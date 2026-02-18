@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | التحدي الأخير</title>
+    <title>Ultra Study Core | نظام الوحوش</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -12,51 +12,45 @@
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen pb-10">
 
     <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-4">
-        <div class="absolute top-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-600"></div>
-        <h1 class="text-6xl font-black mb-4 tracking-tighter italic text-white uppercase">Ultra <span class="text-cyan-500">Core</span></h1>
-        <p class="text-slate-400 mb-8">سجل دخول عشان تحرق دم صحابك بساعات مذاكرتك</p>
-        <button id="btn-login" class="bg-white text-black px-10 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-neon">
-            Login with Google
-        </button>
+        <h1 class="text-6xl font-black mb-4 italic text-white uppercase">Ultra <span class="text-cyan-500">Core</span></h1>
+        <button id="btn-login" class="bg-white text-black px-10 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-neon">دخول بجوجل</button>
     </div>
 
     <div id="main-content" class="hidden">
         <nav class="p-6 border-b border-slate-800 flex justify-between items-center glass sticky top-0 z-40">
             <div class="text-2xl font-black tracking-tighter italic">ULTRA<span class="text-cyan-500">CORE</span></div>
-            <div class="flex items-center gap-4">
-                <span id="user-name" class="text-sm font-bold text-cyan-400"></span>
-                <button id="btn-logout" class="text-red-500 text-xs font-bold border border-red-500/20 px-3 py-1 rounded-lg">خروج</button>
-            </div>
+            <div id="user-info" class="flex items-center gap-4 text-sm font-bold text-cyan-400"></div>
         </nav>
 
-        <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <main class="max-w-7-xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8 text-right">
+            
             <div class="lg:col-span-2 space-y-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-12 text-center relative overflow-hidden shadow-2xl">
-                    <div class="relative z-10">
-                        <span class="bg-cyan-500/10 text-cyan-500 px-4 py-1 rounded-full text-xs font-black tracking-widest border border-cyan-500/20 uppercase">Focus Mode Active</span>
-                        <div id="timer-display" class="text-[8rem] md:text-[10rem] font-mono font-black my-8 leading-none tracking-tighter">00:00:00</div>
-                        <button id="btn-timer" class="w-full max-w-sm py-6 rounded-[2rem] bg-cyan-500 text-black font-black text-2xl shadow-neon hover:scale-105 transition-all">
-                            ابدأ المذاكرة
-                        </button>
-                    </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 text-center shadow-2xl">
+                    <div id="timer-display" class="text-[7rem] md:text-[9rem] font-mono font-black my-6 leading-none">00:00:00</div>
+                    <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-xl shadow-neon transition-all">ابدأ المذاكرة</button>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-[2rem] p-6">
+                    <h3 class="text-lg font-black mb-4 flex items-center gap-2">📅 سجل نشاطك (بالدقائق)</h3>
+                    <div id="study-log" class="space-y-2 max-h-40 overflow-y-auto pr-2">
+                        </div>
                 </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-8 glass">
-                <h3 class="text-xl font-black mb-6 flex items-center gap-2">🏆 لوحة المتصدرين</h3>
+            <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 glass">
+                <h3 class="text-xl font-black mb-6">🏆 ترتيب الوحوش (دقائق)</h3>
                 <div id="leaderboard-list" class="space-y-4">
-                    <p class="text-slate-500 text-sm">جاري تحميل الوحوش...</p>
-                </div>
+                    </div>
             </div>
         </main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -73,93 +67,81 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        let timerInterval;
-        let seconds = 0;
-        let isRunning = false;
-        let currentUser = null;
+        let timerInterval, seconds = 0, isRunning = false, user = null;
 
-        // --- Logic: Auth ---
-        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('btn-logout').onclick = () => signOut(auth);
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
+        onAuthStateChanged(auth, u => {
+            if (u) {
+                user = u;
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-name').innerText = user.displayName;
-                
-                // حفظ المستخدم في الداتابيز
-                setDoc(doc(db, "users", user.uid), {
-                    displayName: user.displayName,
-                    daily_hours: 0,
-                    status: "Online"
-                }, { merge: true });
-
+                document.getElementById('user-info').innerText = u.displayName;
+                syncUser();
                 loadLeaderboard();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('main-content').classList.add('hidden');
+                loadStudyLog();
             }
         });
 
-        // --- Logic: Timer ---
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+
         document.getElementById('btn-timer').onclick = function() {
             if (!isRunning) {
-                isRunning = true;
-                this.innerText = "إيقاف مؤقت";
-                this.classList.replace('bg-cyan-500', 'bg-red-500');
-                this.classList.add('text-white');
-                
+                isRunning = true; this.innerText = "إيقاف"; this.classList.replace('bg-cyan-500', 'bg-red-500');
                 timerInterval = setInterval(() => {
-                    seconds++;
-                    updateTimerDisplay();
-                    if (seconds % 10 === 0) syncToFirebase(); // حفظ كل 10 ثواني
+                    seconds++; updateDisplay();
+                    if (seconds % 60 === 0) saveProgress(1); // حفظ كل دقيقة
                 }, 1000);
             } else {
-                clearInterval(timerInterval);
-                isRunning = false;
-                this.innerText = "استكمال المذاكرة";
-                this.classList.replace('bg-red-500', 'bg-cyan-500');
-                this.classList.remove('text-white');
+                clearInterval(timerInterval); isRunning = false; this.innerText = "استكمال"; this.classList.replace('bg-red-500', 'bg-cyan-500');
             }
         };
 
-        function updateTimerDisplay() {
+        function updateDisplay() {
             const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
             const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
             const s = (seconds % 60).toString().padStart(2, '0');
             document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
         }
 
-        async function syncToFirebase() {
-            if (currentUser) {
-                await updateDoc(doc(db, "users", currentUser.uid), {
-                    daily_hours: increment(10 / 3600),
-                    status: "Studying 🔥"
-                });
-            }
+        async function saveProgress(mins) {
+            const today = new Date().toISOString().split('T')[0];
+            const userRef = doc(db, "users", user.uid);
+            const logRef = doc(db, "users", user.uid, "logs", today);
+
+            // تحديث الوقت الكلي (للوحة المتصدرين)
+            await updateDoc(userRef, { total_mins: increment(mins) });
+            // تحديث سجل اليوم
+            await setDoc(logRef, { date: today, mins: increment(mins) }, { merge: true });
         }
 
-        // --- Logic: Leaderboard ---
         function loadLeaderboard() {
-            const q = query(collection(db, "users"), orderBy("daily_hours", "desc"), limit(5));
-            onSnapshot(q, (snapshot) => {
+            onSnapshot(query(collection(db, "users"), orderBy("total_mins", "desc"), limit(10)), snap => {
                 const list = document.getElementById('leaderboard-list');
                 list.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const item = `
-                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
-                            <div>
-                                <p class="font-bold text-sm">${data.displayName}</p>
-                                <p class="text-[10px] text-cyan-400 font-bold">${data.status || 'Offline'}</p>
-                            </div>
-                            <p class="font-mono font-black">${(data.daily_hours || 0).toFixed(2)}h</p>
+                snap.docs.forEach((d, i) => {
+                    const data = d.data();
+                    list.innerHTML += `
+                        <div class="flex justify-between p-4 bg-slate-800 rounded-xl border border-slate-700">
+                            <span class="font-bold ${i < 3 ? 'text-yellow-500' : 'text-slate-500'}">#${i + 1}</span>
+                            <span class="font-bold">${data.displayName}</span>
+                            <span class="text-cyan-400 font-mono">${(data.total_mins || 0).toFixed(0)} دقيقة</span>
                         </div>`;
-                    list.innerHTML += item;
                 });
             });
+        }
+
+        function loadStudyLog() {
+            onSnapshot(collection(db, "users", user.uid, "logs"), snap => {
+                const logDiv = document.getElementById('study-log');
+                logDiv.innerHTML = '';
+                snap.docs.forEach(d => {
+                    const data = d.data();
+                    logDiv.innerHTML += `<div class="flex justify-between text-sm p-2 border-b border-slate-800"><span>${data.date}</span><span class="text-cyan-500">${data.mins} دقيقة</span></div>`;
+                });
+            });
+        }
+
+        async function syncUser() {
+            await setDoc(doc(db, "users", user.uid), { displayName: user.displayName }, { merge: true });
         }
     </script>
 </body>
