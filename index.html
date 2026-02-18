@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>🔥 Study War Email Login</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+<style>
+body{
+    font-family: "Arial", sans-serif;
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+    text-align:center;
+    padding:20px;
+}
+h1{
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #00ffcc;
+    text-shadow: 0 0 20px #00ffcc;
+}
+input, button{
+    padding:10px 15px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+    outline:none;
+    transition: 0.3s;
+}
+input:focus{
+    box-shadow:0 0 10px #00ffcc;
+}
+button{
+    cursor:pointer;
+    font-weight:bold;
+    background:#ff00ff;
+    color:white;
+    box-shadow:0 0 10px #ff00ff;
+}
+button:hover{
+    transform: scale(1.05);
+}
+#leaderboard{
+    margin-top:20px;
+}
+.player{
+    background: rgba(255,255,255,0.05);
+    margin:10px auto;
+    padding:10px;
+    border-radius:10px;
+    width: 300px;
+    transition: transform 0.3s, background 0.3s;
+}
+.player:hover{
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.2);
+}
+.first{
+    background: gold;
+    color:black;
+    font-weight:bold;
+    text-shadow:0 0 10px black;
+}
+.badge{
+    display:inline-block;
+    background:#ffcc00;
+    color:black;
+    padding:5px 10px;
+    border-radius:5px;
+    margin-left:5px;
+    font-weight:bold;
+    animation: badgePop 0.5s;
+}
+@keyframes badgePop{
+    0%{transform: scale(0);}
+    100%{transform: scale(1);}
+}
+</style>
+</head>
+<body>
+
+<h1>🔥 Study War</h1>
+
+<div id="auth">
+    <input type="email" id="email" placeholder="البريد الإلكتروني"><br>
+    <input type="password" id="password" placeholder="كلمة المرور"><br>
+    <button id="registerBtn">تسجيل حساب جديد</button>
+    <button id="loginBtn">تسجيل دخول</button>
+</div>
+
+<div id="main" style="display:none;">
+    <h2 id="welcome"></h2>
+    <input type="number" id="hours" placeholder="عدد ساعات المذاكرة">
+    <button onclick="addStudy()">أضف ساعات</button>
+    <div id="achievements"></div>
+
+    <h2>🏆 Leaderboard</h2>
+    <div id="leaderboard"></div>
+    <button onclick="logout()">تسجيل خروج</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, getDocs, query, orderBy, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
+  authDomain: "ultra-core.firebaseapp.com",
+  projectId: "ultra-core",
+  storageBucket: "ultra-core.firebasestorage.app",
+  messagingSenderId: "351766462712",
+  appId: "1:351766462712:web:e683d8aa0d213b6e59fb0d"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getFirestore(app);
+const playersRef = collection(db,"players");
+
+// تسجيل حساب جديد
+document.getElementById("registerBtn").addEventListener("click",()=>{
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    if(!email || !password) return alert("ادخل البريد وكلمة المرور");
+
+    createUserWithEmailAndPassword(auth,email,password)
+    .then(userCredential=>{
+        alert("تم إنشاء الحساب!");
+        checkUser(userCredential.user);
+    })
+    .catch(err=>alert(err.message));
+});
+
+// تسجيل دخول
+document.getElementById("loginBtn").addEventListener("click",()=>{
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    if(!email || !password) return alert("ادخل البريد وكلمة المرور");
+
+    signInWithEmailAndPassword(auth,email,password)
+    .then(userCredential=>{
+        console.log("Logged in",userCredential.user.email);
+    })
+    .catch(err=>alert(err.message));
+});
+
+// متابعة حالة تسجيل الدخول
+onAuthStateChanged(auth,user=>{
+    if(user){
+        document.getElementById("auth").style.display="none";
+        document.getElementById("main").style.display="block";
+        document.getElementById("welcome").innerText = `مرحبًا ${user.email}`;
+        checkUser(user);
+        listenLeaderboard();
+    }else{
+        document.getElementById("auth").style.display="block";
+        document.getElementById("main").style.display="none";
+    }
+});
+
+// التحقق من وجود المستخدم في Firestore
+async function checkUser(user){
+    const snapshot = await getDocs(playersRef);
+    let exists = false;
+    snapshot.forEach(docItem=>{
+        if(docItem.data().uid === user.uid){
+            exists = true;
+        }
+    });
+    if(!exists){
+        await addDoc(playersRef,{
+            uid:user.uid,
+            name:user.email,
+            points:0,
+            totalHours:0,
+            badges:[]
+        });
+    }
+}
+
+// إضافة ساعات
+window.addStudy = async function(){
+    const hours = parseInt(document.getElementById("hours").value);
+    if(!hours) return alert("ادخل عدد ساعات صحيح");
+
+    const user = auth.currentUser;
+    const snapshot = await getDocs(playersRef);
+    snapshot.forEach(async docItem=>{
+        if(docItem.data().uid === user.uid){
+            let points = docItem.data().points + hours*10;
+            let totalHours = docItem.data().totalHours + hours;
+            let badges = docItem.data().badges || [];
+
+            if(totalHours >= 10 && !badges.includes("10 ساعات")){
+                badges.push("10 ساعات");
+                showBadge("10 ساعات");
+            }
+            if(totalHours >= 50 && !badges.includes("50 ساعات")){
+                badges.push("50 ساعات");
+                showBadge("50 ساعات");
+            }
+
+            await updateDoc(doc(db,"players",docItem.id),{
+                totalHours,
+                points,
+                badges
+            });
+        }
+    });
+    document.getElementById("hours").value="";
+};
+
+// عرض Badges
+function showBadge(name){
+    const ach = document.getElementById("achievements");
+    const span = document.createElement("span");
+    span.className="badge";
+    span.innerText=name;
+    ach.appendChild(span);
+}
+
+// Leaderboard مباشر
+function listenLeaderboard(){
+    const q = query(playersRef, orderBy("points","desc"));
+    onSnapshot(q,(snapshot)=>{
+        const board = document.getElementById("leaderboard");
+        board.innerHTML="";
+        let index=0;
+        snapshot.forEach(docItem=>{
+            index++;
+            let div = document.createElement("div");
+            div.className="player";
+            if(index===1) div.classList.add("first");
+            div.innerHTML = `
+                <h3>المركز ${index}</h3>
+                <p>${docItem.data().name}</p>
+                <p>${docItem.data().points} نقطة</p>
+            `;
+            board.appendChild(div);
+        });
+    });
+}
+
+// تسجيل خروج
+function logout(){
+    signOut(auth);
+}
+</script>
+
+</body>
+</html>
