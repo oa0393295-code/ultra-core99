@@ -1,294 +1,166 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🔥 Study War Ultimate Live</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:#fff;
-  text-align:center;
-}
-h1{color:#00ffcc;text-shadow:0 0 15px #00ffcc;}
-input,button{
-  padding:10px;
-  margin:5px;
-  border-radius:8px;
-  border:none;
-}
-button{
-  background:#ff00ff;
-  color:#fff;
-  font-weight:bold;
-  cursor:pointer;
-}
-button:hover{transform:scale(1.05);}
-.section{
-  background:rgba(255,255,255,0.05);
-  margin:20px auto;
-  padding:15px;
-  border-radius:12px;
-  width:90%;
-  max-width:600px;
-}
-.player{
-  background:rgba(255,255,255,0.08);
-  margin:8px;
-  padding:8px;
-  border-radius:8px;
-}
-.first{background:gold;color:#000;font-weight:bold;}
-.badge{
-  display:inline-block;
-  background:#ffcc00;
-  color:#000;
-  padding:4px 8px;
-  border-radius:6px;
-  margin:4px;
-}
-.timer{
-  font-size:28px;
-  margin:10px;
-  color:#00ffcc;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra Study Core | التحدي الأخير</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; }
+        .shadow-neon { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
+    </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-<h1>🔥 Study War Ultimate</h1>
-
-<!-- AUTH -->
-<div id="auth" class="section">
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button id="registerBtn">تسجيل</button>
-  <button id="loginBtn">دخول</button>
-</div>
-
-<!-- MAIN -->
-<div id="main" style="display:none;">
-
-  <!-- PROFILE -->
-  <div class="section">
-    <h2 id="welcome"></h2>
-    <input type="number" id="hours" placeholder="عدد ساعات المذاكرة">
-    <button onclick="addStudy()">أضف ساعات</button>
-    <div id="achievements"></div>
-    <button onclick="logout()">تسجيل خروج</button>
-  </div>
-
-  <!-- LEADERBOARD -->
-  <div class="section">
-    <h2>🏆 Leaderboard</h2>
-    <div id="leaderboard"></div>
-  </div>
-
-  <!-- ROOM -->
-  <div class="section">
-    <h2>🔥 Live Room</h2>
-    <input type="text" id="roomName" placeholder="اسم الروم">
-    <button onclick="createRoom()">إنشاء روم</button><br>
-
-    <input type="text" id="joinRoomId" placeholder="ID الروم">
-    <button onclick="joinRoom()">دخول روم</button>
-
-    <div id="roomArea" style="display:none;">
-      <h3 id="roomTitle"></h3>
-      <div class="timer" id="timer">25:00</div>
-      <button onclick="startPomodoro()">ابدأ بومودورو</button>
-      <button onclick="toggleStudy()">📚 ابدأ/أوقف مذاكرة</button>
-      <div id="roomMembers"></div>
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-4">
+        <div class="absolute top-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-600"></div>
+        <h1 class="text-6xl font-black mb-4 tracking-tighter italic text-white uppercase">Ultra <span class="text-cyan-500">Core</span></h1>
+        <p class="text-slate-400 mb-8">سجل دخول عشان تحرق دم صحابك بساعات مذاكرتك</p>
+        <button id="btn-login" class="bg-white text-black px-10 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-neon">
+            Login with Google
+        </button>
     </div>
-  </div>
 
-</div>
+    <div id="main-content" class="hidden">
+        <nav class="p-6 border-b border-slate-800 flex justify-between items-center glass sticky top-0 z-40">
+            <div class="text-2xl font-black tracking-tighter italic">ULTRA<span class="text-cyan-500">CORE</span></div>
+            <div class="flex items-center gap-4">
+                <span id="user-name" class="text-sm font-bold text-cyan-400"></span>
+                <button id="btn-logout" class="text-red-500 text-xs font-bold border border-red-500/20 px-3 py-1 rounded-lg">خروج</button>
+            </div>
+        </nav>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, getDocs, query, orderBy, updateDoc, onSnapshot, setDoc }
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-12 text-center relative overflow-hidden shadow-2xl">
+                    <div class="relative z-10">
+                        <span class="bg-cyan-500/10 text-cyan-500 px-4 py-1 rounded-full text-xs font-black tracking-widest border border-cyan-500/20 uppercase">Focus Mode Active</span>
+                        <div id="timer-display" class="text-[8rem] md:text-[10rem] font-mono font-black my-8 leading-none tracking-tighter">00:00:00</div>
+                        <button id="btn-timer" class="w-full max-w-sm py-6 rounded-[2rem] bg-cyan-500 text-black font-black text-2xl shadow-neon hover:scale-105 transition-all">
+                            ابدأ المذاكرة
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
-  authDomain: "ultra-core.firebaseapp.com",
-  projectId: "ultra-core",
-  storageBucket: "ultra-core.firebasestorage.app",
-  messagingSenderId: "351766462712",
-  appId: "1:351766462712:web:e683d8aa0d213b6e59fb0d"
-};
+            <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-8 glass">
+                <h3 class="text-xl font-black mb-6 flex items-center gap-2">🏆 لوحة المتصدرين</h3>
+                <div id="leaderboard-list" class="space-y-4">
+                    <p class="text-slate-500 text-sm">جاري تحميل الوحوش...</p>
+                </div>
+            </div>
+        </main>
+    </div>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth();
-const db = getFirestore(app);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const playersRef = collection(db,"players");
-const roomsRef = collection(db,"rooms");
+        const firebaseConfig = {
+            apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
+            authDomain: "ultra-core.firebaseapp.com",
+            projectId: "ultra-core",
+            storageBucket: "ultra-core.firebasestorage.app",
+            messagingSenderId: "351766462712",
+            appId: "1:351766462712:web:e683d8aa0d213b6e59fb0d"
+        };
 
-let currentRoomId=null;
-let studying=false;
-let localTimer=null;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-/* AUTH */
-registerBtn.onclick=()=>{
-  createUserWithEmailAndPassword(auth,email.value,password.value)
-  .catch(e=>alert(e.message));
-};
+        let timerInterval;
+        let seconds = 0;
+        let isRunning = false;
+        let currentUser = null;
 
-loginBtn.onclick=()=>{
-  signInWithEmailAndPassword(auth,email.value,password.value)
-  .catch(e=>alert(e.message));
-};
+        // --- Logic: Auth ---
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+        document.getElementById('btn-logout').onclick = () => signOut(auth);
 
-onAuthStateChanged(auth,user=>{
-  if(user){
-    authDiv(false);
-    welcome.innerText="مرحبًا "+user.email;
-    checkUser(user);
-    listenLeaderboard();
-  }else authDiv(true);
-});
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('user-name').innerText = user.displayName;
+                
+                // حفظ المستخدم في الداتابيز
+                setDoc(doc(db, "users", user.uid), {
+                    displayName: user.displayName,
+                    daily_hours: 0,
+                    status: "Online"
+                }, { merge: true });
 
-function authDiv(show){
-  document.getElementById("auth").style.display=show?"block":"none";
-  document.getElementById("main").style.display=show?"none":"block";
-}
+                loadLeaderboard();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-content').classList.add('hidden');
+            }
+        });
 
-function logout(){ signOut(auth); }
+        // --- Logic: Timer ---
+        document.getElementById('btn-timer').onclick = function() {
+            if (!isRunning) {
+                isRunning = true;
+                this.innerText = "إيقاف مؤقت";
+                this.classList.replace('bg-cyan-500', 'bg-red-500');
+                this.classList.add('text-white');
+                
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    updateTimerDisplay();
+                    if (seconds % 10 === 0) syncToFirebase(); // حفظ كل 10 ثواني
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+                isRunning = false;
+                this.innerText = "استكمال المذاكرة";
+                this.classList.replace('bg-red-500', 'bg-cyan-500');
+                this.classList.remove('text-white');
+            }
+        };
 
-/* USER SETUP */
-async function checkUser(user){
-  const snap=await getDocs(playersRef);
-  let exists=false;
-  snap.forEach(d=>{ if(d.data().uid===user.uid) exists=true;});
-  if(!exists){
-    await addDoc(playersRef,{
-      uid:user.uid,
-      name:user.email,
-      points:0,
-      totalHours:0,
-      badges:[]
-    });
-  }
-}
+        function updateTimerDisplay() {
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
+        }
 
-/* ADD STUDY */
-window.addStudy=async()=>{
-  const h=parseInt(hours.value);
-  if(!h)return alert("ادخل رقم");
-  const snap=await getDocs(playersRef);
-  snap.forEach(async d=>{
-    if(d.data().uid===auth.currentUser.uid){
-      let data=d.data();
-      let total=data.totalHours+h;
-      let points=data.points+h*10;
-      let badges=data.badges||[];
+        async function syncToFirebase() {
+            if (currentUser) {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    daily_hours: increment(10 / 3600),
+                    status: "Studying 🔥"
+                });
+            }
+        }
 
-      if(total>=10 && !badges.includes("10 ساعات"))badges.push("10 ساعات");
-      if(total>=50 && !badges.includes("50 ساعات"))badges.push("50 ساعات");
-
-      await updateDoc(doc(db,"players",d.id),{totalHours:total,points,badges});
-    }
-  });
-};
-
-/* LEADERBOARD */
-function listenLeaderboard(){
-  const q=query(playersRef,orderBy("points","desc"));
-  onSnapshot(q,s=>{
-    leaderboard.innerHTML="";
-    let i=0;
-    s.forEach(d=>{
-      i++;
-      let div=document.createElement("div");
-      div.className="player";
-      if(i===1)div.classList.add("first");
-      div.innerHTML=`${i}. ${d.data().name} - ${d.data().points} نقطة`;
-      leaderboard.appendChild(div);
-    });
-  });
-}
-
-/* ROOM */
-window.createRoom=async()=>{
-  const name=roomName.value;
-  if(!name)return alert("اكتب اسم");
-  const room=await addDoc(roomsRef,{
-    name,
-    members:[auth.currentUser.uid],
-    live:{},
-    pomodoroEnd:null
-  });
-  alert("Room ID: "+room.id);
-};
-
-window.joinRoom=async()=>{
-  currentRoomId=joinRoomId.value;
-  if(!currentRoomId)return alert("ادخل ID");
-  roomArea.style.display="block";
-  roomTitle.innerText="Room: "+currentRoomId;
-  listenRoom();
-};
-
-function listenRoom(){
-  const roomDoc=doc(db,"rooms",currentRoomId);
-  onSnapshot(roomDoc,s=>{
-    const data=s.data();
-    if(!data)return;
-    roomMembers.innerHTML="";
-    if(data.live){
-      Object.keys(data.live).forEach(uid=>{
-        let div=document.createElement("div");
-        div.className="player";
-        div.innerText=uid+" "+(data.live[uid].studying?"📚":"⏸");
-        roomMembers.appendChild(div);
-      });
-    }
-    if(data.pomodoroEnd){
-      runTimer(data.pomodoroEnd);
-    }
-  });
-}
-
-/* PRESENCE */
-window.toggleStudy=async()=>{
-  studying=!studying;
-  await updateDoc(doc(db,"rooms",currentRoomId),{
-    [`live.${auth.currentUser.uid}`]:{
-      studying,
-      time:Date.now()
-    }
-  });
-};
-
-/* POMODORO */
-window.startPomodoro=async()=>{
-  const end=Date.now()+25*60*1000;
-  await updateDoc(doc(db,"rooms",currentRoomId),{
-    pomodoroEnd:end
-  });
-};
-
-function runTimer(end){
-  if(localTimer)clearInterval(localTimer);
-  localTimer=setInterval(()=>{
-    let diff=end-Date.now();
-    if(diff<=0){timer.innerText="00:00";clearInterval(localTimer);return;}
-    let m=Math.floor(diff/60000);
-    let s=Math.floor((diff%60000)/1000);
-    timer.innerText=`${m}:${s<10?"0"+s:s}`;
-  },1000);
-}
-
-</script>
+        // --- Logic: Leaderboard ---
+        function loadLeaderboard() {
+            const q = query(collection(db, "users"), orderBy("daily_hours", "desc"), limit(5));
+            onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('leaderboard-list');
+                list.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const item = `
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                            <div>
+                                <p class="font-bold text-sm">${data.displayName}</p>
+                                <p class="text-[10px] text-cyan-400 font-bold">${data.status || 'Offline'}</p>
+                            </div>
+                            <p class="font-mono font-black">${(data.daily_hours || 0).toFixed(2)}h</p>
+                        </div>`;
+                    list.innerHTML += item;
+                });
+            });
+        }
+    </script>
 </body>
 </html>
