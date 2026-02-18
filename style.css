@@ -1,0 +1,111 @@
+/* استيراد الخطوط الاحترافية */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Cairo:wght@400;700&display=swap');
+
+:root {
+    --cyan: #00f2ff;
+    --purple: #bc13fe;
+    --glass: rgba(255, 255, 255, 0.03);
+    --border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+    cursor: crosshair; /* تغيير شكل الماوس لشكل احترافي */
+}
+
+body {
+    margin: 0;
+    font-family: 'Cairo', sans-serif;
+    background-color: #000;
+    color: #fff;
+    user-select: none;
+}
+
+/* تأثير الصندوق الزجاجي (Glassmorphism) */
+.glass-box {
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.glass-box:hover {
+    border-color: var(--cyan);
+    background: rgba(0, 242, 255, 0.05);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+}
+
+/* أزرار النيكسس (Nexus Buttons) */
+.nexus-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--cyan);
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.nexus-btn:hover {
+    background: var(--cyan);
+    color: #000;
+    box-shadow: 0 0 30px var(--cyan);
+    transform: translateY(-2px);
+}
+
+/* تخصيص الـ Checkbox ليكون كأنه زر في طائرة */
+.habit-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid transparent;
+    transition: 0.3s;
+}
+
+.habit-item.active {
+    border-color: var(--cyan);
+    background: rgba(0, 242, 255, 0.08);
+}
+
+/* الأنيميشن الخاص بشاشة التحميل */
+#loader {
+    transition: transform 0.8s cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+.loaded #loader {
+    transform: translateY(-100%);
+}
+
+/* ستايل الرسوم البيانية */
+canvas {
+    filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.1));
+}
+
+/* تخصيص الـ Scrollbar عشان ميبوظش المنظر */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cyan);
+    border-radius: 10px;
+}
+
+/* نصوص الهيدر */
+h1 {
+    font-family: 'Orbitron', sans-serif;
+}
