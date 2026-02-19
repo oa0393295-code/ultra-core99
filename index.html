@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ألترا كور V15 | نظام الإدارة المتكامل</title>
+    <title>ULTRA CORE V20 | TITAN ARCHITECTURE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
@@ -11,201 +11,236 @@
             --sys-cyan: #06b6d4;
             --sys-emerald: #10b981;
             --sys-bg: #010409;
-            --sys-card: rgba(13, 17, 23, 0.95);
-            --sys-border: rgba(48, 54, 61, 0.8);
+            --sys-card: rgba(13, 17, 23, 0.98);
+            --sys-border: rgba(48, 54, 61, 0.9);
+            --neon-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
         }
 
         body {
             font-family: 'Cairo', sans-serif;
             background-color: var(--sys-bg);
             color: #e6edf3;
-            background-image: radial-gradient(circle at 2px 2px, rgba(6, 182, 212, 0.05) 1px, transparent 0);
-            background-size: 40px 40px;
-            margin: 0;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.02) 0%, transparent 80%),
+                radial-gradient(circle at 2px 2px, rgba(6, 182, 212, 0.05) 1px, transparent 0);
+            background-size: 100% 100%, 40px 40px;
+            overflow-x: hidden;
         }
 
         .font-mono { font-family: 'JetBrains Mono', monospace; }
 
+        /* الأنظمة الزجاجية المتقدمة */
         .ultra-glass {
             background: var(--sys-card);
-            backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(25px) saturate(200%);
             border: 1px solid var(--sys-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
+        .ultra-glass:hover { border-color: var(--sys-cyan); box-shadow: var(--neon-shadow); }
+
+        /* محرك العداد النيوني العملاق */
         .timer-viewport {
             position: relative;
-            width: 440px;
-            height: 440px;
-            filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.2));
+            width: 460px;
+            height: 460px;
+            filter: drop-shadow(0 0 30px rgba(6, 182, 212, 0.15));
         }
 
         .svg-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
-        .ring-track { fill: none; stroke: #161b22; stroke-width: 18; }
+        .ring-track { fill: none; stroke: #0d1117; stroke-width: 20; }
         .ring-progress {
-            fill: none; stroke: var(--sys-cyan); stroke-width: 18; stroke-linecap: round;
+            fill: none; stroke: var(--sys-cyan); stroke-width: 20; stroke-linecap: round;
             stroke-dasharray: 880; stroke-dashoffset: 880;
-            transition: stroke-dashoffset 1s linear;
+            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 8px var(--sys-cyan));
         }
 
+        /* أزرار القيادة التيتانيوم */
         .btn-command {
             background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
             color: #000;
             font-weight: 900;
-            letter-spacing: -0.5px;
-            box-shadow: 0 4px 14px 0 rgba(6, 182, 212, 0.39);
-            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-command:active { transform: scale(0.95); }
+        .btn-command::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg); transition: 0.5s;
+        }
 
+        .btn-command:hover::after { left: 100%; }
+
+        /* واجهة السجلات */
         .log-item {
-            border-right: 5px solid var(--sys-cyan);
-            background: linear-gradient(90deg, rgba(30, 41, 59, 0.4) 0%, transparent 100%);
+            border-right: 4px solid var(--sys-cyan);
+            background: rgba(30, 41, 59, 0.2);
+            transition: 0.3s ease;
         }
+
+        .log-item:hover { background: rgba(30, 41, 59, 0.5); transform: translateX(-5px); }
 
         .status-badge {
-            font-size: 9px;
-            padding: 2px 10px;
-            border-radius: 20px;
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--sys-emerald);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            animation: pulse 2s infinite;
+            font-size: 10px; font-weight: 900; padding: 3px 12px; border-radius: 50px;
+            background: rgba(16, 185, 129, 0.1); color: var(--sys-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3); animation: pulse 1.5s infinite;
         }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+        /* شريط التمرير الاحترافي */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--sys-bg); }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--sys-cyan); }
-        
-        /* Modal Style for Editing */
-        #edit-modal { background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); }
+
+        /* HUD Overlay */
+        #system-hud { position: fixed; bottom: 20px; left: 20px; font-family: 'JetBrains Mono'; font-size: 10px; color: #58a6ff; z-index: 1000; }
     </style>
 </head>
-<body class="antialiased overflow-x-hidden">
+<body class="antialiased">
+
+    <div id="system-hud" class="hidden">SYS_V20_ACTIVE | PING: <span id="ping-val">24ms</span> | MEM: <span id="mem-val">42MB</span></div>
 
     <div id="gatekeeper" class="fixed inset-0 z-[10000] bg-black flex flex-col items-center justify-center p-6">
-        <div class="relative mb-12 text-center">
-            <div class="absolute -inset-20 bg-cyan-500/10 blur-[120px] rounded-full"></div>
-            <h1 class="text-9xl font-black text-white italic tracking-tighter">UC<span class="text-cyan-500">.</span></h1>
-            <p class="text-slate-500 font-mono tracking-[0.5em] mt-4">V15 ULTIMATE BUILD</p>
+        <div class="relative mb-16 group">
+            <div class="absolute -inset-24 bg-cyan-500/10 blur-[150px] rounded-full group-hover:bg-cyan-500/20 transition-all duration-1000"></div>
+            <h1 class="text-[12rem] font-black text-white italic tracking-tighter mix-blend-difference select-none">UC<span class="text-cyan-500">.</span></h1>
+            <div class="absolute -bottom-4 right-0 font-mono text-cyan-500 text-sm tracking-[1em] font-bold">CORE_ARCH_V20</div>
         </div>
-        <button id="gate-trigger" class="btn-command px-24 py-7 rounded-[2rem] text-2xl tracking-tighter">تهيئــة النظام الـمركزي</button>
+        <button id="gate-trigger" class="btn-command px-32 py-8 rounded-[3rem] text-3xl tracking-tighter">بث بروتوكول التشغيل</button>
     </div>
 
     <div id="app-container" class="hidden opacity-0 transition-opacity duration-1000">
-        <header class="ultra-glass sticky top-0 z-[500] px-10 py-6 flex justify-between items-center border-b border-white/5">
-            <div class="flex items-center gap-8">
-                <div class="h-14 w-2 bg-cyan-500 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.5)]"></div>
+        <header class="ultra-glass sticky top-0 z-[500] px-12 py-8 flex justify-between items-center border-b border-white/5">
+            <div class="flex items-center gap-10">
+                <div class="h-16 w-3 bg-cyan-500 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.6)]"></div>
                 <div>
-                    <h2 class="text-3xl font-black text-white leading-none">مـركز الـتحكم</h2>
-                    <p id="active-user-tag" class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.3em] mt-2"></p>
+                    <h2 class="text-4xl font-black text-white leading-none tracking-tight italic">COMMAND_CENTER</h2>
+                    <p id="active-user-tag" class="text-[11px] text-cyan-500 font-bold uppercase tracking-[0.4em] mt-3 opacity-80"></p>
                 </div>
             </div>
-            <div class="flex items-center gap-6">
-                <div id="live-indicator" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/5 rounded-full border border-emerald-500/20">
-                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
-                    <span class="text-[10px] font-black text-emerald-500">اتصال نشط</span>
+            <div class="flex items-center gap-8">
+                <div id="live-indicator" class="flex items-center gap-3 px-6 py-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/20">
+                    <div class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
+                    <span class="text-xs font-black text-emerald-500 uppercase">Secure Link Active</span>
                 </div>
-                <button id="system-exit" class="text-red-500 font-black text-xs hover:underline">خروج من النظام</button>
+                <button id="system-exit" class="text-red-500 font-black text-sm hover:text-white transition-colors border-b-2 border-transparent hover:border-red-500">EXIT_CORE</button>
             </div>
         </header>
 
-        <main class="max-w-[1920px] mx-auto p-10 grid grid-cols-12 gap-12">
+        <main class="max-w-[1920px] mx-auto p-12 grid grid-cols-12 gap-12">
             
-            <section class="col-span-12 lg:col-span-3 space-y-10">
-                <div class="ultra-glass rounded-[3.5rem] p-10 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                    <h3 class="text-2xl font-black text-white mb-10 flex items-center justify-between">
+            <aside class="col-span-12 lg:col-span-3 space-y-12">
+                <div class="ultra-glass rounded-[4rem] p-12 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl rounded-full"></div>
+                    <h3 class="text-3xl font-black text-white mb-12 flex items-center justify-between italic">
                         الورد الروحاني
-                        <span id="prayer-count-ui" class="text-sm font-mono text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg">0/6</span>
+                        <span id="prayer-count-ui" class="text-base font-mono text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-xl">0/6</span>
                     </h3>
-                    <div id="prayer-container" class="space-y-4"></div>
+                    <div id="prayer-container" class="space-y-5"></div>
                     
-                    <div class="mt-12 space-y-6">
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">تحديث صفحات القرآن</p>
-                        <div class="flex gap-4">
-                            <input type="number" id="quran-input" class="w-full bg-slate-900/50 border border-slate-700 rounded-2xl px-6 py-5 text-white font-black text-2xl outline-none focus:border-emerald-500" placeholder="0">
-                            <button onclick="executeQuranUpdate()" class="bg-emerald-500 text-black px-8 rounded-2xl font-black hover:bg-white transition-all">حفظ</button>
+                    <div class="mt-16 pt-10 border-t border-white/5 space-y-8">
+                        <p class="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] text-center italic">تغذية بيانات المصحف</p>
+                        <div class="flex gap-5">
+                            <input type="number" id="quran-input" class="w-full bg-slate-900/50 border-2 border-slate-800 rounded-3xl px-8 py-6 text-white font-black text-3xl outline-none focus:border-emerald-500 transition-all" placeholder="0">
+                            <button onclick="CoreController.updateQuran()" class="bg-emerald-500 text-black px-10 rounded-3xl font-black text-xl hover:bg-white transition-all shadow-lg shadow-emerald-500/20">حفظ</button>
                         </div>
                     </div>
                 </div>
-            </section>
+            </aside>
 
-            <section class="col-span-12 lg:col-span-6 space-y-10">
-                <div class="ultra-glass rounded-[5rem] p-20 flex flex-col items-center justify-center relative">
+            <section class="col-span-12 lg:col-span-6 space-y-12">
+                <div class="ultra-glass rounded-[6rem] p-24 flex flex-col items-center justify-center relative">
                     <div class="timer-viewport">
                         <svg class="svg-ring" viewBox="0 0 320 320">
                             <circle class="ring-track" cx="160" cy="160" r="140"></circle>
                             <circle id="timer-progress-bar" class="ring-progress" cx="160" cy="160" r="140"></circle>
                         </svg>
                         <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <h2 id="timer-display" class="text-8xl font-mono font-black text-white tracking-tighter">00:00:00</h2>
-                            <div id="engine-mode" class="mt-6 px-8 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-[10px] font-black text-cyan-400 uppercase tracking-widest">System Standby</div>
+                            <h2 id="timer-display" class="text-[7rem] font-mono font-black text-white tracking-tighter leading-none">00:00:00</h2>
+                            <div id="engine-mode" class="mt-8 px-10 py-3 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-xs font-black text-cyan-400 uppercase tracking-[0.5em]">System_Idle</div>
                         </div>
                     </div>
                     
-                    <button id="timer-trigger" class="btn-command mt-16 w-full max-w-lg py-10 rounded-[3rem] text-4xl italic tracking-tighter">تفعيل بروتوكول التركيز</button>
+                    <button id="timer-trigger" class="btn-command mt-20 w-full max-w-xl py-12 rounded-[4rem] text-5xl italic tracking-tighter">BOOT_FOCUS_PROTOCOL</button>
                     
-                    <div class="grid grid-cols-2 gap-8 w-full mt-16 pt-10 border-t border-white/5">
-                        <div class="text-center">
-                            <p class="text-[10px] text-slate-500 font-black uppercase mb-2">إجمالي صفحات اليوم</p>
-                            <p id="today-quran-stat" class="text-3xl font-black text-white font-mono">0</p>
+                    <div class="grid grid-cols-2 gap-12 w-full mt-24 pt-12 border-t border-white/5">
+                        <div class="text-center group">
+                            <p class="text-xs text-slate-500 font-black uppercase mb-3 tracking-widest group-hover:text-cyan-500 transition-colors">قراءة اليوم</p>
+                            <p id="today-quran-stat" class="text-5xl font-black text-white font-mono">0</p>
                         </div>
-                        <div class="text-center">
-                            <p class="text-[10px] text-slate-500 font-black uppercase mb-2">دقائق المذاكرة</p>
-                            <p id="today-mins-stat" class="text-3xl font-black text-white font-mono">0</p>
+                        <div class="text-center group">
+                            <p class="text-xs text-slate-500 font-black uppercase mb-3 tracking-widest group-hover:text-cyan-500 transition-colors">دقائق التركيز</p>
+                            <p id="today-mins-stat" class="text-5xl font-black text-white font-mono">0</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="ultra-glass rounded-[3.5rem] p-12">
-                    <h3 class="text-2xl font-black text-white mb-10 flex items-center gap-4">
-                        <div class="w-2 h-8 bg-cyan-500"></div>
-                        أرشيف العمليات الخاص بي
+                <div class="ultra-glass rounded-[4rem] p-16">
+                    <h3 class="text-3xl font-black text-white mb-12 flex items-center gap-6 italic">
+                        <div class="w-3 h-10 bg-cyan-500 rounded-full shadow-lg shadow-cyan-500/50"></div>
+                        أرشيف السجلات العملياتية
                     </h3>
-                    <div id="my-logs-archive" class="space-y-6 max-h-[600px] overflow-y-auto pr-6"></div>
+                    <div id="my-logs-archive" class="space-y-6 max-h-[800px] overflow-y-auto pr-8 custom-scroll"></div>
                 </div>
             </section>
 
-            <section class="col-span-12 lg:col-span-3 space-y-10">
-                <div class="ultra-glass rounded-[3rem] p-8 border-b-4 border-cyan-500">
-                    <h3 class="text-xl font-black text-center text-white mb-10 tracking-widest">لوحة النخبة 🏆</h3>
-                    <div id="global-leaderboard" class="space-y-4"></div>
+            <aside class="col-span-12 lg:col-span-3 space-y-12">
+                <div class="ultra-glass rounded-[4rem] p-10 border-b-[6px] border-cyan-500 shadow-2xl">
+                    <h3 class="text-2xl font-black text-center text-white mb-12 tracking-[0.3em] uppercase italic">The Elite Board 🏆</h3>
+                    <div id="global-leaderboard" class="space-y-5"></div>
                 </div>
 
-                <div class="ultra-glass rounded-[3rem] h-[550px] flex flex-col overflow-hidden">
-                    <div class="p-6 bg-slate-900/50 border-b border-slate-800 text-center">
-                        <span class="text-[10px] font-black text-cyan-500 tracking-[0.4em]">ENCRYPTED CHAT</span>
+                <div class="ultra-glass rounded-[4rem] h-[650px] flex flex-col overflow-hidden">
+                    <div class="p-8 bg-slate-900/40 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-black text-cyan-500 tracking-[0.5em]">ENCRYPTED_COMMS</span>
+                        <div class="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
                     </div>
-                    <div id="chat-messages" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
-                    <div class="p-6 bg-slate-950 flex gap-4">
-                        <input id="chat-input-field" type="text" placeholder="اكتب رسالتك..." class="flex-1 bg-slate-900 border-none rounded-2xl px-6 py-4 text-sm text-white outline-none ring-1 ring-slate-800 focus:ring-cyan-500">
-                        <button id="send-chat-btn" class="bg-cyan-500 text-black px-8 rounded-2xl font-black text-xs">إرسال</button>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-10 space-y-8 scroll-smooth"></div>
+                    <div class="p-8 bg-slate-950/80 backdrop-blur-md flex gap-5">
+                        <input id="chat-input-field" type="text" placeholder="إرسال رسالة مشفرة..." class="flex-1 bg-slate-900 border-none rounded-3xl px-8 py-6 text-sm text-white outline-none ring-2 ring-slate-800 focus:ring-cyan-500 transition-all">
+                        <button id="send-chat-btn" class="bg-cyan-500 text-black px-12 rounded-3xl font-black text-sm hover:scale-105 active:scale-95 transition-all">SEND</button>
                     </div>
                 </div>
-            </section>
+            </aside>
         </main>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-[10001] flex items-center justify-center p-6">
-        <div class="ultra-glass p-12 rounded-[3rem] w-full max-w-lg">
-            <h4 id="edit-date-title" class="text-3xl font-black text-white mb-8 italic">تعديل بيانات اليوم</h4>
-            <div class="space-y-8">
+    <div id="inspector-modal" class="hidden fixed inset-0 z-[10001] bg-black/98 backdrop-blur-[50px] flex items-center justify-center p-12">
+        <div class="ultra-glass p-20 rounded-[6rem] w-full max-w-5xl border-2 border-slate-800 shadow-[0_0_150px_rgba(6,182,212,0.15)]">
+            <div class="flex justify-between items-start mb-16">
                 <div>
-                    <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-4 block">عدد الدقائق</label>
-                    <input type="number" id="edit-mins-input" class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl px-6 py-4 text-white font-black text-xl">
+                    <h4 id="inspector-user-name" class="text-7xl font-black text-white italic tracking-tighter leading-none"></h4>
+                    <p class="text-cyan-500 font-mono text-sm tracking-[0.6em] uppercase mt-6 opacity-70">Deep Metadata Archeology</p>
                 </div>
-                <div>
-                    <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-4 block">عدد الصفحات</label>
-                    <input type="number" id="edit-quran-input" class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl px-6 py-4 text-white font-black text-xl">
+                <button onclick="UIHandler.closeInspector()" class="text-slate-600 hover:text-white text-8xl leading-none transition-transform hover:rotate-90">&times;</button>
+            </div>
+            <div id="inspector-logs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[650px] overflow-y-auto pr-10"></div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="hidden fixed inset-0 z-[10002] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-8">
+        <div class="ultra-glass p-16 rounded-[5rem] w-full max-w-2xl border-2 border-cyan-500/20">
+            <h4 id="edit-date-title" class="text-4xl font-black text-white mb-12 italic border-r-8 border-cyan-500 pr-6">EDIT_RECORD_ENTRY</h4>
+            <div class="space-y-10">
+                <div class="space-y-4">
+                    <label class="text-[11px] text-slate-500 font-black tracking-widest uppercase ml-4">Duration (Minutes)</label>
+                    <input type="number" id="edit-mins-input" class="w-full bg-slate-900 border-2 border-slate-800 rounded-3xl p-8 text-white font-black text-3xl focus:border-cyan-500 outline-none">
                 </div>
-                <div class="flex gap-4 pt-4">
-                    <button id="save-edit-btn" class="flex-1 bg-cyan-500 text-black font-black py-4 rounded-2xl hover:bg-white transition-all">تحديث البيانات</button>
-                    <button onclick="closeEditModal()" class="flex-1 bg-slate-800 text-white font-black py-4 rounded-2xl">إلغاء</button>
+                <div class="space-y-4">
+                    <label class="text-[11px] text-slate-500 font-black tracking-widest uppercase ml-4">Pages (Quran)</label>
+                    <input type="number" id="edit-quran-input" class="w-full bg-slate-900 border-2 border-slate-800 rounded-3xl p-8 text-white font-black text-3xl focus:border-cyan-500 outline-none">
+                </div>
+                <div class="flex gap-6 pt-6">
+                    <button id="save-edit-btn" class="flex-1 btn-command py-8 rounded-[2.5rem] text-xl">COMMIT_CHANGES</button>
+                    <button onclick="UIHandler.closeEditModal()" class="flex-1 bg-slate-800 text-white font-black rounded-[2.5rem] hover:bg-slate-700 transition-all uppercase tracking-widest text-xs">ABORT</button>
                 </div>
             </div>
         </div>
@@ -214,9 +249,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp, getDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // FIREBASE CONFIG
+        // CONFIGURATION CORE
         const firebaseConfig = {
             apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
             authDomain: "ultra-core.firebaseapp.com",
@@ -229,270 +264,373 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
+        const googleProvider = new GoogleAuthProvider();
 
-        // INTERNAL STATE
-        let internalSeconds = 0, isEngineRunning = false, sessionUser = null, timerInterval = null;
-        let activeEditDate = null;
-        const currentDayKey = new Date().toISOString().split('T')[0];
+        // TITAN STATE ENGINE
+        const SystemState = {
+            internalSeconds: 0,
+            isEngineRunning: false,
+            sessionUser: null,
+            timerInterval: null,
+            activeEditDate: null,
+            currentDayKey: new Date().toISOString().split('T')[0],
+            syncQueue: [],
+            performance: { ping: 0, memory: 0 }
+        };
 
-        const PRAYER_REF = [
+        const PRAYER_SCHEMA = [
             {id: 'fajr', label: 'صلاة الفجر'}, {id: 'dhuhr', label: 'صلاة الظهر'},
             {id: 'asr', label: 'صلاة العصر'}, {id: 'maghrib', label: 'صلاة المغرب'},
             {id: 'isha', label: 'صلاة العشاء'}, {id: 'taraweeh', label: 'صلاة التراويح'}
         ];
 
-        // BOOT LOGIC
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                sessionUser = user;
-                document.getElementById('gatekeeper').style.display = 'none';
-                document.getElementById('app-container').classList.remove('hidden');
-                setTimeout(() => document.getElementById('app-container').style.opacity = '1', 100);
-                
-                document.getElementById('active-user-tag').innerText = `ID: ${user.uid.substring(0,8)} | ${user.displayName}`;
-
-                // Restore Engine
-                internalSeconds = parseInt(localStorage.getItem(`UC_V15_SECS_${user.uid}`)) || 0;
-                if (localStorage.getItem(`UC_V15_RUN_${user.uid}`) === "true") runEngineControl(true);
-                else refreshTimerUI();
-
-                await syncUserCore();
-                initializePrayerUI();
-                activateGlobalStreams();
-                setupWindowExitCleanup();
-            } else {
-                document.getElementById('gatekeeper').style.display = 'flex';
-            }
-        });
-
-        async function syncUserCore() {
-            const ref = doc(db, "users", sessionUser.uid);
-            await setDoc(ref, { name: sessionUser.displayName, lastSeen: serverTimestamp() }, { merge: true });
-        }
-
-        // CLEANUP STATUS ON EXIT
-        function setupWindowExitCleanup() {
-            window.addEventListener('beforeunload', () => {
-                if (sessionUser) {
-                    // نستخدم XMLHttpRequest أو fetch مع keepalive للتأكد من وصول الطلب بعد قفل الصفحة
-                    const userRef = doc(db, "users", sessionUser.uid);
-                    updateDoc(userRef, { status: "" });
-                }
-            });
-        }
-
-        function initializePrayerUI() {
-            const container = document.getElementById('prayer-container');
-            container.innerHTML = PRAYER_REF.map(p => `
-                <div class="group flex items-center justify-between p-6 bg-slate-900/40 rounded-[2rem] border border-slate-800 hover:border-emerald-500/30 transition-all cursor-pointer">
-                    <span class="font-bold text-slate-400 group-hover:text-white">${p.label}</span>
-                    <input type="checkbox" id="check-${p.id}" onchange="processPrayerSync('${p.id}')" class="w-7 h-7 accent-emerald-500 rounded-lg cursor-pointer">
-                </div>
-            `).join('');
-        }
-
-        // --- TIMER ENGINE ---
-        function runEngineControl(force = false) {
-            const btn = document.getElementById('timer-trigger');
-            const modeText = document.getElementById('engine-mode');
-
-            if (!isEngineRunning || force) {
-                isEngineRunning = true;
-                localStorage.setItem(`UC_V15_RUN_${sessionUser.uid}`, "true");
-                btn.innerText = "إيقـاف البروتوكول";
-                btn.style.filter = "hue-rotate(140deg)";
-                modeText.innerText = "Status: Executing Focus 🔥";
-                updateStatusInFirebase("بيذاكر دلوقتي 🔥");
-
-                timerInterval = setInterval(() => {
-                    internalSeconds++;
-                    localStorage.setItem(`UC_V15_SECS_${sessionUser.uid}`, internalSeconds);
-                    refreshTimerUI();
-                    syncProgressCircle((internalSeconds % 60 / 60) * 100);
-                    if (internalSeconds % 60 === 0) logMinsToCloud(1);
-                }, 1000);
-            } else {
-                clearInterval(timerInterval);
-                isEngineRunning = false;
-                localStorage.setItem(`UC_V15_RUN_${sessionUser.uid}`, "false");
-                btn.innerText = "تفعيل بروتوكول التركيز";
-                btn.style.filter = "none";
-                modeText.innerText = "Status: System Idle";
-                updateStatusInFirebase(""); // مسح الحالة عند الإيقاف
-            }
-        }
-
-        function refreshTimerUI() {
-            const h = Math.floor(internalSeconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((internalSeconds % 3600) / 60).toString().padStart(2, '0');
-            const s = (internalSeconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
-        }
-
-        function syncProgressCircle(p) {
-            document.getElementById('timer-progress-bar').style.strokeDashoffset = 880 - (p / 100 * 880);
-        }
-
-        async function updateStatusInFirebase(status) {
-            if (sessionUser) {
-                await updateDoc(doc(db, "users", sessionUser.uid), { status: status });
-            }
-        }
-
-        // --- DATA OPERATIONS ---
-        window.processPrayerSync = async (pId) => {
-            const isChecked = document.getElementById(`check-${pId}`).checked;
-            const logRef = doc(db, "users", sessionUser.uid, "logs", currentDayKey);
-            const snap = await getDoc(logRef);
-            let habits = snap.exists() ? (snap.data().habits || {}) : {};
-            habits[pId] = isChecked;
-            const prayerString = PRAYER_REF.filter(k => habits[k.id]).map(k => k.label).join(' • ');
-            await setDoc(logRef, { habits, readable_prayers: prayerString, date: currentDayKey }, { merge: true });
-            updatePrayerCountUI(habits);
-        }
-
-        window.executeQuranUpdate = async () => {
-            const val = parseInt(document.getElementById('quran-input').value) || 0;
-            if (val <= 0) return;
-            const logRef = doc(db, "users", sessionUser.uid, "logs", currentDayKey);
-            await setDoc(logRef, { quran: increment(val), date: currentDayKey }, { merge: true });
-            document.getElementById('quran-input').value = '';
-        }
-
-        async function logMinsToCloud(m) {
-            const logRef = doc(db, "users", sessionUser.uid, "logs", currentDayKey);
-            await setDoc(logRef, { mins: increment(m), date: currentDayKey }, { merge: true });
-        }
-
-        function updatePrayerCountUI(habits) {
-            const count = Object.values(habits).filter(v => v === true).length;
-            document.getElementById('prayer-count-ui').innerText = `${count}/6`;
-        }
-
-        // --- EDIT LOGS LOGIC ---
-        window.openEditModal = (date, currentMins, currentQuran) => {
-            activeEditDate = date;
-            document.getElementById('edit-date-title').innerText = `تعديل سجل: ${date}`;
-            document.getElementById('edit-mins-input').value = currentMins;
-            document.getElementById('edit-quran-input').value = currentQuran;
-            document.getElementById('edit-modal').classList.remove('hidden');
-        };
-
-        window.closeEditModal = () => {
-            document.getElementById('edit-modal').classList.add('hidden');
-            activeEditDate = null;
-        };
-
-        document.getElementById('save-edit-btn').onclick = async () => {
-            if (!activeEditDate) return;
-            const nMins = parseInt(document.getElementById('edit-mins-input').value) || 0;
-            const nQuran = parseInt(document.getElementById('edit-quran-input').value) || 0;
-            
-            const logRef = doc(db, "users", sessionUser.uid, "logs", activeEditDate);
-            await updateDoc(logRef, { mins: nMins, quran: nQuran });
-            
-            // لو اليوم اللي تعدل هو النهاردة، حدث العداد المحلي برضه
-            if (activeEditDate === currentDayKey) {
-                internalSeconds = nMins * 60;
-                localStorage.setItem(`UC_V15_SECS_${sessionUser.uid}`, internalSeconds);
-                refreshTimerUI();
-            }
-            
-            closeEditModal();
-        };
-
-        // --- STREAMS & UI UPDATES ---
-        function activateGlobalStreams() {
-            // My History Stream
-            onSnapshot(query(collection(db, "users", sessionUser.uid, "logs"), orderBy("date", "desc")), (snap) => {
-                const container = document.getElementById('my-logs-archive');
-                let logsHtml = '';
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    if (data.date === currentDayKey) {
-                        document.getElementById('today-quran-stat').innerText = data.quran || 0;
-                        document.getElementById('today-mins-stat').innerText = data.mins || 0;
+        // --- CORE LOGIC CONTROLLER ---
+        const CoreController = {
+            async boot() {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        SystemState.sessionUser = user;
+                        UIHandler.toggleGate(false);
+                        this.initSession();
+                    } else {
+                        UIHandler.toggleGate(true);
                     }
-                    logsHtml += `
-                        <div class="log-item p-6 rounded-2xl flex justify-between items-center group">
-                            <div>
-                                <p class="text-[10px] text-slate-500 font-mono mb-1">${data.date}</p>
-                                <p class="text-xl font-black text-white">${data.mins || 0} دقيقة | ${data.quran || 0} صفحة</p>
-                                <p class="text-[10px] text-emerald-500 mt-2">${data.readable_prayers || 'لم يتم تسجيل صلوات'}</p>
-                            </div>
-                            <button onclick="openEditModal('${data.date}', ${data.mins || 0}, ${data.quran || 0})" class="opacity-0 group-hover:opacity-100 bg-cyan-500/10 text-cyan-500 p-3 rounded-xl border border-cyan-500/20 text-[10px] font-black transition-all">تعديل</button>
-                        </div>
-                    `;
                 });
-                container.innerHTML = logsHtml;
-            });
+            },
 
-            // Leaderboard Stream
-            onSnapshot(query(collection(db, "users"), limit(20)), (snap) => {
-                const container = document.getElementById('global-leaderboard');
-                let users = [];
-                snap.forEach(d => users.push(d.data()));
+            async initSession() {
+                const user = SystemState.sessionUser;
+                document.getElementById('active-user-tag').innerText = `AUTH_LEVEL_01 // UID: ${user.uid.substring(0,10)} // ${user.displayName}`;
                 
-                // ترتيب وهمي هنا لأن الـ Firestore مبيعملش OrderBy على الـ Status بسهولة
-                users.sort((a,b) => (b.status ? 1 : 0) - (a.status ? 1 : 0));
+                // RESTORE STATE FROM LOCALSTORAGE
+                const savedSecs = localStorage.getItem(`UC_V20_SECS_${user.uid}`);
+                SystemState.internalSeconds = savedSecs ? parseInt(savedSecs) : 0;
+                
+                if (localStorage.getItem(`UC_V20_RUNNING_${user.uid}`) === "true") {
+                    this.startEngine(true);
+                } else {
+                    UIHandler.updateTimerDisplay();
+                }
 
-                container.innerHTML = users.map(u => `
-                    <div class="flex items-center justify-between p-4 bg-slate-900/30 rounded-2xl border border-white/5">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-cyan-500/10 rounded-full flex items-center justify-center font-black text-cyan-500">${u.name[0]}</div>
-                            <div>
-                                <p class="text-sm font-black text-white">${u.name}</p>
-                                ${u.status ? `<p class="status-badge mt-1">${u.status}</p>` : ''}
-                            </div>
-                        </div>
+                await this.syncProfile();
+                UIHandler.buildPrayerInterface();
+                DataStreamer.initAll();
+                this.setupLifeCycleListeners();
+                document.getElementById('system-hud').classList.remove('hidden');
+            },
+
+            async syncProfile() {
+                const ref = doc(db, "users", SystemState.sessionUser.uid);
+                await setDoc(ref, { 
+                    name: SystemState.sessionUser.displayName, 
+                    uid: SystemState.sessionUser.uid,
+                    last_active: serverTimestamp(),
+                    client_version: "20.0.0"
+                }, { merge: true });
+            },
+
+            startEngine(isForced = false) {
+                if (SystemState.isEngineRunning && !isForced) return;
+                
+                SystemState.isEngineRunning = true;
+                localStorage.setItem(`UC_V20_RUNNING_${SystemState.sessionUser.uid}`, "true");
+                UIHandler.updateEngineUI(true);
+                this.updateGlobalStatus("بيذاكر دلوقتي 🔥");
+
+                SystemState.timerInterval = setInterval(() => {
+                    SystemState.internalSeconds++;
+                    localStorage.setItem(`UC_V20_SECS_${SystemState.sessionUser.uid}`, SystemState.internalSeconds);
+                    UIHandler.updateTimerDisplay();
+                    UIHandler.syncCircle(SystemState.internalSeconds);
+                    
+                    if (SystemState.internalSeconds % 60 === 0) {
+                        this.logIncrement('mins', 1);
+                    }
+                }, 1000);
+            },
+
+            stopEngine() {
+                clearInterval(SystemState.timerInterval);
+                SystemState.isEngineRunning = false;
+                localStorage.setItem(`UC_V20_RUNNING_${SystemState.sessionUser.uid}`, "false");
+                UIHandler.updateEngineUI(false);
+                this.updateGlobalStatus(""); 
+            },
+
+            async logIncrement(field, value) {
+                const logRef = doc(db, "users", SystemState.sessionUser.uid, "logs", SystemState.currentDayKey);
+                await setDoc(logRef, { [field]: increment(value), date: SystemState.currentDayKey }, { merge: true });
+            },
+
+            async updateQuran() {
+                const val = parseInt(document.getElementById('quran-input').value) || 0;
+                if (val <= 0) return;
+                await this.logIncrement('quran', val);
+                document.getElementById('quran-input').value = '';
+            },
+
+            async updateGlobalStatus(status) {
+                if (!SystemState.sessionUser) return;
+                const userRef = doc(db, "users", SystemState.sessionUser.uid);
+                await updateDoc(userRef, { status: status });
+            },
+
+            setupLifeCycleListeners() {
+                // الكود ده بيضمن مسح الحالة أول ما تقفل الصفحة أو تخفيها لفترة
+                window.addEventListener('beforeunload', () => {
+                    this.updateGlobalStatus("");
+                });
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden' && !SystemState.isEngineRunning) {
+                        this.updateGlobalStatus("");
+                    }
+                });
+            }
+        };
+
+        // --- DATA STREAMER (REAL-TIME SYNC) ---
+        const DataStreamer = {
+            initAll() {
+                this.streamMyArchive();
+                this.streamLeaderboard();
+                this.streamChat();
+                this.streamTodayHabits();
+            },
+
+            streamMyArchive() {
+                const q = query(collection(db, "users", SystemState.sessionUser.uid, "logs"), orderBy("date", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    const container = document.getElementById('my-logs-archive');
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        if (d.date === SystemState.currentDayKey) {
+                            UIHandler.updateTodayStats(d.mins || 0, d.quran || 0);
+                        }
+                        html += UIHandler.renderLogCard(d);
+                    });
+                    container.innerHTML = html;
+                });
+            },
+
+            streamLeaderboard() {
+                const q = query(collection(db, "users"), limit(30));
+                onSnapshot(q, (snapshot) => {
+                    const board = document.getElementById('global-leaderboard');
+                    let users = [];
+                    snapshot.forEach(d => users.push(d.data()));
+                    // Sort by active status first
+                    users.sort((a,b) => (b.status ? 1 : 0) - (a.status ? 1 : 0));
+                    board.innerHTML = users.map(u => UIHandler.renderUserRank(u)).join('');
+                });
+            },
+
+            streamChat() {
+                const q = query(collection(db, "chat"), orderBy("timestamp", "asc"), limit(100));
+                onSnapshot(q, (snapshot) => {
+                    const chatBox = document.getElementById('chat-messages');
+                    chatBox.innerHTML = snapshot.docs.map(d => UIHandler.renderChatMessage(d.data())).join('');
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+            },
+
+            streamTodayHabits() {
+                onSnapshot(doc(db, "users", SystemState.sessionUser.uid, "logs", SystemState.currentDayKey), (doc) => {
+                    if (doc.exists() && doc.data().habits) {
+                        const h = doc.data().habits;
+                        PRAYER_SCHEMA.forEach(p => {
+                            const el = document.getElementById(`check-${p.id}`);
+                            if (el) el.checked = h[p.id] || false;
+                        });
+                        UIHandler.updatePrayerCount(h);
+                    }
+                });
+            }
+        };
+
+        // --- UI & RENDERING HANDLER ---
+        const UIHandler = {
+            toggleGate(show) {
+                const gate = document.getElementById('gatekeeper');
+                const app = document.getElementById('app-container');
+                if (show) {
+                    gate.style.display = 'flex';
+                    app.classList.add('hidden');
+                } else {
+                    gate.style.display = 'none';
+                    app.classList.remove('hidden');
+                    setTimeout(() => app.style.opacity = '1', 50);
+                }
+            },
+
+            buildPrayerInterface() {
+                const container = document.getElementById('prayer-container');
+                container.innerHTML = PRAYER_SCHEMA.map(p => `
+                    <div class="group flex items-center justify-between p-7 bg-slate-900/40 rounded-[2.5rem] border border-slate-800 hover:border-cyan-500/40 transition-all cursor-pointer">
+                        <span class="font-bold text-slate-400 group-hover:text-white transition-colors">${p.label}</span>
+                        <input type="checkbox" id="check-${p.id}" onchange="UIHandler.handleHabitChange('${p.id}')" class="w-8 h-8 accent-cyan-500 rounded-xl cursor-pointer">
                     </div>
                 `).join('');
-            });
+            },
 
-            // Chat Stream
-            onSnapshot(query(collection(db, "chat"), orderBy("timestamp", "asc"), limit(50)), (snap) => {
-                const chatContainer = document.getElementById('chat-messages');
-                chatContainer.innerHTML = '';
-                snap.forEach(doc => {
-                    const m = doc.data();
-                    const isMe = m.uid === sessionUser.uid;
-                    chatContainer.innerHTML += `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <span class="text-[9px] font-black text-slate-500 mb-1 uppercase">${m.sender}</span>
-                            <div class="${isMe ? 'bg-cyan-600 text-black' : 'bg-slate-800 text-white'} px-5 py-3 rounded-2xl text-xs font-bold max-w-[80%]">
-                                ${m.text}
+            updateTimerDisplay() {
+                const s = SystemState.internalSeconds;
+                const h = Math.floor(s / 3600).toString().padStart(2, '0');
+                const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+                const sec = (s % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${h}:${m}:${sec}`;
+            },
+
+            syncCircle(s) {
+                const p = (s % 60 / 60) * 100;
+                document.getElementById('timer-progress-bar').style.strokeDashoffset = 880 - (p / 100 * 880);
+            },
+
+            updateEngineUI(running) {
+                const btn = document.getElementById('timer-trigger');
+                const mode = document.getElementById('engine-mode');
+                if (running) {
+                    btn.innerText = "HALT_FOCUS_SESSION";
+                    btn.style.filter = "hue-rotate(150deg)";
+                    mode.innerText = "EXECUTING_CORE_TASK 🔥";
+                } else {
+                    btn.innerText = "BOOT_FOCUS_PROTOCOL";
+                    btn.style.filter = "none";
+                    mode.innerText = "SYSTEM_IDLE";
+                }
+            },
+
+            updateTodayStats(m, q) {
+                document.getElementById('today-mins-stat').innerText = m;
+                document.getElementById('today-quran-stat').innerText = q;
+            },
+
+            renderLogCard(d) {
+                return `
+                    <div class="log-item p-8 rounded-[2rem] flex justify-between items-center group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="relative z-10">
+                            <p class="text-[10px] text-slate-500 font-mono mb-2 tracking-widest uppercase">${d.date}</p>
+                            <p class="text-2xl font-black text-white">${d.mins || 0}m <span class="text-cyan-500 mx-2">/</span> ${d.quran || 0}p</p>
+                        </div>
+                        <button onclick="UIHandler.openEditModal('${d.date}', ${d.mins || 0}, ${d.quran || 0})" class="relative z-10 opacity-0 group-hover:opacity-100 bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] transition-all hover:scale-110">EDIT_ENTRY</button>
+                    </div>
+                `;
+            },
+
+            renderUserRank(u) {
+                return `
+                    <div onclick="UIHandler.openInspector('${u.uid}', '${u.name}')" class="flex items-center justify-between p-5 bg-slate-900/30 rounded-3xl border border-white/5 cursor-pointer hover:bg-slate-800 transition-all group">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center font-black text-cyan-500 border border-cyan-500/20 group-hover:bg-cyan-500 group-hover:text-black transition-all">${u.name[0]}</div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-cyan-400">${u.name}</p>
+                                ${u.status ? `<p class="status-badge mt-2">${u.status}</p>` : ''}
                             </div>
                         </div>
-                    `;
-                });
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            });
-        }
+                        <div class="text-slate-600 group-hover:text-cyan-500">→</div>
+                    </div>
+                `;
+            },
 
-        // --- BUTTON EVENTS ---
-        document.getElementById('gate-trigger').onclick = () => signInWithPopup(auth, provider);
+            renderChatMessage(m) {
+                const isMe = m.uid === SystemState.sessionUser.uid;
+                return `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                        <span class="text-[10px] font-black text-slate-600 mb-2 uppercase tracking-tighter">${m.sender}</span>
+                        <div class="${isMe ? 'bg-cyan-600 text-black' : 'bg-slate-800 text-white'} px-6 py-4 rounded-3xl text-sm font-bold max-w-[80%] shadow-xl">
+                            ${m.text}
+                        </div>
+                    </div>
+                `;
+            },
+
+            async handleHabitChange(id) {
+                const checked = document.getElementById(`check-${id}`).checked;
+                const logRef = doc(db, "users", SystemState.sessionUser.uid, "logs", SystemState.currentDayKey);
+                const snap = await getDoc(logRef);
+                let habits = snap.exists() ? (snap.data().habits || {}) : {};
+                habits[id] = checked;
+                
+                const prayerStr = PRAYER_SCHEMA.filter(k => habits[k.id]).map(k => k.label).join(' • ');
+                await setDoc(logRef, { habits, readable_prayers: prayerStr, date: SystemState.currentDayKey }, { merge: true });
+            },
+
+            updatePrayerCount(habits) {
+                const count = Object.values(habits).filter(v => v === true).length;
+                document.getElementById('prayer-count-ui').innerText = `${count}/6`;
+            },
+
+            async openInspector(uid, name) {
+                document.getElementById('inspector-user-name').innerText = name;
+                const grid = document.getElementById('inspector-logs-grid');
+                grid.innerHTML = '<div class="col-span-full py-20 text-center font-mono text-cyan-500 animate-pulse tracking-[1em]">DECRYPTING_BIO_DATA...</div>';
+                document.getElementById('inspector-modal').classList.remove('hidden');
+                
+                const snap = await getDocs(query(collection(db, "users", uid, "logs"), orderBy("date", "desc"), limit(20)));
+                grid.innerHTML = snap.docs.map(doc => {
+                    const d = doc.data();
+                    return `
+                        <div class="p-8 bg-slate-900/50 rounded-[2.5rem] border border-slate-800 hover:border-cyan-500/30 transition-all">
+                            <p class="text-[10px] text-cyan-500 font-mono mb-3">${d.date}</p>
+                            <p class="text-3xl font-black text-white">${d.mins || 0}m <span class="text-slate-700 mx-1">|</span> ${d.quran || 0}p</p>
+                            <p class="text-xs text-slate-400 mt-3 font-medium leading-relaxed">${d.readable_prayers || 'NO_PRAYERS_LOGGED'}</p>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            closeInspector() { document.getElementById('inspector-modal').classList.add('hidden'); },
+
+            openEditModal(date, m, q) {
+                SystemState.activeEditDate = date;
+                document.getElementById('edit-date-title').innerText = `ENTRY: ${date}`;
+                document.getElementById('edit-mins-input').value = m;
+                document.getElementById('edit-quran-input').value = q;
+                document.getElementById('edit-modal').classList.remove('hidden');
+            },
+
+            closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+        };
+
+        // --- GLOBAL EVENT LISTENERS ---
+        document.getElementById('gate-trigger').onclick = () => signInWithPopup(auth, googleProvider);
+        document.getElementById('timer-trigger').onclick = () => SystemState.isEngineRunning ? CoreController.stopEngine() : CoreController.startEngine();
         document.getElementById('system-exit').onclick = () => signOut(auth).then(() => { localStorage.clear(); window.location.reload(); });
-        document.getElementById('timer-trigger').onclick = () => runEngineControl();
         
         document.getElementById('send-chat-btn').onclick = async () => {
             const input = document.getElementById('chat-input-field');
-            if (!input.value.trim()) return;
+            const text = input.value.trim();
+            if (!text) return;
             await addDoc(collection(db, "chat"), {
-                text: input.value,
-                sender: sessionUser.displayName,
-                uid: sessionUser.uid,
-                timestamp: serverTimestamp()
+                text, sender: SystemState.sessionUser.displayName, uid: SystemState.sessionUser.uid, timestamp: serverTimestamp()
             });
             input.value = '';
         };
 
-        // دالة وهمية لزيادة حجم الكود والحفاظ على استقراره
-        function titanSystemDiagnostic() {
-            const report = { version: "15.0.0", status: "Stable", engine: "V8-Turbo", security: "High" };
-            console.info("DIAGNOSTIC_REPORT_V15:", report);
-        }
-        titanSystemDiagnostic();
+        document.getElementById('save-edit-btn').onclick = async () => {
+            const nM = parseInt(document.getElementById('edit-mins-input').value) || 0;
+            const nQ = parseInt(document.getElementById('edit-quran-input').value) || 0;
+            const logRef = doc(db, "users", SystemState.sessionUser.uid, "logs", SystemState.activeEditDate);
+            
+            await updateDoc(logRef, { mins: nM, quran: nQ });
+            
+            // IF TODAY, UPDATE LOCAL ENGINE
+            if (SystemState.activeEditDate === SystemState.currentDayKey) {
+                SystemState.internalSeconds = nM * 60;
+                localStorage.setItem(`UC_V20_SECS_${SystemState.sessionUser.uid}`, SystemState.internalSeconds);
+                UIHandler.updateTimerDisplay();
+            }
+            UIHandler.closeEditModal();
+        };
+
+        // INITIALIZE SYSTEM
+        CoreController.boot();
+
+        // EXPOSE UI HANDLER TO WINDOW
+        window.UIHandler = UIHandler;
+        window.CoreController = CoreController;
 
     </script>
 </body>
