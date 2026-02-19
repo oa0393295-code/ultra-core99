@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | Fix Pro</title>
+    <title>Ultra Study Core | Advanced Guardian Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -11,7 +11,6 @@
         .shadow-neon { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
         select { background: #1e293b; color: white; border-radius: 8px; padding: 5px; border: 1px solid #475569; font-size: 12px; }
-        /* شريط التمرير الأبيض للشات */
         #chat-messages::-webkit-scrollbar { width: 6px; }
         #chat-messages::-webkit-scrollbar-thumb { background: #ffffff; border-radius: 10px; }
         #study-log::-webkit-scrollbar { width: 4px; }
@@ -112,6 +111,7 @@
         const provider = new GoogleAuthProvider();
 
         let timerInterval, seconds = 0, isRunning = false, user = null, editingDate = "";
+        let autoKillTimeout; // مؤقت القفل التلقائي
         const todayStr = new Date().toISOString().split('T')[0];
 
         onAuthStateChanged(auth, async (u) => {
@@ -121,16 +121,11 @@
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
                 
-                // استرجاع الثواني المحفوظة في localStorage عند الريفرش
-                const savedSecs = localStorage.getItem(`secs_${user.uid}`);
-                if (savedSecs) {
-                    seconds = parseInt(savedSecs);
-                    updateDisplay();
-                }
-
-                // استرجاع حالة العداد (هل كان شغال؟)
-                if (localStorage.getItem(`running_${user.uid}`) === "true") {
-                    startTimerLogic();
+                // جلب الداتا القديمة عشان الليدربورد ميبقاش 0
+                const userRef = doc(db, "users", u.uid);
+                const userSnap = await getDoc(userRef);
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, { displayName: u.displayName, uid: u.uid, daily_mins: 0 }, { merge: true });
                 }
 
                 await setDoc(doc(db, "users", u.uid), { displayName: u.displayName, uid: u.uid }, { merge: true });
@@ -141,8 +136,24 @@
             }
         });
 
+        // --- نظام الحماية الجديد: قفل عند إغلاق الصفحة ---
+        window.addEventListener('beforeunload', () => {
+            if (isRunning && user) {
+                stopTimerLogic();
+                updateStatusInDB("مريح شوية ☕");
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && isRunning) {
+                console.log("التابة اتقفلت أو اتبدلت - جاري إيقاف العداد");
+                stopTimerLogic();
+            }
+        });
+
         document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
         document.getElementById('btn-logout').onclick = () => { 
+            stopTimerLogic();
             localStorage.clear();
             signOut(auth);
             window.location.reload();
@@ -157,24 +168,35 @@
         };
 
         function startTimerLogic() {
+            if(!user) return;
             isRunning = true;
-            localStorage.setItem(`running_${user.uid}`, "true");
             document.getElementById('btn-timer').innerText = "إيقاف الجلسة";
             document.getElementById('btn-timer').classList.replace('bg-cyan-500', 'bg-red-500');
             updateStatusInDB("بيذاكر دلوقتي 🔥");
             
+            // قفل تلقائي بعد 3 ساعات (10800000 مللي ثانية) عشان لو نمت والعداد شغال
+            autoKillTimeout = setTimeout(() => {
+                if(isRunning) {
+                    console.warn("تم الإيقاف التلقائي للعداد بسبب الخمول الطويل");
+                    stopTimerLogic();
+                }
+            }, 10800000); 
+
             timerInterval = setInterval(() => {
                 seconds++;
-                localStorage.setItem(`secs_${user.uid}`, seconds);
                 updateDisplay();
-                if (seconds > 0 && seconds % 60 === 0) saveProgress(1, todayStr);
+                if (seconds > 0 && seconds % 60 === 0) {
+                    saveProgress(1, todayStr);
+                }
             }, 1000);
         }
 
         function stopTimerLogic() {
             clearInterval(timerInterval);
+            clearTimeout(autoKillTimeout);
             isRunning = false;
-            localStorage.setItem(`running_${user.uid}`, "false");
+            seconds = 0; // تصفير العداد عند الإيقاف حسب طلبك
+            updateDisplay();
             document.getElementById('btn-timer').innerText = "ابدأ المذاكرة";
             document.getElementById('btn-timer').classList.replace('bg-red-500', 'bg-cyan-500');
             updateStatusInDB("مريح شوية ☕");
@@ -185,10 +207,13 @@
             const userRef = doc(db, "users", user.uid);
             const logRef = doc(db, "users", user.uid, "logs", dateStr);
             
+            // تحديث السجل اليومي
             await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
+            
+            // تحديث المراكز على الشمال
             if (dateStr === todayStr) {
                 await updateDoc(userRef, { daily_mins: increment(mins) }).catch(async () => {
-                    await setDoc(userRef, { daily_mins: mins }, { merge: true });
+                    await setDoc(userRef, { daily_mins: mins, displayName: user.displayName }, { merge: true });
                 });
             }
         }
@@ -200,7 +225,6 @@
             if (total > 0) await saveProgress(total, todayStr);
         };
 
-        // دالة التعديل (المصلحة)
         window.openEditModal = function(date, currentMins) {
             editingDate = date;
             const hSelect = document.getElementById('edit-hours');
@@ -249,7 +273,7 @@
                 list.innerHTML = '';
                 snap.docs.forEach((d, i) => {
                     const data = d.data();
-                    list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500' : 'border-slate-700'}">
+                    list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500 ring-2 ring-cyan-500/20' : 'border-slate-700'}">
                         <div class="flex items-center gap-3">
                             <span class="text-slate-500 font-black">#${i+1}</span>
                             <div class="text-right">
@@ -267,7 +291,8 @@
             onSnapshot(collection(db, "users", user.uid, "logs"), (snap) => {
                 const logDiv = document.getElementById('study-log');
                 logDiv.innerHTML = '';
-                snap.docs.sort((a,b) => b.id.localeCompare(a.id)).forEach(d => {
+                const docs = snap.docs.sort((a,b) => b.id.localeCompare(a.id));
+                docs.forEach(d => {
                     const data = d.data();
                     logDiv.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-xl border border-slate-700 mb-2">
                         <span class="text-slate-400 text-sm font-bold font-mono">${data.date}</span>
