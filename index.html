@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TITAN V70 | NEBULA ARCHITECT</title>
+    <title>TITAN CORE V80 | HYPER-LIFECYCLE ENGINE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --neon-cyan: #06b6d4;
-            --neon-emerald: #10b981;
+            --titan-cyan: #06b6d4;
+            --titan-emerald: #10b981;
+            --titan-red: #ef4444;
             --titan-bg: #020617;
-            --glass-panel: rgba(15, 23, 42, 0.85);
-            --glass-border: rgba(56, 189, 248, 0.2);
+            --glass: rgba(15, 23, 42, 0.9);
+            --border: rgba(56, 189, 248, 0.2);
         }
 
         body {
@@ -21,201 +22,182 @@
             background: var(--titan-bg);
             color: #f1f5f9;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
             min-height: 100vh;
-            overflow-x: hidden;
+            margin: 0;
         }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
 
-        /* الواجهة الخزعبلية */
         .glass-node {
-            background: var(--glass-panel);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
             border-radius: 2rem;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* المحرك الدائري المحدث */
+        .orb-wrapper {
             position: relative;
-            overflow: hidden;
+            width: 350px;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .glass-node:hover {
-            border-color: var(--neon-cyan);
-            transform: translateY(-5px);
-            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+        .orb-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .orb-track { fill: none; stroke: rgba(255,255,255,0.03); stroke-width: 12; }
+        .orb-progress {
+            fill: none; stroke: var(--titan-cyan); stroke-width: 12;
+            stroke-linecap: round; stroke-dasharray: 1005; stroke-dashoffset: 1005;
+            transition: stroke-dashoffset 1s linear;
+            filter: drop-shadow(0 0 12px var(--titan-cyan));
         }
 
-        /* الأزرار الاحترافية */
-        .btn-nebula {
+        /* نظام المربعات الملونة مع النص */
+        .prayer-tag {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 50px;
+            border: 1px solid transparent;
+        }
+        .p-completed { background: rgba(16, 185, 129, 0.2); border-color: var(--titan-emerald); color: var(--titan-emerald); }
+        .p-missed { background: rgba(239, 68, 68, 0.1); border-color: var(--titan-red); color: var(--titan-red); opacity: 0.6; }
+
+        /* الأزرار الـ "تيتان" */
+        .btn-titan {
             background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
             border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            font-weight: 900;
+            color: white; font-weight: 900;
             border-radius: 1.2rem;
-            transition: 0.4s;
-            position: relative;
-            z-index: 1;
+            transition: 0.3s;
+            cursor: pointer;
         }
+        .btn-titan:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(6, 182, 212, 0.3); }
 
-        .btn-nebula::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
-            opacity: 0;
-            transition: 0.4s;
-            border-radius: 1.2rem;
-            z-index: -1;
-        }
-
-        .btn-nebula:hover::after { opacity: 1; }
-        .btn-nebula:hover { transform: scale(1.05); letter-spacing: 1px; }
-
-        /* محرك الأوربت */
-        .orb-container {
-            width: 280px; height: 280px;
-            display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle, rgba(6,182,212,0.05) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-
-        .orb-ring {
-            fill: none; stroke: var(--neon-cyan); stroke-width: 8;
-            stroke-dasharray: 880; stroke-dashoffset: 880;
-            stroke-linecap: round;
-            filter: drop-shadow(0 0 10px var(--neon-cyan));
-            transition: stroke-dashoffset 1s linear;
-        }
-
-        /* مربعات الرصد المجهرية */
-        .micro-badge {
-            width: 8px; height: 8px; border-radius: 2px;
-            display: inline-block; margin: 0 1px;
-        }
-        .m-done { background: var(--neon-emerald); box-shadow: 0 0 5px var(--neon-emerald); }
-        .m-miss { background: #ef4444; opacity: 0.3; }
-
-        /* تحسين الجدول */
-        .rank-number { font-size: 1.5rem; font-weight: 900; font-family: 'JetBrains Mono'; }
-
-        .custom-scroll::-webkit-scrollbar { width: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--titan-cyan); border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div id="gate" class="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center">
-        <div class="relative">
-            <h1 class="text-[120px] font-black text-white italic tracking-tighter opacity-10">TITAN</h1>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <button id="auth-btn" class="btn-nebula px-20 py-8 text-2xl">دخول الـمجال</button>
-            </div>
-        </div>
+        <h1 class="text-9xl font-black text-white italic opacity-10 mb-10">TITAN V80</h1>
+        <button id="auth-btn" class="btn-titan px-20 py-8 text-2xl">الدخول للـمركز</button>
     </div>
 
     <div id="mainframe" class="hidden opacity-0 p-6">
-        <div class="max-w-[1750px] mx-auto grid grid-cols-12 gap-8">
+        <div class="max-w-[1800px] mx-auto grid grid-cols-12 gap-8">
             
             <aside class="col-span-12 lg:col-span-3 space-y-8">
                 <div class="glass-node p-8">
                     <div class="flex items-center gap-5">
-                        <div id="u-hex" class="w-16 h-16 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-cyan-500/20">?</div>
+                        <div id="u-hex" class="w-16 h-16 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-lg">?</div>
                         <div>
                             <h2 id="u-name" class="text-xl font-black text-white">تحميل...</h2>
                             <p id="u-time" class="mono text-cyan-400 font-bold">00:00:00</p>
                         </div>
                     </div>
-                    <button id="logout" class="mt-8 text-[10px] text-slate-500 font-black uppercase hover:text-red-500 transition-colors">Terminate Session</button>
+                    <button id="logout" class="mt-8 text-[10px] text-slate-500 font-black hover:text-red-500">EXIT SESSION</button>
                 </div>
 
                 <div class="glass-node p-8">
-                    <h3 class="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.3em]">الصلوات الخمس</h3>
+                    <h3 class="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.3em]">الصلوات اليومية</h3>
                     <div id="prayer-hook" class="space-y-3"></div>
                 </div>
 
                 <div class="glass-node p-8">
-                    <h3 class="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.3em]">داتا القرآن</h3>
+                    <h3 class="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.3em]">بيانات القرآن</h3>
                     <div class="flex gap-2">
-                        <input type="number" id="q-in" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-4 text-white font-black focus:border-emerald-500 outline-none transition-all" placeholder="ص">
-                        <button id="q-save" class="btn-nebula px-6">حفظ</button>
+                        <input type="number" id="q-in" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-4 text-white font-black outline-none focus:border-emerald-500" placeholder="صفحات">
+                        <button id="q-save" class="btn-titan px-6">حفظ</button>
                     </div>
                 </div>
             </aside>
 
             <section class="col-span-12 lg:col-span-6 space-y-8">
                 <div class="glass-node p-12 flex flex-col items-center">
-                    <div class="orb-container">
-                        <svg class="w-full h-full -rotate-90" viewBox="0 0 320 320">
-                            <circle cx="160" cy="160" r="140" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="8"></circle>
-                            <circle id="orb-fill" class="orb-ring" cx="160" cy="160" r="140"></circle>
+                    <div class="orb-wrapper">
+                        <svg class="orb-svg" viewBox="0 0 350 350">
+                            <circle class="orb-track" cx="175" cy="175" r="160"></circle>
+                            <circle id="orb-fill" class="orb-progress" cx="175" cy="175" r="160"></circle>
                         </svg>
                         <div class="absolute flex flex-col items-center">
                             <h2 id="orb-val" class="text-7xl font-black mono text-white">00:00:00</h2>
-                            <p id="orb-state" class="mt-4 text-[10px] font-black text-slate-500 tracking-widest uppercase">IDLE</p>
+                            <p class="text-[10px] font-black text-slate-500 tracking-[0.5em] mt-2">ACTIVE_SESSION</p>
                         </div>
                     </div>
                     
-                    <button id="orb-btn" class="btn-nebula mt-12 w-full max-w-md py-8 text-2xl italic tracking-tighter">بـدء الـمهمة</button>
+                    <button id="orb-btn" class="btn-titan mt-12 w-full max-w-md py-8 text-2xl italic">تشغيل البروتوكول</button>
                     
                     <div class="grid grid-cols-2 gap-10 w-full mt-12 pt-10 border-t border-white/5">
                         <div class="text-center">
-                            <p class="text-[10px] text-slate-500 font-black uppercase mb-2">الدقائق</p>
+                            <p class="text-[10px] text-slate-500 font-black mb-2">إجمالي المذاكرة (دقائق)</p>
                             <p id="st-m" class="text-5xl font-black mono text-white">0</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-[10px] text-slate-500 font-black uppercase mb-2">الصفحات</p>
+                            <p class="text-[10px] text-slate-500 font-black mb-2">إجمالي القرآن (صفحات)</p>
                             <p id="st-q" class="text-5xl font-black mono text-white">0</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="glass-node p-8">
-                    <h3 class="text-sm font-black text-cyan-500 italic mb-8 flex items-center gap-3">
-                        <div class="w-1 h-6 bg-cyan-500"></div> الأرشيف الـمركزي
-                    </h3>
-                    <div id="history" class="space-y-5 max-h-[700px] custom-scroll pr-3"></div>
+                    <h3 class="text-sm font-black text-cyan-500 italic mb-8 border-r-4 border-cyan-500 pr-4">سجل العمليات التاريخية</h3>
+                    <div id="history" class="space-y-6 max-h-[800px] custom-scroll pr-3"></div>
                 </div>
             </section>
 
             <aside class="col-span-12 lg:col-span-3 space-y-8">
-                <div class="glass-node p-8 border-b-4 border-emerald-500/50">
-                    <h3 class="text-xs font-black text-center mb-8 uppercase tracking-[0.4em] text-emerald-400">Global Monitoring</h3>
-                    <div id="leaderboard" class="space-y-4 max-h-[500px] custom-scroll"></div>
+                <div class="glass-node p-8">
+                    <h3 class="text-xs font-black text-center mb-8 uppercase tracking-[0.4em] text-emerald-400">نظام الرصد العالمي (Live)</h3>
+                    <div id="leaderboard" class="space-y-4 max-h-[600px] custom-scroll"></div>
                 </div>
 
-                <div class="glass-node h-[500px] flex flex-col">
+                <div class="glass-node h-[450px] flex flex-col">
                     <div id="chat" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scroll"></div>
                     <div class="p-4 bg-slate-900/50 flex gap-2">
-                        <input id="chat-in" type="text" placeholder="أرسل رسالة..." class="flex-1 bg-transparent border-b border-slate-700 p-2 text-white outline-none focus:border-cyan-500 transition-all">
-                        <button id="chat-btn" class="btn-nebula px-6 py-2">دفع</button>
+                        <input id="chat-in" type="text" placeholder="رسالة..." class="flex-1 bg-transparent border-b border-slate-700 p-2 text-white outline-none">
+                        <button id="chat-btn" class="btn-titan px-6 py-2">إرسال</button>
                     </div>
                 </div>
             </aside>
         </div>
     </div>
 
-    <div id="inspect-modal" class="hidden fixed inset-0 z-[10000] bg-slate-950/95 flex items-center justify-center p-8 backdrop-blur-3xl">
-        <div class="glass-node w-full max-w-4xl p-12">
-            <h4 id="ins-name" class="text-5xl font-black italic mb-10 text-white"></h4>
-            <div id="ins-body" class="grid grid-cols-1 md:grid-cols-2 gap-5 max-h-[600px] custom-scroll"></div>
-            <button onclick="UI.closeIns()" class="mt-8 text-slate-500 font-black uppercase tracking-widest hover:text-white">إغلاق</button>
+    <div id="inspect-modal" class="hidden fixed inset-0 z-[10000] bg-slate-950/98 flex items-center justify-center p-8 backdrop-blur-3xl">
+        <div class="glass-node w-full max-w-5xl p-12 relative">
+            <button onclick="CoreUI.closeIns()" class="absolute top-8 left-8 text-4xl text-slate-500 hover:text-white">&times;</button>
+            <h4 id="ins-name" class="text-5xl font-black italic mb-12 text-white border-r-8 border-emerald-500 pr-6"></h4>
+            <div id="ins-body" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[600px] custom-scroll p-4"></div>
         </div>
     </div>
 
     <div id="edit-modal" class="hidden fixed inset-0 z-[11000] bg-slate-950/98 flex items-center justify-center p-8 backdrop-blur-3xl">
-        <div class="glass-node w-full max-w-xl p-10 border-2 border-emerald-500/20">
-            <h4 class="text-2xl font-black mb-8 italic text-emerald-400">إعادة تكوين البيانات</h4>
-            <div class="space-y-8">
-                <div class="grid grid-cols-2 gap-5">
-                    <input type="number" id="ed-m" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-5 text-white font-black text-3xl outline-none focus:border-cyan-500">
-                    <input type="number" id="ed-q" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-5 text-white font-black text-3xl outline-none focus:border-emerald-500">
+        <div class="glass-node w-full max-w-2xl p-12 border-2 border-emerald-500/20">
+            <h4 class="text-2xl font-black mb-10 italic text-cyan-400">إعادة ضبط سجل البيانات</h4>
+            <div class="space-y-10">
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-xs font-black text-slate-500 uppercase block mb-3">عدد دقائق المذاكرة</label>
+                        <input type="number" id="ed-m" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-white font-black text-3xl focus:border-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-black text-slate-500 uppercase block mb-3">عدد صفحات القرآن</label>
+                        <input type="number" id="ed-q" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-white font-black text-3xl focus:border-emerald-500 outline-none">
+                    </div>
                 </div>
                 <div id="ed-prayers" class="grid grid-cols-3 gap-3"></div>
                 <div class="flex gap-4">
-                    <button id="ed-save" class="flex-1 btn-nebula py-5 text-xl">حفظ</button>
-                    <button onclick="UI.closeEd()" class="flex-1 bg-slate-800 text-white rounded-2xl font-black">إلغاء</button>
+                    <button id="ed-save" class="flex-1 btn-titan py-6 text-xl">حفظ التغييرات</button>
+                    <button onclick="CoreUI.closeEd()" class="flex-1 bg-slate-800 text-white rounded-2xl font-black">إلغاء</button>
                 </div>
             </div>
         </div>
@@ -240,7 +222,10 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        class Titan {
+        /**
+         * TITAN KERNEL V80
+         */
+        class TitanCore {
             constructor() {
                 this.user = null; this.secs = 0; this.active = false; this.ticker = null;
                 this.today = new Date().toISOString().split('T')[0];
@@ -253,47 +238,49 @@
 
             async init(u) {
                 this.user = u;
-                UI.boot(true);
+                CoreUI.boot(true);
                 this.restore();
-                this.handlePresence();
+                this.lifecycle();
                 this.streams();
             }
 
-            handlePresence() {
-                // بروتوكول الإغلاق: العداد يقف لو قفلنا الصفحة
+            lifecycle() {
+                // الميزة: لو قفل الصفحة العداد يقف، لو ريفريش يكمل
                 window.onbeforeunload = () => {
                     if(this.active) {
-                        localStorage.setItem(`t70_run_${this.user.uid}`, "false");
+                        localStorage.setItem(`v80_run_${this.user.uid}`, "false");
                     }
                     updateDoc(doc(db, "users", this.user.uid), { status: "" });
                 };
             }
 
             restore() {
-                const s = localStorage.getItem(`t70_secs_${this.user.uid}`);
+                const s = localStorage.getItem(`v80_secs_${this.user.uid}`);
                 this.secs = s ? parseInt(s) : 0;
-                // في الريفريش يكمل، لكن لو قفلنا الصفحة كان المفروض يقف (من حدث onbeforeunload)
-                if(localStorage.getItem(`t70_run_${this.user.uid}`) === "true") this.engine();
-                else UI.upOrb();
+                if(localStorage.getItem(`v80_run_${this.user.uid}`) === "true") this.engine();
+                else CoreUI.upOrb();
             }
 
             engine() {
                 if(!this.active) {
                     this.active = true;
-                    localStorage.setItem(`t70_run_${this.user.uid}`, "true");
-                    UI.orbState(true);
+                    localStorage.setItem(`v80_run_${this.user.uid}`, "true");
+                    CoreUI.orbState(true);
                     this.broadcast("بيذاكر دلوقتي 🔥");
                     this.ticker = setInterval(() => {
                         this.secs++;
-                        localStorage.setItem(`t70_secs_${this.user.uid}`, this.secs);
-                        UI.upOrb();
-                        if(this.secs % 60 === 0) this.log('mins', 1);
+                        localStorage.setItem(`v80_secs_${this.user.uid}`, this.secs);
+                        CoreUI.upOrb();
+                        if(this.secs % 60 === 0) {
+                            this.log('mins', 1);
+                            this.broadcast("بيذاكر دلوقتي 🔥"); // تحديث الدقائق في الرصد كل دقيقة
+                        }
                     }, 1000);
                 } else {
                     clearInterval(this.ticker);
                     this.active = false;
-                    localStorage.setItem(`t70_run_${this.user.uid}`, "false");
-                    UI.orbState(false);
+                    localStorage.setItem(`v80_run_${this.user.uid}`, "false");
+                    CoreUI.orbState(false);
                     this.broadcast("");
                 }
             }
@@ -305,65 +292,69 @@
 
             async broadcast(m) {
                 if(!this.user) return;
-                await updateDoc(doc(db, "users", this.user.uid), { status: m, todayMins: Math.floor(this.secs/60) });
+                await updateDoc(doc(db, "users", this.user.uid), { 
+                    status: m, 
+                    todayMins: Math.floor(this.secs/60) 
+                });
             }
 
             streams() {
+                // المزامنة الحية لجدول الترتيب - يتم التحديث تلقائياً عند تغيير أي قيمة
                 onSnapshot(query(collection(db, "users"), limit(40)), (snap) => {
                     const users = snap.docs.map(d => d.data()).sort((a,b) => (b.todayMins||0) - (a.todayMins||0));
-                    UI.renderLeaders(users);
+                    CoreUI.renderLeaders(users);
                 });
 
                 onSnapshot(query(collection(db, "users", this.user.uid, "logs"), orderBy("date", "desc")), (snap) => {
                     const logs = snap.docs.map(d => d.data());
                     const current = logs.find(l => l.date === this.today);
-                    if(current) UI.dash(current);
-                    UI.renderHistory(logs);
+                    if(current) CoreUI.dash(current);
+                    CoreUI.renderHistory(logs);
                 });
 
                 onSnapshot(query(collection(db, "chat"), orderBy("timestamp", "asc"), limit(50)), (snap) => {
-                    UI.chat(snap.docs.map(d => d.data()));
+                    CoreUI.chat(snap.docs.map(d => d.data()));
                 });
-                
+
                 onSnapshot(doc(db, "users", this.user.uid, "logs", this.today), (snap) => {
-                    if(snap.exists()) UI.syncP(snap.data().habits || {});
+                    if(snap.exists()) CoreUI.syncP(snap.data().habits || {});
                 });
             }
         }
 
-        const UI = {
+        const CoreUI = {
             boot(s) {
                 document.getElementById('gate').style.display = s ? 'none' : 'flex';
                 document.getElementById('mainframe').classList.toggle('hidden', !s);
                 if(s) {
                     setTimeout(() => document.getElementById('mainframe').style.opacity = '1', 100);
                     this.buildP();
-                    document.getElementById('u-name').innerText = core.user.displayName;
-                    document.getElementById('u-hex').innerText = core.user.displayName[0];
+                    document.getElementById('u-name').innerText = Kernel.user.displayName;
+                    document.getElementById('u-hex').innerText = Kernel.user.displayName[0];
                 }
             },
 
             upOrb() {
-                const s = core.secs;
+                const s = Kernel.secs;
                 const h = Math.floor(s/3600).toString().padStart(2,'0');
                 const m = Math.floor((s%3600)/60).toString().padStart(2,'0');
                 const sc = (s%60).toString().padStart(2,'0');
                 document.getElementById('orb-val').innerText = `${h}:${m}:${sc}`;
-                document.getElementById('orb-fill').style.strokeDashoffset = 880 - ((s%60)/60 * 880);
+                // حساب الـ Offset للدائرة الجديدة (محيط 1005)
+                document.getElementById('orb-fill').style.strokeDashoffset = 1005 - ((s%60)/60 * 1005);
             },
 
             orbState(a) {
                 const b = document.getElementById('orb-btn');
-                b.innerText = a ? "إيقاف الـتركيز" : "بـدء الـمهمة";
+                b.innerText = a ? "إيقاف الـمهمة" : "تشغيل البروتوكول";
                 b.style.filter = a ? "hue-rotate(180deg)" : "none";
-                document.getElementById('orb-state').innerText = a ? "EXECUTING..." : "IDLE";
             },
 
             buildP() {
-                document.getElementById('prayer-hook').innerHTML = core.prayers.map(p => `
+                document.getElementById('prayer-hook').innerHTML = Kernel.prayers.map(p => `
                     <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
                         <span class="text-sm font-bold text-slate-400">${p.n}</span>
-                        <input type="checkbox" id="p-${p.id}" onchange="Handlers.p('${p.id}')" class="w-6 h-6 accent-cyan-500 cursor-pointer">
+                        <input type="checkbox" id="p-${p.id}" onchange="Logic.p('${p.id}')" class="w-6 h-6 accent-cyan-500 cursor-pointer">
                     </div>
                 `).join('');
             },
@@ -375,156 +366,169 @@
 
             renderLeaders(us) {
                 document.getElementById('leaderboard').innerHTML = us.map((u, i) => {
-                    // حقن الميدالية
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
-                    // حقن الصلوات المصغرة
-                    const micros = core.prayers.map(p => `<div class="micro-badge ${(u.lastHabits && u.lastHabits[p.id]) ? 'm-done' : 'm-miss'}"></div>`).join('');
-                    
+                    const prayerGrid = Kernel.prayers.map(p => {
+                        const done = u.lastHabits && u.lastHabits[p.id];
+                        return `<div class="prayer-tag ${done ? 'p-completed' : 'p-missed'}">${p.n}</div>`;
+                    }).join('');
+
                     return `
-                    <div onclick="UI.openIns('${u.uid}', '${u.name}')" class="p-5 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all">
-                        <div class="flex items-center justify-between">
+                    <div onclick="CoreUI.openIns('${u.uid}', '${u.name}')" class="p-5 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all">
+                        <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-4">
-                                <span class="rank-number ${i<3?'text-cyan-400':'text-slate-700'}">${i+1} ${medal}</span>
-                                <div>
-                                    <p class="text-sm font-black text-white">${u.name}</p>
-                                    <div class="mt-1">${micros}</div>
-                                </div>
+                                <span class="text-2xl font-black mono ${i<3?'text-cyan-400':'text-slate-700'}">${i+1}${medal}</span>
+                                <p class="text-sm font-black text-white">${u.name}</p>
                             </div>
-                            <div class="bg-cyan-500/10 text-cyan-500 px-3 py-1 rounded-lg font-black mono">${u.todayMins || 0}m</div>
+                            <div class="bg-cyan-500/10 text-cyan-500 px-4 py-1 rounded-xl font-black mono">${u.todayMins || 0}m</div>
                         </div>
-                        ${u.status ? `<p class="mt-3 text-[10px] text-cyan-500 italic font-black animate-pulse">${u.status}</p>` : ''}
+                        <div class="flex flex-wrap gap-1">${prayerGrid}</div>
+                        ${u.status ? `<p class="mt-4 text-[10px] text-cyan-500 font-black animate-pulse italic">${u.status}</p>` : ''}
                     </div>`;
                 }).join('');
             },
 
             renderHistory(logs) {
-                document.getElementById('history').innerHTML = logs.map(l => `
+                document.getElementById('history').innerHTML = logs.map(l => {
+                    const prayerGrid = Kernel.prayers.map(p => {
+                        const done = l.habits && l.habits[p.id];
+                        return `<div class="prayer-tag ${done ? 'p-completed' : 'p-missed'}">${p.n}</div>`;
+                    }).join('');
+
+                    return `
                     <div class="glass-node p-6 relative group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div><p class="mono text-[10px] text-cyan-500">${l.date}</p><h4 class="text-3xl font-black text-white">${l.mins || 0} <span class="text-xs text-slate-500">د</span></h4></div>
-                            <div class="text-emerald-400 font-black text-xl">${l.quran || 0} ص</div>
+                        <div class="flex justify-between items-start mb-6">
+                            <div><p class="mono text-[10px] text-cyan-500 mb-1">${l.date}</p><h4 class="text-4xl font-black text-white">${l.mins || 0} <span class="text-xs text-slate-500">دقيقة</span></h4></div>
+                            <div class="text-emerald-400 font-black text-2xl">${l.quran || 0} <span class="text-xs">صفحة</span></div>
                         </div>
-                        <button onclick="UI.openEd('${l.date}', ${l.mins || 0}, ${l.quran || 0}, ${JSON.stringify(l.habits || {}).replace(/"/g, '&quot;')})" class="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 bg-white text-black px-4 py-2 rounded-xl text-[10px] font-black">تعديل</button>
-                    </div>
-                `).join('');
+                        <div class="flex flex-wrap gap-1 mb-2">${prayerGrid}</div>
+                        <button onclick="CoreUI.openEd('${l.date}', ${l.mins || 0}, ${l.quran || 0}, ${JSON.stringify(l.habits || {}).replace(/"/g, '&quot;')})" class="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 bg-white text-black px-5 py-2 rounded-xl text-[10px] font-black">إدارة</button>
+                    </div>`;
+                }).join('');
             },
 
             chat(ms) {
                 const c = document.getElementById('chat');
                 c.innerHTML = ms.map(m => `
-                    <div class="flex flex-col ${m.uid===core.user.uid?'items-end':'items-start'}">
-                        <span class="text-[8px] font-black text-slate-600 uppercase mb-1">${m.sender}</span>
-                        <div class="${m.uid===core.user.uid?'bg-cyan-600 text-black':'bg-slate-800 text-white'} px-4 py-2 rounded-2xl font-bold text-sm">${m.text}</div>
-                    </div>
-                `).join('');
+                    <div class="flex flex-col ${m.uid===Kernel.user.uid?'items-end':'items-start'}">
+                        <span class="text-[8px] font-black text-slate-600 mb-1">${m.sender}</span>
+                        <div class="${m.uid===Kernel.user.uid?'bg-cyan-600 text-black':'bg-slate-800 text-white'} px-4 py-2 rounded-2xl font-bold text-sm shadow-lg">${m.text}</div>
+                    </div>`).join('');
                 c.scrollTop = c.scrollHeight;
             },
 
             syncP(h) {
-                core.prayers.forEach(p => { if(document.getElementById(`p-${p.id}`)) document.getElementById(`p-${p.id}`).checked = h[p.id] || false; });
+                Kernel.prayers.forEach(p => { if(document.getElementById(`p-${p.id}`)) document.getElementById(`p-${p.id}`).checked = h[p.id] || false; });
             },
 
-            openIns(id, n) {
+            async openIns(id, n) {
                 document.getElementById('ins-name').innerText = n;
-                document.getElementById('ins-body').innerHTML = '<div class="col-span-full text-center mono text-cyan-500 animate-pulse">RECOVERING...</div>';
+                document.getElementById('ins-body').innerHTML = '<div class="col-span-full py-20 text-center mono text-cyan-500 animate-pulse">Scanning Bio-Grid...</div>';
                 document.getElementById('inspect-modal').classList.remove('hidden');
-                getDocs(query(collection(db, "users", id, "logs"), orderBy("date", "desc"))).then(snap => {
-                    document.getElementById('ins-body').innerHTML = snap.docs.map(doc => {
-                        const d = doc.data();
-                        return `<div class="p-5 bg-white/5 rounded-2xl border border-white/5">
-                            <p class="mono text-[10px] text-cyan-500">${d.date}</p>
-                            <div class="flex justify-between mt-2 font-black"><span>${d.mins||0}m</span><span class="text-emerald-400">${d.quran||0}p</span></div>
-                        </div>`;
+                
+                const snap = await getDocs(query(collection(db, "users", id, "logs"), orderBy("date", "desc")));
+                document.getElementById('ins-body').innerHTML = snap.docs.map(doc => {
+                    const d = doc.data();
+                    const prayerGrid = Kernel.prayers.map(p => {
+                        const done = d.habits && d.habits[p.id];
+                        return `<div class="prayer-tag ${done ? 'p-completed' : 'p-missed'}">${p.n}</div>`;
                     }).join('');
-                });
+
+                    return `
+                    <div class="p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <p class="mono text-[10px] text-cyan-500 mb-4">${d.date}</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-black">${d.mins||0}m</span>
+                            <span class="text-2xl font-black text-emerald-400">${d.quran||0}p</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1">${prayerGrid}</div>
+                    </div>`;
+                }).join('');
             },
             closeIns() { document.getElementById('inspect-modal').classList.add('hidden'); },
 
             openEd(date, m, q, h) {
-                core.editState = { date, habits: h || {} };
+                Kernel.editState = { date, habits: h || {} };
                 document.getElementById('ed-m').value = m;
                 document.getElementById('ed-q').value = q;
-                document.getElementById('ed-prayers').innerHTML = core.prayers.map(p => `
-                    <div class="flex flex-col items-center p-2 bg-black/40 rounded-xl">
-                        <span class="text-[8px] font-bold text-slate-500">${p.n}</span>
-                        <input type="checkbox" id="ed-p-${p.id}" ${core.editState.habits[p.id] ? 'checked' : ''} onchange="core.editState.habits['${p.id}'] = this.checked" class="w-4 h-4 accent-emerald-500">
-                    </div>
-                `).join('');
+                document.getElementById('ed-prayers').innerHTML = Kernel.prayers.map(p => `
+                    <div class="flex flex-col items-center p-3 bg-black/40 rounded-xl">
+                        <span class="text-[8px] font-bold text-slate-500 mb-2">${p.n}</span>
+                        <input type="checkbox" id="ed-p-${p.id}" ${Kernel.editState.habits[p.id] ? 'checked' : ''} onchange="Kernel.editState.habits['${p.id}'] = this.checked" class="w-5 h-5 accent-emerald-500">
+                    </div>`).join('');
                 document.getElementById('edit-modal').classList.remove('hidden');
             },
             closeEd() { document.getElementById('edit-modal').classList.add('hidden'); }
         };
 
-        const Handlers = {
+        const Logic = {
             async p(id) {
                 const v = document.getElementById(`p-${id}`).checked;
-                const r = doc(db, "users", core.user.uid, "logs", core.today);
+                const r = doc(db, "users", Kernel.user.uid, "logs", Kernel.today);
                 const snap = await getDoc(r);
                 let h = snap.exists() ? (snap.data().habits || {}) : {};
                 h[id] = v;
-                await setDoc(r, { habits: h, date: core.today }, { merge: true });
-                // تحديث آخر حالة صلوات للرصد العالمي
-                await updateDoc(doc(db, "users", core.user.uid), { lastHabits: h });
+                await setDoc(r, { habits: h, date: Kernel.today }, { merge: true });
+                await updateDoc(doc(db, "users", Kernel.user.uid), { lastHabits: h });
             },
 
             async saveEd() {
                 const nM = parseInt(document.getElementById('ed-m').value) || 0;
                 const nQ = parseInt(document.getElementById('ed-q').value) || 0;
-                const h = core.editState.habits;
-                const r = doc(db, "users", core.user.uid, "logs", core.editState.date);
+                const h = Kernel.editState.habits;
+                const r = doc(db, "users", Kernel.user.uid, "logs", Kernel.editState.date);
                 await updateDoc(r, { mins: nM, quran: nQ, habits: h });
-                if(core.editState.date === core.today) {
-                    core.secs = nM * 60;
-                    localStorage.setItem(`t70_secs_${core.user.uid}`, core.secs);
-                    UI.upOrb();
+                if(Kernel.editState.date === Kernel.today) {
+                    Kernel.secs = nM * 60;
+                    localStorage.setItem(`v80_secs_${Kernel.user.uid}`, Kernel.secs);
+                    CoreUI.upOrb();
+                    Kernel.broadcast("");
                 }
-                UI.closeEd();
+                CoreUI.closeEd();
             }
         };
 
-        const core = new Titan();
-        onAuthStateChanged(auth, u => { if(u) core.init(u); else UI.boot(false); });
+        const Kernel = new TitanCore();
+        onAuthStateChanged(auth, u => { if(u) Kernel.init(u); else CoreUI.boot(false); });
 
         document.getElementById('auth-btn').onclick = () => signInWithPopup(auth, provider);
         document.getElementById('logout').onclick = () => signOut(auth).then(() => { localStorage.clear(); window.location.reload(); });
-        document.getElementById('orb-btn').onclick = () => core.engine();
-        document.getElementById('ed-save').onclick = () => Handlers.saveEd();
+        document.getElementById('orb-btn').onclick = () => Kernel.engine();
+        document.getElementById('ed-save').onclick = () => Logic.saveEd();
 
-        // تفعيل زر الانتر
-        const enterTrigger = (elId, callback) => {
-            document.getElementById(elId).addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') callback();
-            });
+        // نظام مفتاح Enter
+        const bindEnter = (id, fn) => {
+            document.getElementById(id).addEventListener('keypress', (e) => { if(e.key==='Enter') fn(); });
         };
 
-        enterTrigger('q-in', async () => {
+        bindEnter('q-in', async () => {
             const v = parseInt(document.getElementById('q-in').value) || 0;
-            if(v > 0) { await core.log('quran', v); document.getElementById('q-in').value = ''; }
+            if(v > 0) { await Kernel.log('quran', v); document.getElementById('q-in').value = ''; }
         });
 
-        enterTrigger('chat-in', async () => {
+        bindEnter('chat-in', async () => {
             const i = document.getElementById('chat-in');
             if(!i.value.trim()) return;
-            await addDoc(collection(db, "chat"), { text: i.value, sender: core.user.displayName, uid: core.user.uid, timestamp: serverTimestamp() });
+            await addDoc(collection(db, "chat"), { text: i.value, sender: Kernel.user.displayName, uid: Kernel.user.uid, timestamp: serverTimestamp() });
             i.value = '';
         });
 
-        enterTrigger('ed-m', () => Handlers.saveEd());
-        enterTrigger('ed-q', () => Handlers.saveEd());
+        bindEnter('ed-m', () => Logic.saveEd());
+        bindEnter('ed-q', () => Logic.saveEd());
 
         document.getElementById('q-save').onclick = async () => {
             const v = parseInt(document.getElementById('q-in').value) || 0;
-            if(v > 0) { await core.log('quran', v); document.getElementById('q-in').value = ''; }
+            if(v > 0) { await Kernel.log('quran', v); document.getElementById('q-in').value = ''; }
         };
+
         document.getElementById('chat-btn').onclick = async () => {
             const i = document.getElementById('chat-in');
             if(!i.value.trim()) return;
-            await addDoc(collection(db, "chat"), { text: i.value, sender: core.user.displayName, uid: core.user.uid, timestamp: serverTimestamp() });
+            await addDoc(collection(db, "chat"), { text: i.value, sender: Kernel.user.displayName, uid: Kernel.user.uid, timestamp: serverTimestamp() });
             i.value = '';
         };
 
         setInterval(() => { document.getElementById('u-time').innerText = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
-        window.UI = UI; window.Handlers = Handlers;
+        window.CoreUI = CoreUI; window.Logic = Logic; window.Kernel = Kernel;
     </script>
 </body>
 </html>
