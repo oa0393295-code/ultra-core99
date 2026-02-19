@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | The Final Masterpiece</title>
+    <title>Ultra Study Core | Pro Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -11,14 +11,8 @@
         .shadow-neon { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
         select { background: #1e293b; color: white; border-radius: 8px; padding: 8px; border: 1px solid #475569; }
-        
-        /* رجعت لك الشريط الأبيض للشات */
         #chat-messages::-webkit-scrollbar { width: 6px; }
-        #chat-messages::-webkit-scrollbar-track { background: transparent; }
         #chat-messages::-webkit-scrollbar-thumb { background: #ffffff; border-radius: 10px; }
-        
-        #study-log::-webkit-scrollbar { width: 4px; }
-        #study-log::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -42,11 +36,11 @@
 
         <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-6 text-center">
-                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative">
                     <div id="timer-display" class="text-[7rem] md:text-[9rem] font-mono font-black my-6 text-white leading-none">00:00:00</div>
                     <div class="flex flex-col gap-6 items-center">
                         <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-2xl shadow-neon transition-all hover:bg-cyan-400">ابدأ المذاكرة</button>
-                        <div class="flex flex-wrap justify-center items-center gap-3 bg-slate-800/50 p-5 rounded-3xl border border-slate-700">
+                        <div class="flex flex-wrap justify-center items-center gap-3 bg-slate-800/50 p-5 rounded-3xl border border-slate-700 text-white">
                             <span class="text-sm font-bold italic text-slate-400">إضافة وقت:</span>
                             <select id="manual-hours"><option value="0">0 ساعة</option><script>for(let i=1;i<=12;i++) document.write(`<option value="${i}">${i} ساعة</option>`)</script></select>
                             <select id="manual-mins"><option value="0">0 دقيقة</option><script>for(let i=1;i<=59;i++) document.write(`<option value="${i}">${i} دقيقة</option>`)</script></select>
@@ -54,9 +48,8 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-lg">
-                    <h3 class="text-2xl font-black mb-6 text-white italic underline decoration-cyan-500 underline-offset-8">📅 سجل النشاط</h3>
+                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-lg text-right">
+                    <h3 class="text-2xl font-black mb-6 text-white italic underline decoration-cyan-500 underline-offset-8">📅 سجل أيامك</h3>
                     <div id="study-log" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
                 </div>
             </div>
@@ -66,31 +59,16 @@
                     <h3 class="text-xl font-black mb-6 text-white italic text-center uppercase tracking-tighter">🏆 تحدي اليوم</h3>
                     <div id="leaderboard-list" class="space-y-4"></div>
                 </div>
-
-                <div class="bg-slate-900 border border-slate-800 rounded-[2rem] flex flex-col h-[500px] overflow-hidden shadow-2xl glass">
-                    <div class="p-4 border-b border-slate-800 bg-slate-800/50"><h3 class="font-black text-cyan-500 italic uppercase text-sm text-center">Ultra Chat 💬</h3></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-[2rem] flex flex-col h-[500px] overflow-hidden glass shadow-2xl">
+                    <div class="p-4 border-b border-slate-800 bg-slate-800/50"><h3 class="font-black text-cyan-500 text-center uppercase text-sm">Ultra Chat 💬</h3></div>
                     <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col text-[15px]"></div>
                     <div class="p-4 bg-slate-950/50 flex gap-2">
-                        <input id="chat-input" type="text" placeholder="اكتب رسالة..." class="flex-1 bg-slate-800 border-none rounded-xl px-4 py-3 text-sm text-white outline-none">
+                        <input id="chat-input" type="text" placeholder="اكتب رسالة..." class="flex-1 bg-slate-800 rounded-xl px-4 py-3 text-white outline-none">
                         <button id="btn-send-chat" class="bg-cyan-500 text-black px-5 py-2 rounded-xl font-black">إرسال</button>
                     </div>
                 </div>
             </div>
         </main>
-    </div>
-
-    <div id="edit-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
-            <h4 class="text-xl text-white font-black mb-6 italic">تعديل الوقت</h4>
-            <div class="flex justify-center gap-4 mb-8">
-                <select id="edit-hours"></select>
-                <select id="edit-mins"></select>
-            </div>
-            <div class="flex gap-4">
-                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-4 rounded-2xl font-black">حفظ</button>
-                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl">إلغاء</button>
-            </div>
-        </div>
     </div>
 
     <script type="module">
@@ -112,7 +90,7 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        let timerInterval, seconds = 0, isRunning = false, user = null, editingDate = "";
+        let timerInterval, seconds = 0, isRunning = false, user = null;
         const todayStr = new Date().toISOString().split('T')[0];
 
         onAuthStateChanged(auth, async (u) => {
@@ -121,51 +99,57 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
-                
-                // تهيئة المستخدم: استخدام setDoc بـ merge يضمن وجود حقل daily_mins فوراً
-                await setDoc(doc(db, "users", u.uid), { 
-                    displayName: u.displayName, 
-                    uid: u.uid,
-                }, { merge: true });
-
-                const userSnap = await getDoc(doc(db, "users", u.uid));
-                if (userSnap.data().daily_mins === undefined) {
-                    await updateDoc(doc(db, "users", u.uid), { daily_mins: 0 });
-                }
-
-                if (sessionStorage.getItem('study_start_time')) startTimerLogic(parseInt(sessionStorage.getItem('study_start_time')));
+                await setDoc(doc(db, "users", u.uid), { displayName: u.displayName, uid: u.uid }, { merge: true });
                 loadLeaderboard(); loadStudyLog(); loadChat();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-content').classList.add('hidden');
             }
         });
 
-        window.addEventListener('unload', () => { if (user) updateDoc(doc(db, "users", user.uid), { status: "مريح شوية ☕" }); });
+        // تسجيل خروج فوري
+        document.getElementById('btn-logout').onclick = async () => {
+            await signOut(auth);
+            window.location.reload(); 
+        };
 
         document.getElementById('btn-timer').onclick = function() {
             if (!isRunning) {
-                const start = Date.now();
-                sessionStorage.setItem('study_start_time', start);
-                startTimerLogic(start);
-            } else { stopTimerLogic(); }
+                isRunning = true;
+                this.innerText = "إيقاف مؤقت";
+                this.classList.replace('bg-cyan-500', 'bg-red-500');
+                updateStatusInDB("بيذاكر دلوقتي 🔥");
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    updateDisplay();
+                    if (seconds % 60 === 0) forceSave(1, todayStr);
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+                isRunning = false;
+                this.innerText = "استكمال المذاكرة";
+                this.classList.replace('bg-red-500', 'bg-cyan-500');
+                updateStatusInDB("مريح شوية ☕");
+            }
         };
 
-        function startTimerLogic(startTime) {
-            isRunning = true;
-            document.getElementById('btn-timer').innerText = "إيقاف مؤقت";
-            document.getElementById('btn-timer').classList.replace('bg-cyan-500', 'bg-red-500');
-            updateStatusInDB("بيذاكر دلوقتي 🔥");
-            timerInterval = setInterval(() => {
-                seconds = Math.floor((Date.now() - startTime) / 1000);
-                updateDisplay();
-                if (seconds > 0 && seconds % 60 === 0) forceSave(1, todayStr);
-            }, 1000);
-        }
-
-        function stopTimerLogic() {
-            clearInterval(timerInterval); isRunning = false;
-            sessionStorage.removeItem('study_start_time');
-            document.getElementById('btn-timer').innerText = "ابدأ المذاكرة";
-            document.getElementById('btn-timer').classList.replace('bg-red-500', 'bg-cyan-500');
-            seconds = 0; updateDisplay(); updateStatusInDB("مريح شوية ☕");
+        async function forceSave(mins, dateStr) {
+            if (!user) return;
+            const userRef = doc(db, "users", user.uid);
+            const logRef = doc(db, "users", user.uid, "logs", dateStr);
+            
+            // تحديث السجل
+            await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
+            
+            // تحديث المراكز (الجدول اللي عالشمال)
+            if (dateStr === todayStr) {
+                const snap = await getDoc(userRef);
+                if (!snap.exists() || snap.data().daily_mins === undefined) {
+                    await setDoc(userRef, { daily_mins: mins }, { merge: true });
+                } else {
+                    await updateDoc(userRef, { daily_mins: increment(mins) });
+                }
+            }
         }
 
         document.getElementById('btn-add-manual').onclick = async function() {
@@ -175,30 +159,16 @@
             if (total > 0) await forceSave(total, todayStr);
         };
 
-        async function forceSave(mins, dateStr) {
-            if (!user) return;
-            const userRef = doc(db, "users", user.uid);
-            const logRef = doc(db, "users", user.uid, "logs", dateStr);
-
-            // 1. تحديث السجل
-            await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
-
-            // 2. تحديث جدول المتصدرين (الحل الجذري للمشكلة)
-            if (dateStr === todayStr) {
-                await setDoc(userRef, { daily_mins: increment(mins) }, { merge: true });
-            }
-        }
-
-        async function updateStatusInDB(status) {
-            if (user) await updateDoc(doc(db, "users", user.uid), { status: status });
-            document.getElementById('user-status-text').innerText = status;
-        }
-
         function updateDisplay() {
             const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
             const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
             const s = (seconds % 60).toString().padStart(2, '0');
             document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
+        }
+
+        async function updateStatusInDB(status) {
+            if (user) await updateDoc(doc(db, "users", user.uid), { status: status });
+            document.getElementById('user-status-text').innerText = status;
         }
 
         function loadLeaderboard() {
@@ -207,10 +177,15 @@
                 snap.docs.forEach((d, i) => {
                     const data = d.data();
                     list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-700'}">
-                        <div class="flex items-center gap-3"><span class="font-black text-slate-500">#${i + 1}</span>
-                        <div class="text-right"><p class="font-bold text-white text-sm">${data.displayName}</p>
-                        <p class="text-[9px] font-black ${data.status?.includes('🔥') ? 'text-orange-400' : 'text-slate-500'} uppercase">${data.status || 'مريح'}</p></div></div>
-                        <span class="text-cyan-400 font-mono font-black">${Math.round(data.daily_mins || 0)} د</span></div>`;
+                        <div class="flex items-center gap-3">
+                            <span class="font-black text-slate-500">#${i + 1}</span>
+                            <div class="text-right">
+                                <p class="font-bold text-white text-sm">${data.displayName}</p>
+                                <p class="text-[9px] font-black ${data.status?.includes('🔥') ? 'text-orange-400' : 'text-slate-500'} uppercase">${data.status || 'مريح'}</p>
+                            </div>
+                        </div>
+                        <span class="text-cyan-400 font-mono font-black">${Math.round(data.daily_mins || 0)} د</span>
+                    </div>`;
                 });
             });
         }
@@ -222,36 +197,14 @@
                     const data = d.data();
                     logDiv.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-2xl border border-slate-800 mb-2">
                         <span class="text-slate-400 text-sm font-bold font-mono">${data.date}</span>
-                        <div class="flex items-center gap-4"><span class="text-white font-black text-lg">${data.mins || 0} دقيقة</span>
-                        <button class="text-cyan-500 text-2xl" onclick="window.openEditModal('${data.date}', ${data.mins || 0})">✎</button></div></div>`;
+                        <div class="flex items-center gap-4">
+                            <span class="text-white font-black text-lg">${data.mins || 0} دقيقة</span>
+                            <button class="text-cyan-500 text-2xl" onclick="window.openEditModal('${data.date}', ${data.mins || 0})">✎</button>
+                        </div>
+                    </div>`;
                 });
             });
         }
-
-        window.openEditModal = function(date, currentMins) {
-            editingDate = date;
-            const hSelect = document.getElementById('edit-hours'); const mSelect = document.getElementById('edit-mins');
-            hSelect.innerHTML = ''; mSelect.innerHTML = '';
-            for(let i=0;i<=12;i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} ساعة</option>`;
-            for(let i=0;i<=59;i++) mSelect.innerHTML += `<option value="${i}" ${currentMins%60==i?'selected':''}>${i} دقيقة</option>`;
-            document.getElementById('edit-modal').classList.remove('hidden');
-        };
-
-        document.getElementById('btn-confirm-edit').onclick = async function() {
-            const h = parseInt(document.getElementById('edit-hours').value);
-            const m = parseInt(document.getElementById('edit-mins').value);
-            const newTotal = (h * 60) + m;
-            const logRef = doc(db, "users", user.uid, "logs", editingDate);
-            const snap = await getDoc(logRef);
-            const oldTotal = snap.exists() ? snap.data().mins : 0;
-            const diff = newTotal - oldTotal;
-
-            await setDoc(logRef, { mins: newTotal }, { merge: true });
-            if (editingDate === todayStr) {
-                await setDoc(doc(db, "users", user.uid), { daily_mins: increment(diff) }, { merge: true });
-            }
-            document.getElementById('edit-modal').classList.add('hidden');
-        };
 
         async function sendChat() {
             const input = document.getElementById('chat-input');
@@ -277,8 +230,8 @@
                 box.scrollTop = box.scrollHeight;
             });
         }
+
         document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('btn-logout').onclick = () => { sessionStorage.clear(); signOut(auth); };
     </script>
 </body>
 </html>
