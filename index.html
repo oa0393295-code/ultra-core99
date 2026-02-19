@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | Ultimate Pro</title>
+    <title>Ultra Study Core | Pro V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -15,7 +15,7 @@
 <body class="min-h-screen pb-10">
 
     <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-4">
-        <h1 class="text-6xl font-black mb-4 italic text-white uppercase tracking-tighter">Ultra <span class="text-cyan-500">Core</span></h1>
+        <h1 class="text-6xl font-black mb-4 italic text-white uppercase tracking-tighter text-center">Ultra <span class="text-cyan-500">Core</span></h1>
         <button id="btn-login" class="bg-white text-black px-12 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-neon">دخول بجوجل</button>
     </div>
 
@@ -25,7 +25,7 @@
             <div class="flex items-center gap-4">
                 <div class="text-left leading-tight">
                     <p id="user-info" class="text-sm font-bold text-cyan-400"></p>
-                    <p id="user-status-text" class="text-[10px] font-bold text-slate-500 uppercase"></p>
+                    <p id="user-status-text" class="text-[10px] font-bold text-slate-500 uppercase">مريح شوية ☕</p>
                 </div>
                 <button id="btn-logout" class="text-red-500 text-xs font-bold border border-red-500/20 px-3 py-1 rounded-lg">خروج</button>
             </div>
@@ -35,17 +35,20 @@
             <div class="lg:col-span-2 space-y-6 text-center">
                 <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
                     <div id="timer-display" class="text-[7rem] md:text-[9rem] font-mono font-black my-6 leading-none tracking-tighter text-white">00:00:00</div>
-                    <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-xl shadow-neon transition-all">ابدأ المذاكرة</button>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-xl shadow-neon transition-all hover:bg-cyan-400">ابدأ المذاكرة</button>
+                        <button id="btn-manual" class="w-full max-w-[150px] py-5 rounded-2xl bg-slate-800 text-white font-bold border border-slate-700 hover:bg-slate-700 transition-all text-sm">إضافة يدوية +</button>
+                    </div>
                 </div>
 
                 <div class="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-lg">
                     <h3 class="text-lg font-black mb-4 flex items-center gap-2 text-white italic">📅 سجل النشاط</h3>
-                    <div id="study-log" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div>
+                    <div id="study-log" class="space-y-2 max-h-60 overflow-y-auto pr-2 text-right"></div>
                 </div>
             </div>
 
             <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 glass shadow-xl">
-                <h3 class="text-xl font-black mb-6 text-white italic tracking-tighter uppercase underline decoration-cyan-500 underline-offset-8">🏆 تحدي اليوم</h3>
+                <h3 class="text-xl font-black mb-6 text-white italic tracking-tighter uppercase underline decoration-cyan-500 underline-offset-8 text-center">🏆 تحدي اليوم</h3>
                 <div id="leaderboard-list" class="space-y-4"></div>
             </div>
         </main>
@@ -79,11 +82,10 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
-                
                 await setDoc(doc(db, "users", u.uid), { displayName: u.displayName, uid: u.uid }, { merge: true });
 
-                // استعادة الوقت لو كان فيه جلسة شغالة قبل الريفريش
-                const savedStartTime = localStorage.getItem('study_start_time');
+                // ميزة الريفريش: استعادة الجلسة
+                const savedStartTime = sessionStorage.getItem('study_start_time');
                 if (savedStartTime) {
                     resumeTimer(parseInt(savedStartTime));
                 }
@@ -93,20 +95,36 @@
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
                 document.getElementById('main-content').classList.add('hidden');
-                stopTimerLogic();
             }
         });
 
+        // إيقاف العداد عند إغلاق المتصفح (وليس الريفريش)
+        window.onbeforeunload = function() {
+            if (isRunning && !window.performance.navigation.type === 1) {
+                // إيقاف رسمي لو مش ريفريش
+                sessionStorage.removeItem('study_start_time');
+            }
+        };
+
         document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('btn-logout').onclick = () => { localStorage.removeItem('study_start_time'); signOut(auth); };
+        document.getElementById('btn-logout').onclick = () => { sessionStorage.removeItem('study_start_time'); signOut(auth); };
 
         document.getElementById('btn-timer').onclick = function() {
             if (!isRunning) {
                 const startTime = Date.now();
-                localStorage.setItem('study_start_time', startTime);
+                sessionStorage.setItem('study_start_time', startTime);
                 startTimerLogic(startTime);
             } else {
                 stopTimerLogic();
+            }
+        };
+
+        // إضافة ساعات يدوية
+        document.getElementById('btn-manual').onclick = async function() {
+            const addedMins = prompt("عايز تضيف كام دقيقة مذاكرة؟");
+            if (addedMins && !isNaN(addedMins)) {
+                await saveProgress(parseInt(addedMins));
+                alert(`تم إضافة ${addedMins} دقيقة لسجلك بنجاح!`);
             }
         };
 
@@ -115,9 +133,6 @@
             const btn = document.getElementById('btn-timer');
             btn.innerText = "إيقاف الجلسة";
             btn.classList.replace('bg-cyan-500', 'bg-red-500');
-            document.getElementById('user-status-text').innerText = "بيذاكر دلوقتي 🔥";
-            document.getElementById('user-status-text').className = "text-[10px] font-bold text-orange-400 uppercase";
-
             updateStatusInDB("بيذاكر دلوقتي 🔥");
 
             timerInterval = setInterval(() => {
@@ -130,16 +145,12 @@
         function stopTimerLogic() {
             clearInterval(timerInterval);
             isRunning = false;
-            localStorage.removeItem('study_start_time');
+            sessionStorage.removeItem('study_start_time');
             const btn = document.getElementById('btn-timer');
-            if(btn) {
-                btn.innerText = "ابدأ المذاكرة";
-                btn.classList.replace('bg-red-500', 'bg-cyan-500');
-            }
+            btn.innerText = "ابدأ المذاكرة";
+            btn.classList.replace('bg-red-500', 'bg-cyan-500');
             seconds = 0;
             updateDisplay();
-            document.getElementById('user-status-text').innerText = "مريح شوية ☕";
-            document.getElementById('user-status-text').className = "text-[10px] font-bold text-slate-500 uppercase";
             updateStatusInDB("مريح شوية ☕");
         }
 
@@ -148,7 +159,11 @@
         }
 
         async function updateStatusInDB(status) {
-            if (user) await updateDoc(doc(db, "users", user.uid), { status: status });
+            if (user) {
+                await updateDoc(doc(db, "users", user.uid), { status: status });
+                document.getElementById('user-status-text').innerText = status;
+                document.getElementById('user-status-text').className = status.includes('🔥') ? "text-[10px] font-bold text-orange-400 uppercase" : "text-[10px] font-bold text-slate-500 uppercase";
+            }
         }
 
         function updateDisplay() {
@@ -162,14 +177,11 @@
             if (!user) return;
             const userRef = doc(db, "users", user.uid);
             const logRef = doc(db, "users", user.uid, "logs", todayStr);
-
-            // تحديث دقائق اليوم الحالي فقط في الحقل الرئيسي للمنافسة
             await setDoc(userRef, { daily_mins: increment(mins) }, { merge: true });
             await setDoc(logRef, { date: todayStr, mins: increment(mins) }, { merge: true });
         }
 
         function loadLeaderboard() {
-            // الترتيب بناءً على دقائق اليوم فقط
             const q = query(collection(db, "users"), orderBy("daily_mins", "desc"), limit(10));
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('leaderboard-list');
@@ -178,9 +190,9 @@
                     const data = d.data();
                     list.innerHTML += `
                         <div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-700'} transition-all">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 text-right">
                                 <span class="font-black text-slate-500">#${i + 1}</span>
-                                <div class="text-right">
+                                <div>
                                     <p class="font-bold text-white text-sm">${data.displayName}</p>
                                     <p class="text-[9px] font-black ${data.status?.includes('🔥') ? 'text-orange-400' : 'text-slate-500'} uppercase">${data.status || 'مريح شوية'}</p>
                                 </div>
@@ -197,7 +209,7 @@
                 logDiv.innerHTML = '';
                 snap.docs.sort((a,b) => b.id.localeCompare(a.id)).forEach(d => {
                     const data = d.data();
-                    logDiv.innerHTML += `<div class="flex justify-between p-3 bg-slate-800/20 rounded-xl border border-slate-800"><span>${data.date}</span><span class="text-cyan-500 font-bold">${data.mins} دقيقة</span></div>`;
+                    logDiv.innerHTML += `<div class="flex justify-between p-3 bg-slate-800/20 rounded-xl border border-slate-800 mb-2"><span>${data.date}</span><span class="text-cyan-500 font-bold">${data.mins} دقيقة</span></div>`;
                 });
             });
         }
