@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | Pro Fix</title>
+    <title>Ultra Study Core | The Real Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -71,6 +71,20 @@
         </main>
     </div>
 
+    <div id="edit-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
+            <h4 class="text-xl text-white font-black mb-6 italic">تعديل وقت اليوم</h4>
+            <div class="flex justify-center gap-4 mb-8">
+                <select id="edit-hours"></select>
+                <select id="edit-mins"></select>
+            </div>
+            <div class="flex gap-4">
+                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-4 rounded-2xl font-black">حفظ</button>
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -90,7 +104,7 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        let timerInterval, seconds = 0, isRunning = false, user = null;
+        let timerInterval, seconds = 0, isRunning = false, user = null, editingDate = "";
         const todayStr = new Date().toISOString().split('T')[0];
 
         onAuthStateChanged(auth, async (u) => {
@@ -99,7 +113,14 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
-                await setDoc(doc(db, "users", u.uid), { displayName: u.displayName, uid: u.uid }, { merge: true });
+                
+                // تهيئة المستخدم لضمان ظهور الوقت على الشمال
+                const userRef = doc(db, "users", u.uid);
+                const userSnap = await getDoc(userRef);
+                if (!userSnap.exists() || userSnap.data().daily_mins === undefined) {
+                    await setDoc(userRef, { displayName: u.displayName, uid: u.uid, daily_mins: 0, status: "مريح شوية ☕" }, { merge: true });
+                }
+                
                 loadLeaderboard(); loadStudyLog(); loadChat();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
@@ -107,11 +128,7 @@
             }
         });
 
-        // تسجيل خروج فوري
-        document.getElementById('btn-logout').onclick = async () => {
-            await signOut(auth);
-            window.location.reload(); 
-        };
+        document.getElementById('btn-logout').onclick = async () => { await signOut(auth); window.location.reload(); };
 
         document.getElementById('btn-timer').onclick = function() {
             if (!isRunning) {
@@ -135,22 +152,49 @@
 
         async function forceSave(mins, dateStr) {
             if (!user) return;
-            const userRef = doc(db, "users", user.uid);
             const logRef = doc(db, "users", user.uid, "logs", dateStr);
-            
+            const userRef = doc(db, "users", user.uid);
+
             // تحديث السجل
             await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
             
-            // تحديث المراكز (الجدول اللي عالشمال)
+            // تحديث جدول المراكز (على الشمال)
             if (dateStr === todayStr) {
-                const snap = await getDoc(userRef);
-                if (!snap.exists() || snap.data().daily_mins === undefined) {
+                await updateDoc(userRef, { daily_mins: increment(mins) }).catch(async () => {
                     await setDoc(userRef, { daily_mins: mins }, { merge: true });
-                } else {
-                    await updateDoc(userRef, { daily_mins: increment(mins) });
-                }
+                });
             }
         }
+
+        // التعديل (صلحتهولك)
+        window.openEditModal = function(date, currentMins) {
+            editingDate = date;
+            const hSelect = document.getElementById('edit-hours'); 
+            const mSelect = document.getElementById('edit-mins');
+            hSelect.innerHTML = ''; mSelect.innerHTML = '';
+            for(let i=0;i<=12;i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} ساعة</option>`;
+            for(let i=0;i<=59;i++) mSelect.innerHTML += `<option value="${i}" ${currentMins%60==i?'selected':''}>${i} دقيقة</option>`;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('btn-confirm-edit').onclick = async function() {
+            const h = parseInt(document.getElementById('edit-hours').value);
+            const m = parseInt(document.getElementById('edit-mins').value);
+            const newTotal = (h * 60) + m;
+            
+            const logRef = doc(db, "users", user.uid, "logs", editingDate);
+            const userRef = doc(db, "users", user.uid);
+            
+            const oldSnap = await getDoc(logRef);
+            const oldMins = oldSnap.exists() ? oldSnap.data().mins : 0;
+            const diff = newTotal - oldMins;
+
+            await setDoc(logRef, { mins: newTotal }, { merge: true });
+            if (editingDate === todayStr) {
+                await updateDoc(userRef, { daily_mins: increment(diff) });
+            }
+            document.getElementById('edit-modal').classList.add('hidden');
+        };
 
         document.getElementById('btn-add-manual').onclick = async function() {
             const h = parseInt(document.getElementById('manual-hours').value);
@@ -193,12 +237,13 @@
         function loadStudyLog() {
             onSnapshot(collection(db, "users", user.uid, "logs"), (snap) => {
                 const logDiv = document.getElementById('study-log'); logDiv.innerHTML = '';
-                snap.docs.sort((a,b) => b.id.localeCompare(a.id)).forEach(d => {
+                const docs = snap.docs.sort((a,b) => b.id.localeCompare(a.id));
+                docs.forEach(d => {
                     const data = d.data();
-                    logDiv.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-2xl border border-slate-800 mb-2">
+                    logDiv.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-2xl border border-slate-800 mb-2 text-right">
                         <span class="text-slate-400 text-sm font-bold font-mono">${data.date}</span>
                         <div class="flex items-center gap-4">
-                            <span class="text-white font-black text-lg">${data.mins || 0} دقيقة</span>
+                            <span class="text-white font-black text-lg">${data.mins || 0} د</span>
                             <button class="text-cyan-500 text-2xl" onclick="window.openEditModal('${data.date}', ${data.mins || 0})">✎</button>
                         </div>
                     </div>`;
@@ -230,7 +275,6 @@
                 box.scrollTop = box.scrollHeight;
             });
         }
-
         document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
     </script>
 </body>
