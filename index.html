@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | Ultimate Pro + Chat</title>
+    <title>Ultra Study Core | The Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
         .shadow-neon { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
-        select { background: #1e293b; color: white; border-radius: 8px; padding: 5px; border: 1px solid #475569; font-size: 12px; }
-        ::-webkit-scrollbar { width: 4px; }
+        select { background: #1e293b; color: white; border-radius: 8px; padding: 8px; border: 1px solid #475569; font-size: 14px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
 
-    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-4">
-        <h1 class="text-6xl font-black mb-4 italic text-white uppercase tracking-tighter">Ultra <span class="text-cyan-500">Core</span></h1>
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-4 text-center">
+        <h1 class="text-7xl font-black mb-4 italic text-white uppercase tracking-tighter">Ultra <span class="text-cyan-500">Core</span></h1>
+        <p class="text-slate-400 mb-8 font-bold">لا وقت للمجاملات.. ذاكر أو انسحب.</p>
         <button id="btn-login" class="bg-white text-black px-12 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-neon">دخول بجوجل</button>
     </div>
 
@@ -27,8 +28,8 @@
             <div class="text-2xl font-black tracking-tighter italic">ULTRA<span class="text-cyan-500">CORE</span></div>
             <div class="flex items-center gap-4">
                 <div class="text-left leading-tight">
-                    <p id="user-info" class="text-sm font-bold text-cyan-400"></p>
-                    <p id="user-status-text" class="text-[10px] font-bold text-slate-500 uppercase">مريح شوية ☕</p>
+                    <p id="user-info" class="text-base font-black text-cyan-400"></p>
+                    <p id="user-status-text" class="text-[11px] font-bold text-slate-500 uppercase">مريح شوية ☕</p>
                 </div>
                 <button id="btn-logout" class="text-red-500 text-xs font-bold border border-red-500/20 px-3 py-1 rounded-lg">خروج</button>
             </div>
@@ -39,53 +40,53 @@
                 <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative text-center">
                     <div id="timer-display" class="text-[7rem] md:text-[9rem] font-mono font-black my-6 text-white leading-none">00:00:00</div>
                     <div class="flex flex-col gap-6 items-center">
-                        <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-xl shadow-neon transition-all hover:bg-cyan-400">ابدأ المذاكرة</button>
+                        <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-2xl shadow-neon transition-all hover:bg-cyan-400">ابدأ المذاكرة</button>
                         
-                        <div class="flex flex-wrap justify-center items-center gap-3 bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
-                            <span class="text-sm font-bold italic text-slate-400">إضافة وقت:</span>
-                            <select id="manual-hours"><option value="0">0 س</option><script>for(let i=1;i<=12;i++) document.write(`<option value="${i}">${i} س</option>`)</script></select>
-                            <select id="manual-mins"><option value="0">0 د</option><script>for(let i=1;i<=59;i++) document.write(`<option value="${i}">${i} د</option>`)</script></select>
-                            <button id="btn-add-manual" class="bg-cyan-500 text-black px-4 py-1 rounded-lg font-black text-xs">أضف +</button>
+                        <div class="flex flex-wrap justify-center items-center gap-3 bg-slate-800/50 p-5 rounded-3xl border border-slate-700">
+                            <span class="text-sm font-bold italic text-slate-400">إضافة وقت يدوي:</span>
+                            <select id="manual-hours"><option value="0">0 ساعة</option><script>for(let i=1;i<=12;i++) document.write(`<option value="${i}">${i} ساعة</option>`)</script></select>
+                            <select id="manual-mins"><option value="0">0 دقيقة</option><script>for(let i=1;i<=59;i++) document.write(`<option value="${i}">${i} دقيقة</option>`)</script></select>
+                            <button id="btn-add-manual" class="bg-cyan-500 text-black px-6 py-2 rounded-xl font-black text-sm hover:bg-cyan-400 transition">أضف +</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-lg">
-                    <h3 class="text-xl font-black mb-6 text-white italic underline decoration-cyan-500 underline-offset-8">📅 سجل أيامك</h3>
+                    <h3 class="text-2xl font-black mb-6 text-white italic underline decoration-cyan-500 underline-offset-8">📅 سجل نشاطك</h3>
                     <div id="study-log" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
                 </div>
             </div>
 
             <div class="space-y-6">
                 <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 glass shadow-xl">
-                    <h3 class="text-xl font-black mb-6 text-white italic text-center uppercase tracking-tighter">🏆 تحدي اليوم</h3>
+                    <h3 class="text-xl font-black mb-6 text-white italic text-center uppercase tracking-tighter">🏆 توب النهاردة</h3>
                     <div id="leaderboard-list" class="space-y-4"></div>
                 </div>
 
-                <div class="bg-slate-900 border border-slate-800 rounded-[2rem] flex flex-col h-[450px] overflow-hidden shadow-2xl glass">
+                <div class="bg-slate-900 border border-slate-800 rounded-[2rem] flex flex-col h-[500px] overflow-hidden shadow-2xl glass">
                     <div class="p-4 border-b border-slate-800 bg-slate-800/50">
-                        <h3 class="font-black text-cyan-500 italic tracking-widest uppercase text-sm">Ultra Chat 💬</h3>
+                        <h3 class="font-black text-cyan-500 italic uppercase text-sm tracking-widest text-center">Ultra Chat 💬</h3>
                     </div>
-                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"></div>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col text-[15px]"></div>
                     <div class="p-4 bg-slate-950/50 flex gap-2">
-                        <input id="chat-input" type="text" placeholder="اكتب رسالة..." class="flex-1 bg-slate-800 border-none rounded-xl px-4 py-2 text-sm focus:ring-1 focus:ring-cyan-500 outline-none">
-                        <button id="btn-send-chat" class="bg-cyan-500 text-black px-4 py-2 rounded-xl font-black text-xs hover:scale-105 transition">إرسال</button>
+                        <input id="chat-input" type="text" placeholder="اكتب رسالة وحمسهم..." class="flex-1 bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-cyan-500 outline-none text-white">
+                        <button id="btn-send-chat" class="bg-cyan-500 text-black px-5 py-2 rounded-xl font-black hover:scale-105 transition">إرسال</button>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-8 rounded-[2rem] w-full max-w-sm text-center">
-            <h4 class="text-white font-black mb-6 italic">تعديل وقت اليوم</h4>
+    <div id="edit-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
+            <h4 class="text-xl text-white font-black mb-6 italic">تعديل الوقت</h4>
             <div class="flex justify-center gap-4 mb-8">
-                <select id="edit-hours" class="text-lg"></select>
-                <select id="edit-mins" class="text-lg"></select>
+                <select id="edit-hours" class="text-lg p-3"></select>
+                <select id="edit-mins" class="text-lg p-3"></select>
             </div>
             <div class="flex gap-4">
-                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-3 rounded-xl font-black">حفظ</button>
-                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-3 rounded-xl">إلغاء</button>
+                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-4 rounded-2xl font-black">حفظ التغيير</button>
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl">إلغاء</button>
             </div>
         </div>
     </div>
@@ -93,7 +94,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
@@ -118,9 +119,10 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
+                
                 await setDoc(doc(db, "users", u.uid), { displayName: u.displayName, uid: u.uid }, { merge: true });
-                const savedStartTime = sessionStorage.getItem('study_start_time');
-                if (savedStartTime) resumeTimer(parseInt(savedStartTime));
+                
+                if (sessionStorage.getItem('study_start_time')) startTimerLogic(parseInt(sessionStorage.getItem('study_start_time')));
                 loadLeaderboard(); loadStudyLog(); loadChat();
             }
         });
@@ -128,34 +130,26 @@
         window.addEventListener('unload', () => { if (user) updateDoc(doc(db, "users", user.uid), { status: "مريح شوية ☕" }); });
 
         document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('btn-logout').onclick = () => { sessionStorage.removeItem('study_start_time'); signOut(auth); };
+        document.getElementById('btn-logout').onclick = () => { sessionStorage.clear(); signOut(auth); };
 
-        // التايمر
+        // العداد
         document.getElementById('btn-timer').onclick = function() {
             if (!isRunning) {
-                const startTime = Date.now();
-                sessionStorage.setItem('study_start_time', startTime);
-                startTimerLogic(startTime);
+                const start = Date.now();
+                sessionStorage.setItem('study_start_time', start);
+                startTimerLogic(start);
             } else { stopTimerLogic(); }
-        };
-
-        // إضافة يدوية
-        document.getElementById('btn-add-manual').onclick = async function() {
-            const h = parseInt(document.getElementById('manual-hours').value);
-            const m = parseInt(document.getElementById('manual-mins').value);
-            const total = (h * 60) + m;
-            if (total > 0) await saveProgress(total, todayStr);
         };
 
         function startTimerLogic(startTime) {
             isRunning = true;
-            document.getElementById('btn-timer').innerText = "إيقاف الجلسة";
+            document.getElementById('btn-timer').innerText = "إيقاف مؤقت";
             document.getElementById('btn-timer').classList.replace('bg-cyan-500', 'bg-red-500');
             updateStatusInDB("بيذاكر دلوقتي 🔥");
             timerInterval = setInterval(() => {
                 seconds = Math.floor((Date.now() - startTime) / 1000);
                 updateDisplay();
-                if (seconds > 0 && seconds % 60 === 0) saveProgress(1, todayStr);
+                if (seconds > 0 && seconds % 60 === 0) forceSave(1, todayStr);
             }, 1000);
         }
 
@@ -167,13 +161,46 @@
             seconds = 0; updateDisplay(); updateStatusInDB("مريح شوية ☕");
         }
 
-        function resumeTimer(startTime) { startTimerLogic(startTime); }
+        // الإضافة اليدوية (مصلحة)
+        document.getElementById('btn-add-manual').onclick = async function() {
+            const h = parseInt(document.getElementById('manual-hours').value);
+            const m = parseInt(document.getElementById('manual-mins').value);
+            const total = (h * 60) + m;
+            if (total > 0) {
+                await forceSave(total, todayStr);
+                alert("تمت الإضافة بنجاح يا بطل!");
+            }
+        };
+
+        async function forceSave(mins, dateStr) {
+            if (!user) return;
+            const userRef = doc(db, "users", user.uid);
+            const logRef = doc(db, "users", user.uid, "logs", dateStr);
+
+            try {
+                // حفظ في السجل أولاً
+                const logSnap = await getDoc(logRef);
+                if (!logSnap.exists()) {
+                    await setDoc(logRef, { date: dateStr, mins: mins });
+                } else {
+                    await updateDoc(logRef, { mins: increment(mins) });
+                }
+
+                // حفظ في الليدربورد لو النهاردة
+                if (dateStr === todayStr) {
+                    const userSnap = await getDoc(userRef);
+                    if (!userSnap.exists() || userSnap.data().daily_mins === undefined) {
+                        await setDoc(userRef, { daily_mins: mins }, { merge: true });
+                    } else {
+                        await updateDoc(userRef, { daily_mins: increment(mins) });
+                    }
+                }
+            } catch (e) { console.error("Save Error:", e); }
+        }
 
         async function updateStatusInDB(status) {
-            if (user) {
-                await updateDoc(doc(db, "users", user.uid), { status: status });
-                document.getElementById('user-status-text').innerText = status;
-            }
+            if (user) await updateDoc(doc(db, "users", user.uid), { status: status }).catch(() => {});
+            document.getElementById('user-status-text').innerText = status;
         }
 
         function updateDisplay() {
@@ -183,58 +210,39 @@
             document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
         }
 
-        async function saveProgress(mins, dateStr) {
-            if (!user) return;
-            const userRef = doc(db, "users", user.uid);
-            const logRef = doc(db, "users", user.uid, "logs", dateStr);
-            if (dateStr === todayStr) await setDoc(userRef, { daily_mins: increment(mins) }, { merge: true });
-            await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
-        }
-
-        // شات الصحاب
-        document.getElementById('btn-send-chat').onclick = sendChat;
-        document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendChat(); };
-
+        // الشات
         async function sendChat() {
             const input = document.getElementById('chat-input');
             if (input.value.trim() && user) {
-                await addDoc(collection(db, "chat"), {
-                    text: input.value,
-                    sender: user.displayName,
-                    uid: user.uid,
-                    timestamp: serverTimestamp()
-                });
+                await addDoc(collection(db, "chat"), { text: input.value, sender: user.displayName, uid: user.uid, timestamp: serverTimestamp() });
                 input.value = '';
             }
         }
+        document.getElementById('btn-send-chat').onclick = sendChat;
+        document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendChat(); };
 
         function loadChat() {
             onSnapshot(query(collection(db, "chat"), orderBy("timestamp", "asc"), limit(50)), (snap) => {
-                const box = document.getElementById('chat-messages');
-                box.innerHTML = '';
+                const box = document.getElementById('chat-messages'); box.innerHTML = '';
                 snap.forEach(d => {
-                    const data = d.data();
-                    const isMe = data.uid === user.uid;
-                    box.innerHTML += `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <span class="text-[9px] text-slate-500 px-2">${data.sender}</span>
-                            <div class="${isMe ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-white'} px-4 py-2 rounded-2xl text-xs max-w-[80%] font-bold">
-                                ${data.text}
-                            </div>
-                        </div>`;
+                    const data = d.data(); const isMe = data.uid === user.uid;
+                    box.innerHTML += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                        <span class="text-[10px] text-slate-500 px-2 font-bold">${data.sender}</span>
+                        <div class="${isMe ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-white'} px-4 py-2 rounded-2xl max-w-[85%] font-medium">
+                            ${data.text}
+                        </div></div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        // تعديل السجل بالاختيارات
+        // التعديل مصلح
         window.openEditModal = function(date, currentMins) {
             editingDate = date;
-            const hSelect = document.getElementById('edit-hours');
-            const mSelect = document.getElementById('edit-mins');
+            const hSelect = document.getElementById('edit-hours'); const mSelect = document.getElementById('edit-mins');
             hSelect.innerHTML = ''; mSelect.innerHTML = '';
-            for(let i=0;i<=12;i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} س</option>`;
-            for(let i=0;i<=59;i++) mSelect.innerHTML += `<option value="${i}" ${currentMins%60==i?'selected':''}>${i} د</option>`;
+            for(let i=0;i<=12;i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} ساعة</option>`;
+            for(let i=0;i<=59;i++) mSelect.innerHTML += `<option value="${i}" ${currentMins%60==i?'selected':''}>${i} دقيقة</option>`;
             document.getElementById('edit-modal').classList.remove('hidden');
         };
 
@@ -243,53 +251,41 @@
             const m = parseInt(document.getElementById('edit-mins').value);
             const newTotal = (h * 60) + m;
             const logRef = doc(db, "users", user.uid, "logs", editingDate);
-            
-            // جلب القيمة الحالية لحساب الفرق لليوم الحالي فقط
             const snap = await getDoc(logRef);
             const oldTotal = snap.exists() ? snap.data().mins : 0;
             const diff = newTotal - oldTotal;
 
             await setDoc(logRef, { mins: newTotal }, { merge: true });
-            if (editingDate === todayStr) await updateDoc(doc(db, "users", user.uid), { daily_mins: increment(diff) });
-            
+            if (editingDate === todayStr) {
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, { daily_mins: increment(diff) });
+            }
             document.getElementById('edit-modal').classList.add('hidden');
         };
 
         function loadLeaderboard() {
             onSnapshot(query(collection(db, "users"), orderBy("daily_mins", "desc"), limit(10)), (snap) => {
-                const list = document.getElementById('leaderboard-list');
-                list.innerHTML = '';
+                const list = document.getElementById('leaderboard-list'); list.innerHTML = '';
                 snap.docs.forEach((d, i) => {
                     const data = d.data();
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-700'}">
-                            <div class="flex items-center gap-3">
-                                <span class="font-black text-slate-500">#${i + 1}</span>
-                                <div class="text-right">
-                                    <p class="font-bold text-white text-sm">${data.displayName}</p>
-                                    <p class="text-[9px] font-black ${data.status?.includes('🔥') ? 'text-orange-400' : 'text-slate-500'} uppercase">${data.status || 'مريح'}</p>
-                                </div>
-                            </div>
-                            <span class="text-cyan-400 font-mono font-black">${Math.round(data.daily_mins || 0)} د</span>
-                        </div>`;
+                    list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-700'}">
+                        <div class="flex items-center gap-3"><span class="font-black text-slate-500">#${i + 1}</span>
+                        <div class="text-right"><p class="font-bold text-white text-sm">${data.displayName}</p>
+                        <p class="text-[9px] font-black ${data.status?.includes('🔥') ? 'text-orange-400' : 'text-slate-500'} uppercase">${data.status || 'مريح'}</p></div></div>
+                        <span class="text-cyan-400 font-mono font-black">${Math.round(data.daily_mins || 0)} د</span></div>`;
                 });
             });
         }
 
         function loadStudyLog() {
             onSnapshot(collection(db, "users", user.uid, "logs"), (snap) => {
-                const logDiv = document.getElementById('study-log');
-                logDiv.innerHTML = '';
+                const logDiv = document.getElementById('study-log'); logDiv.innerHTML = '';
                 snap.docs.sort((a,b) => b.id.localeCompare(a.id)).forEach(d => {
                     const data = d.data();
-                    logDiv.innerHTML += `
-                        <div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-xl border border-slate-700 mb-2">
-                            <span class="text-slate-400 text-sm font-bold font-mono">${data.date}</span>
-                            <div class="flex items-center gap-4">
-                                <span class="text-white font-black">${data.mins || 0} دقيقة</span>
-                                <button class="text-cyan-500 text-lg" onclick="window.openEditModal('${data.date}', ${data.mins || 0})">✎</button>
-                            </div>
-                        </div>`;
+                    logDiv.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-2xl border border-slate-800 mb-2">
+                        <span class="text-slate-400 text-sm font-bold font-mono">${data.date}</span>
+                        <div class="flex items-center gap-4"><span class="text-white font-black text-lg">${data.mins || 0} دقيقة</span>
+                        <button class="text-cyan-500 text-2xl" onclick="window.openEditModal('${data.date}', ${data.mins || 0})">✎</button></div></div>`;
                 });
             });
         }
