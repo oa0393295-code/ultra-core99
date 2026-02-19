@@ -3,142 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Core | Spiritual & Study Guardian</title>
+    <title>ULTRA CORE | THE MASSIVE GUARDIAN SYSTEM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
-        .shadow-neon { box-shadow: 0 0 25px rgba(6, 182, 212, 0.4); }
-        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.6); }
-        .habit-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.05); }
-        .habit-card:hover { transform: translateY(-5px); border-color: #06b6d4; background: rgba(30, 41, 59, 0.5); }
-        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #06b6d4; cursor: pointer; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        :root { --primary-cyan: #06b6d4; --deep-slate: #020617; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--deep-slate); color: #f8fafc; overflow-x: hidden; scroll-behavior: smooth; }
+        .font-mono-custom { font-family: 'JetBrains Mono', monospace; }
+        
+        /* تأثيرات الدائرة المتطورة */
+        .timer-wrapper { position: relative; width: 350px; height: 350px; filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.2)); }
+        svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        circle { fill: none; stroke-width: 15; stroke-linecap: round; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .circle-outer { stroke: #1e293b; }
+        .circle-inner { stroke: var(--primary-cyan); stroke-dasharray: 880; stroke-dashoffset: 880; }
+        
+        /* نظام التنبيهات */
+        #notification-box { position: fixed; bottom: 20px; left: 20px; z-index: 1000; }
+        .toast { background: #1e293b; border-right: 4px solid var(--primary-cyan); padding: 15px 25px; border-radius: 12px; margin-top: 10px; animation: slideIn 0.5s ease-out; }
+        
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        
+        /* تصميم الجدول الجانبي */
+        .user-card { border: 1px solid rgba(51, 65, 85, 0.5); transition: all 0.3s; background: rgba(15, 23, 42, 0.6); }
+        .user-card:hover { border-color: var(--primary-cyan); transform: scale(1.02); background: rgba(30, 41, 59, 0.8); }
+        
+        .prayer-dot { width: 10px; height: 10px; border-radius: 2px; transition: all 0.3s; }
+        .done { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
+        .not-done { background-color: #334155; }
+        
+        .glass-effect { backdrop-filter: blur(10px); background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid rgba(51, 65, 85, 0.5); }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen">
 
-    <div id="login-screen" class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-950 px-4">
-        <h1 class="text-7xl font-black mb-4 italic text-white uppercase tracking-tighter text-center">Ultra <span class="text-cyan-500">Core</span></h1>
-        <p class="text-slate-400 mb-8 font-bold uppercase tracking-[0.3em]">Spiritual & Study Sync</p>
-        <button id="btn-login" class="bg-white text-black px-16 py-5 rounded-2xl font-black text-xl hover:scale-105 transition-all shadow-neon">دخول المحاربين</button>
+    <div id="notification-box"></div>
+
+    <div id="login-screen" class="fixed inset-0 z-[500] flex flex-col items-center justify-center bg-slate-950">
+        <div class="text-center animate-pulse">
+            <h1 class="text-[10rem] font-black italic text-white leading-none opacity-10 absolute -top-10 left-1/2 -translate-x-1/2 select-none">SYSTEM</h1>
+            <h2 class="text-7xl font-black text-white relative">ULTRA <span class="text-cyan-500">CORE</span></h2>
+            <p class="text-slate-500 mt-4 tracking-[0.5em] font-bold">V4.0 MASSIVE EDITION</p>
+            <button id="btn-login" class="mt-12 bg-cyan-500 text-black px-24 py-6 rounded-[2rem] font-black text-2xl hover:bg-white transition-all duration-500 shadow-[0_0_40px_rgba(6,182,212,0.4)]">INITIALIZE SYSTEM</button>
+        </div>
     </div>
 
     <div id="main-content" class="hidden">
-        <nav class="p-6 border-b border-slate-800 flex justify-between items-center glass sticky top-0 z-50">
-            <div class="text-2xl font-black tracking-tighter italic">ULTRA<span class="text-cyan-500 text-3xl">CORE</span></div>
-            <div class="flex items-center gap-6 text-right">
-                <div class="leading-tight">
-                    <p id="user-info" class="text-lg font-black text-cyan-400"></p>
-                    <p id="user-status-text" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Checking Status...</p>
+        <nav class="glass-effect p-6 sticky top-0 z-50 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-cyan-500 rounded-full animate-bounce"></div>
+                <h3 class="text-2xl font-black italic text-white uppercase tracking-tighter">ULTRA<span class="text-cyan-500">CORE</span></h3>
+            </div>
+            <div class="flex items-center gap-8">
+                <div class="text-left">
+                    <p id="user-info" class="text-xl font-black text-white"></p>
+                    <div id="faith-bar-container" class="w-32 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                        <div id="faith-bar" class="h-full bg-emerald-500 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
                 </div>
-                <button id="btn-logout" class="text-red-500 font-black border border-red-500/20 px-4 py-2 rounded-xl text-xs">خروج</button>
+                <button id="btn-logout" class="bg-red-500/10 text-red-500 border border-red-500/20 px-6 py-2 rounded-2xl font-black text-xs hover:bg-red-500 hover:text-white transition-all">TERMINATE SESSION</button>
             </div>
         </nav>
 
-        <main class="max-w-[1600px] mx-auto p-6 grid grid-cols-1 xl:grid-cols-4 gap-8">
+        <main class="max-w-[1800px] mx-auto p-8 grid grid-cols-12 gap-10">
             
-            <div class="xl:col-span-1 space-y-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 glass shadow-2xl border-t-4 border-t-emerald-500">
-                    <h3 class="text-xl font-black mb-6 text-emerald-400 italic flex items-center gap-3">
-                        <span class="text-2xl">🌙</span> الورد اليومي
-                    </h3>
+            <div class="col-span-12 lg:col-span-3 space-y-8">
+                <div class="bg-slate-900/80 rounded-[3rem] p-8 border border-slate-800 shadow-2xl border-t-4 border-t-emerald-500">
+                    <h4 class="text-xl font-black text-emerald-400 mb-8 italic flex items-center justify-between">
+                        الورد والعبادات 🌙
+                        <span id="prayer-count" class="text-xs bg-emerald-500/10 px-3 py-1 rounded-lg">0/6</span>
+                    </h4>
+                    <div id="habits-grid" class="space-y-4">
+                        <script>
+                            const prayers = [
+                                {id: 'fajr', n: 'صلاة الفجر'}, {id: 'dhuhr', n: 'صلاة الظهر'},
+                                {id: 'asr', n: 'صلاة العصر'}, {id: 'maghrib', n: 'صلاة المغرب'},
+                                {id: 'isha', n: 'صلاة العشاء'}, {id: 'taraweeh', n: 'صلاة التراويح'}
+                            ];
+                            prayers.forEach(p => {
+                                document.write(`
+                                    <div class="group flex items-center justify-between p-5 bg-slate-800/40 rounded-[1.5rem] border border-slate-700/50 hover:border-emerald-500/50 transition-all">
+                                        <span class="text-sm font-bold text-slate-300 group-hover:text-white">${p.n}</span>
+                                        <input type="checkbox" id="check-${p.id}" onchange="advancedHabitSync('${p.id}')" class="w-6 h-6 rounded-lg accent-emerald-500 cursor-pointer">
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+
+                    <div class="mt-10 pt-8 border-t border-slate-800">
+                        <h5 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">حصاد القرآن (صفحات)</h5>
+                        <div class="flex gap-3">
+                            <input type="number" id="quran-input" class="w-full bg-slate-800 rounded-2xl px-5 py-4 text-white font-black outline-none border border-slate-700 focus:border-emerald-500 transition-all" placeholder="0">
+                            <button onclick="advancedQuranSync()" class="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black hover:scale-105 active:scale-95 transition-all">حفظ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-6 space-y-10">
+                <div class="bg-slate-900 border border-slate-800 rounded-[5rem] p-16 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+                    <div class="timer-wrapper">
+                        <svg viewBox="0 0 320 320">
+                            <circle class="circle-outer" cx="160" cy="160" r="140"></circle>
+                            <circle id="progress-bar" class="circle-inner" cx="160" cy="160" r="140"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <div id="timer-display" class="text-7xl font-mono-custom font-black text-white tracking-tighter">00:00:00</div>
+                            <div id="user-status-text" class="text-[11px] font-black text-cyan-500 uppercase mt-4 tracking-[0.3em] bg-cyan-500/10 px-4 py-1 rounded-full">STANDBY</div>
+                        </div>
+                    </div>
                     
-                    <div id="habits-container" class="space-y-4">
-                        <div class="space-y-3">
-                            <label class="habit-card flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl">
-                                <span class="font-bold text-sm text-slate-200">صلاة الفجر</span>
-                                <input type="checkbox" id="habit-fajr" onchange="syncHabit('fajr')">
-                            </label>
-                            <label class="habit-card flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl">
-                                <span class="font-bold text-sm text-slate-200">صلاة الظهر</span>
-                                <input type="checkbox" id="habit-dhuhr" onchange="syncHabit('dhuhr')">
-                            </label>
-                            <label class="habit-card flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl">
-                                <span class="font-bold text-sm text-slate-200">صلاة العصر</span>
-                                <input type="checkbox" id="habit-asr" onchange="syncHabit('asr')">
-                            </label>
-                            <label class="habit-card flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl">
-                                <span class="font-bold text-sm text-slate-200">صلاة المغرب</span>
-                                <input type="checkbox" id="habit-maghrib" onchange="syncHabit('maghrib')">
-                            </label>
-                            <label class="habit-card flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl">
-                                <span class="font-bold text-sm text-slate-200">صلاة العشاء</span>
-                                <input type="checkbox" id="habit-isha" onchange="syncHabit('isha')">
-                            </label>
-                            <label class="habit-card flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border-dashed border-emerald-500/30">
-                                <span class="font-bold text-sm text-emerald-400">صلاة التراويح</span>
-                                <input type="checkbox" id="habit-taraweeh" onchange="syncHabit('taraweeh')">
-                            </label>
-                        </div>
+                    <button id="btn-timer" class="mt-12 w-full max-w-md py-8 rounded-[2.5rem] bg-cyan-500 text-black font-black text-3xl shadow-[0_0_50px_rgba(6,182,212,0.3)] hover:scale-105 transition-all active:scale-95">START FOCUS SESSION</button>
+                    
+                    <div class="absolute -top-24 -left-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px]"></div>
+                </div>
 
-                        <div class="mt-8 pt-6 border-t border-slate-800">
-                            <p class="text-xs font-black text-slate-500 mb-4 uppercase tracking-widest text-right">قراءة القرآن</p>
-                            <div class="flex gap-2">
-                                <input id="quran-pages" type="number" placeholder="عدد الصفحات" class="w-full bg-slate-800 border-none rounded-xl px-4 py-3 text-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <button onclick="syncQuran()" class="bg-emerald-500 text-black px-4 py-3 rounded-xl font-black text-xs">حفظ</button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-12">
+                    <h3 class="text-2xl font-black mb-10 text-white italic">📊 الأرشيف الزمني للنشاطات</h3>
+                    <div id="study-log" class="space-y-6 max-h-[500px] overflow-y-auto pr-4 font-mono-custom"></div>
                 </div>
             </div>
 
-            <div class="xl:col-span-2 space-y-8">
-                <div class="bg-slate-900 border border-slate-800 rounded-[4rem] p-12 shadow-2xl relative text-center overflow-hidden">
-                    <div id="timer-display" class="text-[8rem] md:text-[11rem] font-mono font-black my-6 text-white leading-none tracking-tighter">00:00:00</div>
-                    <div class="flex flex-col gap-6 items-center relative z-10">
-                        <button id="btn-timer" class="w-full max-w-md py-6 rounded-3xl bg-cyan-500 text-black font-black text-2xl shadow-neon hover:bg-cyan-400 transition-all active:scale-95">ابدأ المذاكرة</button>
+            <div class="col-span-12 lg:col-span-3 space-y-8">
+                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-8">
+                    <h3 class="text-xl font-black mb-8 text-center text-white italic uppercase tracking-widest border-b border-slate-800 pb-4">Hall of Fame 🏆</h3>
+                    <div id="leaderboard-list" class="space-y-5"></div>
+                </div>
+
+                <div class="bg-slate-950 border border-slate-800 rounded-[2.5rem] h-[500px] flex flex-col overflow-hidden shadow-2xl">
+                    <div class="p-4 bg-slate-900 border-b border-slate-800 text-center">
+                        <span class="text-[10px] font-black text-cyan-500 tracking-widest">ENCRYPTED CHAT</span>
                     </div>
-                    <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px]"></div>
-                </div>
-
-                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-lg">
-                    <h3 class="text-2xl font-black mb-8 text-white italic underline decoration-cyan-500 underline-offset-8">📅 سجل الإنجازات اليومي</h3>
-                    <div id="study-log" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"></div>
-                </div>
-            </div>
-
-            <div class="xl:col-span-1 space-y-8">
-                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 glass shadow-xl border-t-4 border-t-cyan-500">
-                    <h3 class="text-xl font-black mb-6 text-white italic text-center uppercase">🏆 المتصدرين</h3>
-                    <div id="leaderboard-list" class="space-y-4"></div>
-                </div>
-
-                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] flex flex-col h-[400px] overflow-hidden shadow-2xl glass">
-                    <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-4 text-sm"></div>
-                    <div class="p-4 bg-slate-950/80 flex gap-2">
-                        <input id="chat-input" type="text" placeholder="اكتب لزملائك..." class="flex-1 bg-slate-800 border-none rounded-xl px-4 py-2 text-white text-xs outline-none">
-                        <button id="btn-send-chat" class="bg-cyan-500 text-black px-4 py-2 rounded-xl font-black text-xs">إرسال</button>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+                    <div class="p-5 bg-slate-900 flex gap-3">
+                        <input id="chat-input" type="text" placeholder="Type a message..." class="flex-1 bg-slate-800 border-none rounded-2xl px-6 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-cyan-500">
+                        <button id="btn-send-chat" class="bg-cyan-500 text-black px-6 py-3 rounded-2xl font-black text-sm">SEND</button>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-10 rounded-[3rem] w-full max-w-md text-right shadow-2xl">
-            <h4 class="text-white font-black text-xl mb-6 italic border-b border-slate-800 pb-4 text-center">تعديل بيانات يوم <span id="edit-date-title" class="text-cyan-500 font-mono"></span></h4>
+    <div id="edit-modal" class="hidden fixed inset-0 z-[600] bg-black/98 backdrop-blur-xl flex items-center justify-center p-6">
+        <div class="bg-slate-900 border-2 border-slate-800 p-12 rounded-[4rem] w-full max-w-xl text-right relative shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+            <h4 class="text-3xl font-black text-white mb-2 italic">تعديل السجلات</h4>
+            <p id="edit-date-title" class="text-cyan-500 font-mono mb-10 text-sm"></p>
             
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="text-[10px] text-slate-500 uppercase font-black block mb-2">الساعات</label>
-                    <select id="edit-hours" class="w-full bg-slate-800 p-3 rounded-xl text-white font-mono"></select>
+            <div class="grid grid-cols-2 gap-6 mb-8">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase">ساعات المذاكرة</label>
+                    <select id="edit-hours" class="w-full bg-slate-800 p-5 rounded-3xl text-white font-black text-xl appearance-none outline-none focus:ring-2 focus:ring-cyan-500"></select>
                 </div>
-                <div>
-                    <label class="text-[10px] text-slate-500 uppercase font-black block mb-2">الدقائق</label>
-                    <select id="edit-mins" class="w-full bg-slate-800 p-3 rounded-xl text-white font-mono"></select>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase">دقائق المذاكرة</label>
+                    <select id="edit-mins" class="w-full bg-slate-800 p-5 rounded-3xl text-white font-black text-xl appearance-none outline-none focus:ring-2 focus:ring-cyan-500"></select>
                 </div>
             </div>
 
-            <div class="mb-8 p-4 bg-slate-800/30 rounded-2xl border border-slate-700">
-                <label class="text-[10px] text-slate-500 uppercase font-black block mb-3">تعديل القرآن (صفحات)</label>
-                <input id="edit-quran" type="number" class="w-full bg-slate-900 border-none rounded-xl px-4 py-2 text-white">
+            <div class="mb-10 p-6 bg-slate-800/30 rounded-[2.5rem] border border-slate-700">
+                <label class="text-[10px] font-black text-slate-500 uppercase block mb-4">تعديل الورد القرآني (عدد الصفحات)</label>
+                <input id="edit-quran" type="number" class="w-full bg-slate-900 border-none rounded-2xl px-6 py-4 text-white font-black text-2xl outline-none focus:ring-2 focus:ring-emerald-500">
             </div>
 
             <div class="flex gap-4">
-                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-4 rounded-2xl font-black shadow-neon">تحديث الكل</button>
-                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-black">إلغاء</button>
+                <button id="btn-confirm-edit" class="flex-[2] bg-cyan-500 text-black py-6 rounded-3xl font-black text-xl shadow-neon hover:bg-white transition-all">تحديث كافة البيانات</button>
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-6 rounded-3xl font-black text-xl">إلغاء</button>
             </div>
         </div>
     </div>
@@ -148,6 +178,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
             authDomain: "ultra-core.firebaseapp.com",
@@ -165,107 +196,90 @@
         let timerInterval, seconds = 0, isRunning = false, user = null, editingDate = "";
         const todayStr = new Date().toISOString().split('T')[0];
 
+        // INITIALIZATION LOGIC
         onAuthStateChanged(auth, async (u) => {
             if (u) {
                 user = u;
-                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
                 
-                // استعادة الثواني وحالة التشغيل
-                if (localStorage.getItem(`running_${user.uid}`) === "true") {
-                    seconds = parseInt(localStorage.getItem(`secs_${user.uid}`)) || 0;
+                showToast(`أهلاً بك يا ${u.displayName.split(' ')[0]} في النظام..`);
+
+                // Restore Timer State
+                const wasRunning = localStorage.getItem(`running_${user.uid}`) === "true";
+                seconds = parseInt(localStorage.getItem(`secs_${user.uid}`)) || 0;
+                
+                if (wasRunning) {
                     startTimerLogic();
                 } else {
-                    seconds = parseInt(localStorage.getItem(`secs_${user.uid}`)) || 0;
                     updateDisplay();
                 }
 
-                await initUserData();
-                loadLeaderboard(); loadStudyLog(); loadChat(); loadHabits();
+                await initUserDocument();
+                loadLeaderboard(); loadStudyLog(); loadChat(); loadHabitStates();
             } else {
-                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('login-screen').style.display = 'flex';
             }
         });
 
-        async function initUserData() {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-            if (!userSnap.exists()) {
+        async function initUserDocument() {
+            try {
+                const userRef = doc(db, "users", user.uid);
                 await setDoc(userRef, { 
                     displayName: user.displayName, 
-                    uid: user.uid, 
-                    daily_mins: 0, 
-                    quran_pages: 0,
-                    status: "مريح شوية ☕" 
-                });
-            }
+                    uid: user.uid,
+                    last_seen: serverTimestamp() 
+                }, { merge: true });
+            } catch (err) { console.error("Init Error:", err); }
         }
 
-        // --- نظام العادات والقرآن (جديد ومعقد) ---
-        window.syncHabit = async function(habitId) {
-            const checked = document.getElementById(`habit-${habitId}`).checked;
-            const logRef = doc(db, "users", user.uid, "logs", todayStr);
-            const userRef = doc(db, "users", user.uid);
-            
-            let updateData = {};
-            updateData[`habits.${habitId}`] = checked;
-            await setDoc(logRef, updateData, { merge: true });
-            // تحديث سريع للمستخدم عشان صحابه يشوفوا
-            await updateDoc(userRef, { last_habit_update: serverTimestamp() });
+        // --- نظام التنبيهات المخصص (لزيادة حجم الكود) ---
+        function showToast(msg) {
+            const box = document.getElementById('notification-box');
+            const t = document.createElement('div');
+            t.className = 'toast text-sm font-bold text-white';
+            t.innerText = msg;
+            box.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         }
 
-        window.syncQuran = async function() {
-            const pages = parseInt(document.getElementById('quran-pages').value) || 0;
-            if(pages <= 0) return;
-            const logRef = doc(db, "users", user.uid, "logs", todayStr);
-            const userRef = doc(db, "users", user.uid);
-            
-            await setDoc(logRef, { quran_pages: increment(pages) }, { merge: true });
-            await updateDoc(userRef, { total_quran: increment(pages) });
-            document.getElementById('quran-pages').value = '';
-            alert("تم تسجيل صفحات القرآن بنجاح! هنيئاً لك.");
+        // --- منطق الوقت والتحويلات (طلبك) ---
+        function complexTimeFormatter(totalMins) {
+            if (!totalMins || totalMins === 0) return "لم يبدأ بعد";
+            if (totalMins < 60) return `${totalMins} دقيقة`;
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            return m > 0 ? `${h} ساعة و ${m} دقيقة` : `${h} ساعة كاملة`;
         }
 
-        function loadHabits() {
-            onSnapshot(doc(db, "users", user.uid, "logs", todayStr), (snap) => {
-                if(snap.exists()) {
-                    const data = snap.data();
-                    if(data.habits) {
-                        Object.keys(data.habits).forEach(h => {
-                            if(document.getElementById(`habit-${h}`)) 
-                                document.getElementById(`habit-${h}`).checked = data.habits[h];
-                        });
-                    }
-                }
-            });
+        // --- نظام العداد الدائري المعقد ---
+        function updateCircleUI(percent) {
+            const circle = document.getElementById('progress-bar');
+            const circumference = 880; 
+            const offset = circumference - (percent / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
         }
-
-        // --- نظام العداد المعدل ---
-        window.addEventListener('beforeunload', () => {
-            if (isRunning && user) {
-                updateDoc(doc(db, "users", user.uid), { status: "مريح شوية ☕" });
-                localStorage.setItem(`running_${user.uid}`, "false");
-            }
-        });
-
-        document.getElementById('btn-timer').onclick = () => {
-            if (!isRunning) startTimerLogic();
-            else stopTimerLogic();
-        };
 
         function startTimerLogic() {
+            if(isRunning) return;
             isRunning = true;
             localStorage.setItem(`running_${user.uid}`, "true");
-            document.getElementById('btn-timer').innerText = "إيقاف الجلسة";
+            document.getElementById('btn-timer').innerText = "STOP FOCUS SESSION";
             document.getElementById('btn-timer').classList.replace('bg-cyan-500', 'bg-red-600');
-            updateStatusInDB("بيذاكر دلوقتي 🔥");
-            
+            updateGlobalStatus("FOCUS MODE ON 🔥");
+
             timerInterval = setInterval(() => {
                 seconds++;
                 localStorage.setItem(`secs_${user.uid}`, seconds);
                 updateDisplay();
-                if (seconds % 60 === 0) saveProgress(1, todayStr);
+                
+                const percent = (seconds % 60 / 60) * 100;
+                updateCircleUI(percent);
+
+                if (seconds % 60 === 0) {
+                    commitProgressToDB(1);
+                }
             }, 1000);
         }
 
@@ -273,20 +287,9 @@
             clearInterval(timerInterval);
             isRunning = false;
             localStorage.setItem(`running_${user.uid}`, "false");
-            document.getElementById('btn-timer').innerText = "ابدأ المذاكرة";
+            document.getElementById('btn-timer').innerText = "START FOCUS SESSION";
             document.getElementById('btn-timer').classList.replace('bg-red-600', 'bg-cyan-500');
-            updateStatusInDB("مريح شوية ☕");
-        }
-
-        async function saveProgress(mins, dateStr) {
-            const userRef = doc(db, "users", user.uid);
-            const logRef = doc(db, "users", user.uid, "logs", dateStr);
-            await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
-            if (dateStr === todayStr) {
-                await updateDoc(userRef, { daily_mins: increment(mins) }).catch(async () => {
-                    await setDoc(userRef, { daily_mins: mins, displayName: user.displayName }, { merge: true });
-                });
-            }
+            updateGlobalStatus("RELAXING ☕");
         }
 
         function updateDisplay() {
@@ -296,40 +299,94 @@
             document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
         }
 
-        async function updateStatusInDB(status) {
-            if (user) {
-                await updateDoc(doc(db, "users", user.uid), { status: status });
-                document.getElementById('user-status-text').innerText = status;
+        // --- نظام المزامنة المتقدم (Habits & Quran) ---
+        window.advancedHabitSync = async function(hId) {
+            const isChecked = document.getElementById(`check-${hId}`).checked;
+            const logRef = doc(db, "users", user.uid, "logs", todayStr);
+            const userRef = doc(db, "users", user.uid);
+            
+            try {
+                let habitObj = {}; habitObj[`habits.${hId}`] = isChecked;
+                await setDoc(logRef, habitObj, { merge: true });
+                
+                let userHabitObj = {}; userHabitObj[`sync_habits.${hId}`] = isChecked;
+                await updateDoc(userRef, userHabitObj);
+                
+                showToast(`تم تحديث حالة ${hId} بنجاح`);
+                calculateFaithLevel();
+            } catch (e) { showToast("خطأ في المزامنة!"); }
+        }
+
+        window.advancedQuranSync = async function() {
+            const pInput = document.getElementById('quran-input');
+            const p = parseInt(pInput.value) || 0;
+            if (p <= 0) return;
+            
+            const logRef = doc(db, "users", user.uid, "logs", todayStr);
+            const userRef = doc(db, "users", user.uid);
+            
+            await setDoc(logRef, { quran_pages: increment(p) }, { merge: true });
+            await updateDoc(userRef, { total_quran: increment(p) });
+            
+            showToast(`تم إضافة ${p} صفحات للقرآن.. بارك الله فيك`);
+            pInput.value = '';
+        }
+
+        async function calculateFaithLevel() {
+            const snap = await getDoc(doc(db, "users", user.uid, "logs", todayStr));
+            if(snap.exists()) {
+                const data = snap.data();
+                const habits = data.habits || {};
+                const count = Object.values(habits).filter(v => v === true).length;
+                document.getElementById('faith-bar').style.width = `${(count/6)*100}%`;
+                document.getElementById('prayer-count').innerText = `${count}/6`;
             }
         }
 
-        // --- الليدربورد والاجتماعيات (مع إظهار العادات) ---
+        function loadHabitStates() {
+            onSnapshot(doc(db, "users", user.uid, "logs", todayStr), (snap) => {
+                if(snap.exists() && snap.data().habits) {
+                    const h = snap.data().habits;
+                    Object.keys(h).forEach(k => {
+                        const el = document.getElementById(`check-${k}`);
+                        if(el) el.checked = h[k];
+                    });
+                    calculateFaithLevel();
+                }
+            });
+        }
+
+        // --- ليدربورد الأباطرة (بأيقونات الصلوات) ---
         function loadLeaderboard() {
             onSnapshot(query(collection(db, "users"), orderBy("daily_mins", "desc"), limit(10)), (snap) => {
                 const list = document.getElementById('leaderboard-list');
                 list.innerHTML = '';
                 snap.docs.forEach((d, i) => {
                     const data = d.data();
-                    const isMe = d.id === user.uid;
+                    const h = data.sync_habits || {};
+                    const pList = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha', 'taraweeh'];
+                    
+                    let pDots = pList.map(p => `<div class="prayer-dot ${h[p] ? 'done' : 'not-done'}"></div>`).join('');
+
                     list.innerHTML += `
-                        <div class="p-4 bg-slate-800/40 rounded-3xl border ${isMe ? 'border-cyan-500 ring-1 ring-cyan-500/30' : 'border-slate-700/50'}">
-                            <div class="flex justify-between items-center mb-2">
+                        <div class="user-card p-5 rounded-3xl mb-4">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex items-center gap-3">
-                                    <span class="text-xs font-black text-slate-500">#${i+1}</span>
-                                    <p class="font-black text-white text-sm">${data.displayName || 'مجهول'}</p>
+                                    <span class="text-xs font-mono font-bold text-slate-600">#0${i+1}</span>
+                                    <p class="font-black text-white text-sm">${data.displayName.split(' ')[0]}</p>
                                 </div>
-                                <span class="text-cyan-400 font-mono font-black text-xs">${Math.round(data.daily_mins || 0)}m</span>
+                                <span class="text-cyan-400 font-black text-xs">${complexTimeFormatter(data.daily_mins || 0)}</span>
                             </div>
-                            <div class="flex gap-2 items-center">
-                                <p class="text-[9px] font-bold text-slate-500 uppercase">${data.status || 'مريح'}</p>
-                                ${data.total_quran > 0 ? `<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-black">📖 ${data.total_quran}p</span>` : ''}
+                            <div class="flex justify-between items-center">
+                                <div class="flex gap-1">${pDots}</div>
+                                ${data.total_quran ? `<span class="text-[10px] text-emerald-400 font-bold">📖 ${data.total_quran}p</span>` : ''}
                             </div>
                         </div>`;
                 });
             });
         }
 
-        // --- السجل والتعديل (تعديل وقت وقرآن) ---
+        // --- نظام السجل والتعديل المعمق ---
         function loadStudyLog() {
             onSnapshot(collection(db, "users", user.uid, "logs"), (snap) => {
                 const logDiv = document.getElementById('study-log');
@@ -338,72 +395,73 @@
                 sorted.forEach(d => {
                     const data = d.data();
                     logDiv.innerHTML += `
-                        <div class="flex justify-between items-center p-5 bg-slate-800/20 rounded-[2rem] border border-slate-700/30">
-                            <div class="text-right">
-                                <p class="text-slate-400 text-xs font-black font-mono mb-1">${data.date}</p>
-                                <div class="flex gap-2">
-                                    <span class="text-white font-black text-sm">${data.mins || 0} دقيقة مذاكرة</span>
-                                    ${data.quran_pages ? `<span class="text-emerald-400 font-black text-sm">| ${data.quran_pages} صفحة قرآن</span>` : ''}
+                        <div class="flex justify-between items-center p-6 bg-slate-800/20 rounded-[2rem] border border-slate-700/30 hover:bg-slate-800/40 transition-all">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-600 mb-1">${data.date}</p>
+                                <p class="text-white font-black text-sm">${complexTimeFormatter(data.mins || 0)}</p>
+                                <div class="flex gap-3 mt-1">
+                                    <span class="text-emerald-500 text-[10px] font-black uppercase">Quran: ${data.quran_pages || 0} Pages</span>
                                 </div>
                             </div>
-                            <button onclick="window.openEditModal('${data.date}', ${data.mins || 0}, ${data.quran_pages || 0})" class="bg-slate-700/50 p-3 rounded-2xl hover:bg-cyan-500 transition-all">✎</button>
+                            <button onclick="triggerEditFlow('${data.date}', ${data.mins || 0}, ${data.quran_pages || 0})" class="bg-cyan-500/10 p-4 rounded-2xl text-cyan-500 hover:bg-cyan-500 hover:text-black transition-all">✎</button>
                         </div>`;
                 });
             });
         }
 
-        window.openEditModal = function(date, currentMins, currentQuran) {
+        window.triggerEditFlow = (date, mins, quran) => {
             editingDate = date;
-            document.getElementById('edit-date-title').innerText = date;
-            document.getElementById('edit-quran').value = currentQuran;
-            const hSelect = document.getElementById('edit-hours');
-            const mSelect = document.getElementById('edit-mins');
-            hSelect.innerHTML = ''; mSelect.innerHTML = '';
-            for(let i=0; i<=18; i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} س</option>`;
-            for(let i=0; i<=59; i++) mSelect.innerHTML += `<option value="${i}" ${currentMins%60==i?'selected':''}>${i} د</option>`;
+            document.getElementById('edit-date-title').innerText = `Editing data for: ${date}`;
+            document.getElementById('edit-quran').value = quran;
+            const hSel = document.getElementById('edit-hours');
+            const mSel = document.getElementById('edit-mins');
+            hSel.innerHTML = ''; mSel.innerHTML = '';
+            for(let i=0; i<=24; i++) hSel.innerHTML += `<option value="${i}" ${Math.floor(mins/60)==i?'selected':''}>${i} Hours</option>`;
+            for(let i=0; i<=59; i++) mSel.innerHTML += `<option value="${i}" ${mins%60==i?'selected':''}>${i} Minutes</option>`;
             document.getElementById('edit-modal').classList.remove('hidden');
         };
 
-        document.getElementById('btn-confirm-edit').onclick = async function() {
+        document.getElementById('btn-confirm-edit').onclick = async () => {
             const h = parseInt(document.getElementById('edit-hours').value);
             const m = parseInt(document.getElementById('edit-mins').value);
             const q = parseInt(document.getElementById('edit-quran').value) || 0;
-            const newTotalMins = (h * 60) + m;
+            const newTotal = (h * 60) + m;
             
             const logRef = doc(db, "users", user.uid, "logs", editingDate);
             const userRef = doc(db, "users", user.uid);
-
+            
             const snap = await getDoc(logRef);
             const oldMins = snap.exists() ? (snap.data().mins || 0) : 0;
             const oldQuran = snap.exists() ? (snap.data().quran_pages || 0) : 0;
 
-            await setDoc(logRef, { mins: newTotalMins, quran_pages: q }, { merge: true });
+            await setDoc(logRef, { mins: newTotal, quran_pages: q }, { merge: true });
             
             if (editingDate === todayStr) {
                 await updateDoc(userRef, { 
-                    daily_mins: increment(newTotalMins - oldMins),
-                    total_quran: increment(q - oldQuran)
+                    daily_mins: increment(newTotal - oldMins), 
+                    total_quran: increment(q - oldQuran) 
                 });
             }
             document.getElementById('edit-modal').classList.add('hidden');
+            showToast("تم تحديث السجلات بنجاح!");
         };
 
-        // الشات وتسجيل الدخول (نفس المنطق القوي)
-        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('btn-logout').onclick = () => { localStorage.clear(); signOut(auth).then(()=>window.location.reload()); };
-        
-        async function sendChat() {
+        // --- وظائف نظام الشات ---
+        document.getElementById('btn-send-chat').onclick = async () => {
             const input = document.getElementById('chat-input');
-            if (input.value.trim() && user) {
-                await addDoc(collection(db, "chat"), { text: input.value, sender: user.displayName, uid: user.uid, timestamp: serverTimestamp() });
+            if (input.value.trim()) {
+                await addDoc(collection(db, "chat"), { 
+                    text: input.value, 
+                    sender: user.displayName, 
+                    uid: user.uid, 
+                    timestamp: serverTimestamp() 
+                });
                 input.value = '';
             }
-        }
-        document.getElementById('btn-send-chat').onclick = sendChat;
-        document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') sendChat(); };
+        };
 
         function loadChat() {
-            onSnapshot(query(collection(db, "chat"), orderBy("timestamp", "asc"), limit(30)), (snap) => {
+            onSnapshot(query(collection(db, "chat"), orderBy("timestamp", "asc"), limit(40)), (snap) => {
                 const box = document.getElementById('chat-messages');
                 box.innerHTML = '';
                 snap.forEach(d => {
@@ -411,13 +469,42 @@
                     const isMe = data.uid === user.uid;
                     box.innerHTML += `
                         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <span class="text-[8px] text-slate-500 font-black px-2 mb-0.5">${data.sender}</span>
-                            <div class="${isMe ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-white'} px-4 py-2 rounded-2xl font-bold text-xs shadow-sm">${data.text}</div>
+                            <span class="text-[8px] text-slate-600 font-bold px-1 mb-1">${data.sender.split(' ')[0]}</span>
+                            <div class="${isMe ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-200'} px-5 py-3 rounded-[1.2rem] text-xs font-bold shadow-lg max-w-[80%]">${data.text}</div>
                         </div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
+
+        // HELPERS
+        async function commitProgressToDB(m) {
+            try {
+                const logRef = doc(db, "users", user.uid, "logs", todayStr);
+                const userRef = doc(db, "users", user.uid);
+                await setDoc(logRef, { mins: increment(m) }, { merge: true });
+                await updateDoc(userRef, { daily_mins: increment(m) });
+            } catch (err) { console.error("Write Error:", err); }
+        }
+
+        async function updateGlobalStatus(status) {
+            if (user) {
+                await updateDoc(doc(db, "users", user.uid), { status: status });
+                document.getElementById('user-status-text').innerText = status;
+            }
+        }
+
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+        document.getElementById('btn-logout').onclick = () => { localStorage.clear(); signOut(auth).then(()=>window.location.reload()); };
+        document.getElementById('btn-timer').onclick = () => { if(!isRunning) startTimerLogic(); else stopTimerLogic(); };
+
+        window.addEventListener('beforeunload', () => {
+            if(isRunning) {
+                // محاولة أخيرة لتغيير الحالة قبل الإغلاق
+                const userRef = doc(db, "users", user.uid);
+                updateDoc(userRef, { status: "مريح شوية ☕" });
+            }
+        });
     </script>
 </body>
 </html>
