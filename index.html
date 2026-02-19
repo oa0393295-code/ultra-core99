@@ -3,90 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Study Core | Advanced Guardian Edition</title>
+    <title>Ultra Study Core | Ultimate Pro Max</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
-        .shadow-neon { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
-        select { background: #1e293b; color: white; border-radius: 8px; padding: 5px; border: 1px solid #475569; font-size: 12px; }
-        #chat-messages::-webkit-scrollbar { width: 6px; }
-        #chat-messages::-webkit-scrollbar-thumb { background: #ffffff; border-radius: 10px; }
-        #study-log::-webkit-scrollbar { width: 4px; }
-        #study-log::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .shadow-neon { box-shadow: 0 0 25px rgba(6, 182, 212, 0.4); }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.6); }
+        select { background: #1e293b; color: white; border-radius: 10px; padding: 6px 12px; border: 1px solid #475569; font-size: 14px; outline: none; transition: all 0.3s; }
+        select:focus { border-color: #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+        /* تصميم شريط التمرير */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 1px solid #334155; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        /* تخصيص الشات */
+        #chat-messages { scroll-behavior: smooth; }
+        .message-bubble { max-width: 85%; transition: transform 0.2s; }
+        .message-bubble:hover { transform: scale(1.02); }
     </style>
 </head>
 <body class="min-h-screen pb-10">
 
-    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 px-4">
-        <h1 class="text-6xl font-black mb-4 italic text-white uppercase tracking-tighter">Ultra <span class="text-cyan-500">Core</span></h1>
-        <button id="btn-login" class="bg-white text-black px-12 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-neon">دخول بجوجل</button>
+    <div id="login-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950 px-4">
+        <div class="text-center space-y-6">
+            <h1 class="text-7xl font-black mb-4 italic text-white uppercase tracking-tighter">
+                Ultra <span class="text-cyan-500 underline decoration-white/20">Core</span>
+            </h1>
+            <p class="text-slate-500 font-bold tracking-widest uppercase text-sm">أقوى نظام تتبع للمذاكرة في العالم</p>
+            <button id="btn-login" class="bg-white text-black px-16 py-5 rounded-2xl font-black text-xl hover:bg-cyan-500 hover:scale-105 transition-all duration-300 shadow-neon">
+                دخول بجوجل
+            </button>
+        </div>
     </div>
 
     <div id="main-content" class="hidden text-right">
         <nav class="p-6 border-b border-slate-800 flex justify-between items-center glass sticky top-0 z-40">
-            <div class="text-2xl font-black tracking-tighter italic">ULTRA<span class="text-cyan-500">CORE</span></div>
-            <div class="flex items-center gap-4">
+            <div class="text-3xl font-black tracking-tighter italic">ULTRA<span class="text-cyan-500">CORE</span></div>
+            <div class="flex items-center gap-6">
                 <div class="text-left leading-tight">
-                    <p id="user-info" class="text-sm font-bold text-cyan-400"></p>
-                    <p id="user-status-text" class="text-[10px] font-bold text-slate-500 uppercase">مريح شوية ☕</p>
+                    <p id="user-info" class="text-md font-black text-cyan-400"></p>
+                    <p id="user-status-text" class="text-[11px] font-black text-slate-500 uppercase tracking-widest">جاري التحقق...</p>
                 </div>
-                <button id="btn-logout" class="text-red-500 text-xs font-bold border border-red-500/20 px-3 py-1 rounded-lg">خروج</button>
+                <button id="btn-logout" class="text-red-500 text-xs font-black border-2 border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">خروج</button>
             </div>
         </nav>
 
         <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative text-center">
-                    <div id="timer-display" class="text-[7rem] md:text-[9rem] font-mono font-black my-6 text-white leading-none">00:00:00</div>
-                    <div class="flex flex-col gap-6 items-center">
-                        <button id="btn-timer" class="w-full max-w-sm py-5 rounded-2xl bg-cyan-500 text-black font-black text-xl shadow-neon transition-all hover:bg-cyan-400">ابدأ المذاكرة</button>
-                        <div class="flex flex-wrap justify-center items-center gap-3 bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
-                            <span class="text-sm font-bold italic text-slate-400">إضافة وقت:</span>
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-slate-900 border border-slate-800 rounded-[3.5rem] p-12 shadow-2xl relative text-center overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+                    <div id="timer-display" class="text-[8rem] md:text-[10rem] font-mono font-black my-8 text-white leading-none tracking-tighter">00:00:00</div>
+                    
+                    <div class="flex flex-col gap-8 items-center">
+                        <button id="btn-timer" class="w-full max-w-md py-6 rounded-[2rem] bg-cyan-500 text-black font-black text-2xl shadow-neon transition-all hover:bg-cyan-400 active:scale-95">ابدأ المذاكرة الآن</button>
+                        
+                        <div class="flex flex-wrap justify-center items-center gap-4 bg-slate-800/40 p-6 rounded-[2rem] border border-slate-700/50 w-full max-w-lg">
+                            <span class="text-sm font-black italic text-slate-400 uppercase">إضافة وقت يدوي:</span>
                             <select id="manual-hours"><option value="0">0 س</option><script>for(let i=1;i<=12;i++) document.write(`<option value="${i}">${i} س</option>`)</script></select>
                             <select id="manual-mins"><option value="0">0 د</option><script>for(let i=1;i<=59;i++) document.write(`<option value="${i}">${i} د</option>`)</script></select>
-                            <button id="btn-add-manual" class="bg-cyan-500 text-black px-4 py-1 rounded-lg font-black text-xs">أضف +</button>
+                            <button id="btn-add-manual" class="bg-white text-black px-6 py-2 rounded-xl font-black text-sm hover:bg-cyan-500 transition-colors">أضف +</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-lg">
-                    <h3 class="text-xl font-black mb-6 text-white italic underline decoration-cyan-500 underline-offset-8">📅 سجل أيامك</h3>
-                    <div id="study-log" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 shadow-lg relative">
+                    <h3 class="text-2xl font-black mb-8 text-white italic flex items-center gap-3">
+                        <span class="w-2 h-8 bg-cyan-500 rounded-full"></span>
+                        📅 سجل الإنجازات
+                    </h3>
+                    <div id="study-log" class="space-y-4 max-h-[400px] overflow-y-auto pr-4"></div>
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 glass shadow-xl">
-                    <h3 class="text-xl font-black mb-6 text-white italic text-center uppercase tracking-tighter">🏆 تحدي اليوم</h3>
+            <div class="space-y-8">
+                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 glass shadow-xl">
+                    <h3 class="text-xl font-black mb-8 text-white italic text-center uppercase tracking-widest border-b border-slate-800 pb-4">🏆 أقوى 10 محاربين</h3>
                     <div id="leaderboard-list" class="space-y-4"></div>
                 </div>
 
-                <div class="bg-slate-900 border border-slate-800 rounded-[2rem] flex flex-col h-[450px] overflow-hidden shadow-2xl glass">
-                    <div class="p-4 border-b border-slate-800 bg-slate-800/50 text-center">
-                        <h3 class="font-black text-cyan-500 italic uppercase text-sm">Ultra Chat 💬</h3>
+                <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] flex flex-col h-[500px] overflow-hidden shadow-2xl glass border-t-4 border-t-cyan-500">
+                    <div class="p-5 border-b border-slate-800 bg-slate-800/30">
+                        <h3 class="font-black text-cyan-400 italic tracking-widest uppercase text-center">Ultra Core Chat 💬</h3>
                     </div>
-                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col text-[13px]"></div>
-                    <div class="p-4 bg-slate-950/50 flex gap-2">
-                        <input id="chat-input" type="text" placeholder="اكتب رسالة..." class="flex-1 bg-slate-800 border-none rounded-xl px-4 py-2 text-white outline-none">
-                        <button id="btn-send-chat" class="bg-cyan-500 text-black px-4 py-2 rounded-xl font-black text-xs">إرسال</button>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-5 flex flex-col"></div>
+                    <div class="p-5 bg-slate-950/80 flex gap-3 border-t border-slate-800">
+                        <input id="chat-input" type="text" placeholder="اكتب رسالة للصحابة..." class="flex-1 bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500 outline-none text-white">
+                        <button id="btn-send-chat" class="bg-cyan-500 text-black px-6 py-3 rounded-2xl font-black text-sm hover:scale-105 transition-all">إرسال</button>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-8 rounded-[2rem] w-full max-w-sm text-center">
-            <h4 class="text-white font-black mb-6 italic">تعديل وقت السجل</h4>
-            <div class="flex justify-center gap-4 mb-8">
-                <select id="edit-hours" class="text-lg"></select>
-                <select id="edit-mins" class="text-lg"></select>
+    <div id="edit-modal" class="hidden fixed inset-0 z-[150] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-cyan-500/20 p-10 rounded-[3rem] w-full max-w-md text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <h4 class="text-white text-2xl font-black mb-8 italic uppercase tracking-tighter">تعديل بيانات السجل</h4>
+            <div class="flex justify-center gap-6 mb-10">
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-bold text-slate-500 uppercase">الساعات</span>
+                    <select id="edit-hours" class="text-xl px-6 py-3"></select>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-bold text-slate-500 uppercase">الدقائق</span>
+                    <select id="edit-mins" class="text-xl px-6 py-3"></select>
+                </div>
             </div>
             <div class="flex gap-4">
-                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-3 rounded-xl font-black">حفظ</button>
-                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-3 rounded-xl">إلغاء</button>
+                <button id="btn-confirm-edit" class="flex-1 bg-cyan-500 text-black py-4 rounded-2xl font-black text-lg shadow-neon active:scale-95 transition-all">حفظ التغييرات</button>
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-black hover:bg-slate-700 transition-all">إلغاء</button>
             </div>
         </div>
     </div>
@@ -96,6 +121,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
             authDomain: "ultra-core.firebaseapp.com",
@@ -110,10 +136,11 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
+        // المتغيرات العالمية للتحكم في العداد
         let timerInterval, seconds = 0, isRunning = false, user = null, editingDate = "";
-        let autoKillTimeout; // مؤقت القفل التلقائي
         const todayStr = new Date().toISOString().split('T')[0];
 
+        // مراقبة حالة المستخدم (تسجيل الدخول)
         onAuthStateChanged(auth, async (u) => {
             if (u) {
                 user = u;
@@ -121,116 +148,120 @@
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-info').innerText = u.displayName;
                 
-                // جلب الداتا القديمة عشان الليدربورد ميبقاش 0
-                const userRef = doc(db, "users", u.uid);
-                const userSnap = await getDoc(userRef);
-                if (!userSnap.exists()) {
-                    await setDoc(userRef, { displayName: u.displayName, uid: u.uid, daily_mins: 0 }, { merge: true });
+                // استرجاع الثواني المتبقية عند الريفرش فقط لضمان استمرارية الجلسة المفتوحة
+                const savedSecs = localStorage.getItem(`secs_${user.uid}`);
+                if (savedSecs) {
+                    seconds = parseInt(savedSecs);
+                    updateDisplay();
+                }
+
+                // استكمال العداد لو كان شغال قبل الريفرش
+                if (localStorage.getItem(`running_${user.uid}`) === "true") {
+                    startTimerLogic();
                 }
 
                 await setDoc(doc(db, "users", u.uid), { displayName: u.displayName, uid: u.uid }, { merge: true });
                 loadLeaderboard(); loadStudyLog(); loadChat();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('main-content').classList.add('hidden');
             }
         });
 
-        // --- نظام الحماية الجديد: قفل عند إغلاق الصفحة ---
+        // --- ميزة الإيقاف عند الخروج النهائي (Kill Page) ---
         window.addEventListener('beforeunload', () => {
             if (isRunning && user) {
-                stopTimerLogic();
-                updateStatusInDB("مريح شوية ☕");
+                // إرسال تحديث أخير لقاعدة البيانات قبل القفل
+                const userRef = doc(db, "users", user.uid);
+                updateDoc(userRef, { status: "مريح شوية ☕" });
+                localStorage.setItem(`running_${user.uid}`, "false");
             }
         });
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && isRunning) {
-                console.log("التابة اتقفلت أو اتبدلت - جاري إيقاف العداد");
-                stopTimerLogic();
-            }
-        });
-
-        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+        // تسجيل الخروج
         document.getElementById('btn-logout').onclick = () => { 
             stopTimerLogic();
             localStorage.clear();
-            signOut(auth);
-            window.location.reload();
+            signOut(auth).then(() => window.location.reload());
         };
 
+        // زر العداد
         document.getElementById('btn-timer').onclick = function() {
-            if (!isRunning) {
-                startTimerLogic();
-            } else { 
-                stopTimerLogic(); 
-            }
+            if (!isRunning) startTimerLogic();
+            else stopTimerLogic();
         };
 
+        // منطق تشغيل العداد
         function startTimerLogic() {
             if(!user) return;
             isRunning = true;
-            document.getElementById('btn-timer').innerText = "إيقاف الجلسة";
-            document.getElementById('btn-timer').classList.replace('bg-cyan-500', 'bg-red-500');
+            localStorage.setItem(`running_${user.uid}`, "true");
+            document.getElementById('btn-timer').innerText = "إيقاف جلسة المذاكرة";
+            document.getElementById('btn-timer').classList.replace('bg-cyan-500', 'bg-red-600');
             updateStatusInDB("بيذاكر دلوقتي 🔥");
             
-            // قفل تلقائي بعد 3 ساعات (10800000 مللي ثانية) عشان لو نمت والعداد شغال
-            autoKillTimeout = setTimeout(() => {
-                if(isRunning) {
-                    console.warn("تم الإيقاف التلقائي للعداد بسبب الخمول الطويل");
-                    stopTimerLogic();
-                }
-            }, 10800000); 
-
             timerInterval = setInterval(() => {
                 seconds++;
+                localStorage.setItem(`secs_${user.uid}`, seconds);
                 updateDisplay();
+                // حفظ دقيقة كل 60 ثانية لضمان عدم ضياع المجهود
                 if (seconds > 0 && seconds % 60 === 0) {
                     saveProgress(1, todayStr);
                 }
             }, 1000);
         }
 
+        // منطق إيقاف العداد
         function stopTimerLogic() {
             clearInterval(timerInterval);
-            clearTimeout(autoKillTimeout);
             isRunning = false;
-            seconds = 0; // تصفير العداد عند الإيقاف حسب طلبك
-            updateDisplay();
-            document.getElementById('btn-timer').innerText = "ابدأ المذاكرة";
-            document.getElementById('btn-timer').classList.replace('bg-red-500', 'bg-cyan-500');
+            localStorage.setItem(`running_${user.uid}`, "false");
+            document.getElementById('btn-timer').innerText = "ابدأ المذاكرة الآن";
+            document.getElementById('btn-timer').classList.replace('bg-red-600', 'bg-cyan-500');
             updateStatusInDB("مريح شوية ☕");
         }
 
+        // تحديث عرض الوقت
+        function updateDisplay() {
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
+        }
+
+        // حفظ البيانات في Firebase
         async function saveProgress(mins, dateStr) {
             if (!user) return;
             const userRef = doc(db, "users", user.uid);
             const logRef = doc(db, "users", user.uid, "logs", dateStr);
             
-            // تحديث السجل اليومي
-            await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
-            
-            // تحديث المراكز على الشمال
-            if (dateStr === todayStr) {
-                await updateDoc(userRef, { daily_mins: increment(mins) }).catch(async () => {
-                    await setDoc(userRef, { daily_mins: mins, displayName: user.displayName }, { merge: true });
-                });
-            }
+            try {
+                await setDoc(logRef, { date: dateStr, mins: increment(mins) }, { merge: true });
+                if (dateStr === todayStr) {
+                    await updateDoc(userRef, { daily_mins: increment(mins) }).catch(async () => {
+                        await setDoc(userRef, { daily_mins: mins, displayName: user.displayName }, { merge: true });
+                    });
+                }
+            } catch (e) { console.error("Error saving progress:", e); }
         }
 
+        // إضافة وقت يدوي
         document.getElementById('btn-add-manual').onclick = async function() {
             const h = parseInt(document.getElementById('manual-hours').value);
             const m = parseInt(document.getElementById('manual-mins').value);
             const total = (h * 60) + m;
-            if (total > 0) await saveProgress(total, todayStr);
+            if (total > 0) {
+                await saveProgress(total, todayStr);
+                alert(`تم إضافة ${total} دقيقة بنجاح!`);
+            }
         };
 
-        window.openEditModal = function(date, currentMins) {
+        // نظام تعديل السجل المطور
+        window.openEditModal = async function(date, currentMins) {
             editingDate = date;
             const hSelect = document.getElementById('edit-hours');
             const mSelect = document.getElementById('edit-mins');
             hSelect.innerHTML = ''; mSelect.innerHTML = '';
-            for(let i=0; i<=12; i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} س</option>`;
+            for(let i=0; i<=15; i++) hSelect.innerHTML += `<option value="${i}" ${Math.floor(currentMins/60)==i?'selected':''}>${i} س</option>`;
             for(let i=0; i<=59; i++) mSelect.innerHTML += `<option value="${i}" ${currentMins%60==i?'selected':''}>${i} د</option>`;
             document.getElementById('edit-modal').classList.remove('hidden');
         };
@@ -243,7 +274,7 @@
             const userRef = doc(db, "users", user.uid);
 
             const snap = await getDoc(logRef);
-            const oldTotal = snap.exists() ? snap.data().mins : 0;
+            const oldTotal = snap.exists() ? (snap.data().mins || 0) : 0;
             const diff = newTotal - oldTotal;
 
             await setDoc(logRef, { mins: newTotal }, { merge: true });
@@ -253,13 +284,7 @@
             document.getElementById('edit-modal').classList.add('hidden');
         };
 
-        function updateDisplay() {
-            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
-        }
-
+        // تحديث الحالة
         async function updateStatusInDB(status) {
             if (user) {
                 await updateDoc(doc(db, "users", user.uid), { status: status }).catch(()=>{});
@@ -267,48 +292,59 @@
             }
         }
 
+        // تحميل قائمة المتصدرين (Leaderboard)
         function loadLeaderboard() {
             onSnapshot(query(collection(db, "users"), orderBy("daily_mins", "desc"), limit(10)), (snap) => {
                 const list = document.getElementById('leaderboard-list');
                 list.innerHTML = '';
                 snap.docs.forEach((d, i) => {
                     const data = d.data();
-                    list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl border ${d.id === user.uid ? 'border-cyan-500 ring-2 ring-cyan-500/20' : 'border-slate-700'}">
-                        <div class="flex items-center gap-3">
-                            <span class="text-slate-500 font-black">#${i+1}</span>
-                            <div class="text-right">
-                                <p class="font-bold text-white text-sm">${data.displayName}</p>
-                                <p class="text-[9px] font-black text-slate-500 uppercase">${data.status || 'مريح'}</p>
+                    const isMe = d.id === user.uid;
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-5 bg-slate-800/40 rounded-2xl border ${isMe ? 'border-cyan-500 ring-2 ring-cyan-500/20 shadow-neon' : 'border-slate-700/50'}">
+                            <div class="flex items-center gap-4">
+                                <span class="text-xl font-black ${i<3 ? 'text-cyan-400' : 'text-slate-600'}">#${i+1}</span>
+                                <div class="text-right">
+                                    <p class="font-black text-white text-sm">${data.displayName || 'مجهول'}</p>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">${data.status || 'مريح'}</p>
+                                </div>
                             </div>
-                        </div>
-                        <span class="text-cyan-400 font-mono font-black">${Math.round(data.daily_mins || 0)} د</span>
-                    </div>`;
+                            <span class="text-white font-mono font-black bg-slate-950 px-3 py-1 rounded-lg">${Math.round(data.daily_mins || 0)}m</span>
+                        </div>`;
                 });
             });
         }
 
+        // تحميل سجل المذاكرة
         function loadStudyLog() {
             onSnapshot(collection(db, "users", user.uid, "logs"), (snap) => {
                 const logDiv = document.getElementById('study-log');
                 logDiv.innerHTML = '';
-                const docs = snap.docs.sort((a,b) => b.id.localeCompare(a.id));
-                docs.forEach(d => {
+                const sortedDocs = snap.docs.sort((a,b) => b.id.localeCompare(a.id));
+                sortedDocs.forEach(d => {
                     const data = d.data();
-                    logDiv.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-xl border border-slate-700 mb-2">
-                        <span class="text-slate-400 text-sm font-bold font-mono">${data.date}</span>
-                        <div class="flex items-center gap-4">
-                            <span class="text-white font-black">${data.mins || 0} د</span>
-                            <button onclick="window.openEditModal('${data.date}', ${data.mins || 0})" class="text-cyan-500">✎</button>
-                        </div>
-                    </div>`;
+                    logDiv.innerHTML += `
+                        <div class="flex justify-between items-center p-5 bg-slate-800/20 rounded-[1.5rem] border border-slate-700/30 hover:bg-slate-800/40 transition-all">
+                            <span class="text-slate-400 font-bold font-mono">${data.date}</span>
+                            <div class="flex items-center gap-6">
+                                <span class="text-cyan-400 font-black">${data.mins || 0} دقيقة</span>
+                                <button onclick="window.openEditModal('${data.date}', ${data.mins || 0})" class="bg-slate-700/50 p-2 rounded-lg hover:text-white transition-colors">✎</button>
+                            </div>
+                        </div>`;
                 });
             });
         }
 
+        // نظام الشات
         async function sendChat() {
             const input = document.getElementById('chat-input');
             if (input.value.trim() && user) {
-                await addDoc(collection(db, "chat"), { text: input.value, sender: user.displayName, uid: user.uid, timestamp: serverTimestamp() });
+                await addDoc(collection(db, "chat"), { 
+                    text: input.value, 
+                    sender: user.displayName, 
+                    uid: user.uid, 
+                    timestamp: serverTimestamp() 
+                });
                 input.value = '';
             }
         }
@@ -322,14 +358,21 @@
                 snap.forEach(d => {
                     const data = d.data();
                     const isMe = data.uid === user.uid;
-                    box.innerHTML += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <span class="text-[9px] text-slate-500 px-2">${data.sender}</span>
-                        <div class="${isMe ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-white'} px-4 py-2 rounded-2xl font-bold">${data.text}</div>
-                    </div>`;
+                    box.innerHTML += `
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300">
+                            <span class="text-[10px] text-slate-500 font-black px-2 mb-1 uppercase">${data.sender}</span>
+                            <div class="message-bubble ${isMe ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-white'} px-5 py-3 rounded-2xl font-bold text-sm shadow-sm">
+                                ${data.text}
+                            </div>
+                        </div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
+
+        // تسجيل الدخول بجوجل
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+
     </script>
 </body>
 </html>
