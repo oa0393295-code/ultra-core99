@@ -131,10 +131,24 @@ auth.onAuthStateChanged(async (user) => {
                 updateChat(msgs);
             });
 
-        // تهيئة localStorage والتأكد من عدم وجود جلسة سابقة (الرفريش يلغي الجلسة)
+        // تهيئة localStorage والتأكد من عدم وجود جلسة سابقة
         initLocalStorage();
-        // عند تحميل الصفحة، نمسح أي جلسة مخزنة (العداد لا يستأنف)
-        localStorage.removeItem(STORAGE_KEYS.SESSION_START);
+
+        // إذا كان هناك sessionStart مخزن (يعني حصل ريفريش أثناء الجلسة)، ننهي الجلسة بدون حفظ
+        const storedStart = localStorage.getItem(STORAGE_KEYS.SESSION_START);
+        if (storedStart) {
+            // إنهاء الجلسة القديمة بدون حساب النقاط
+            localStorage.removeItem(STORAGE_KEYS.SESSION_START);
+            // تحديث حالة المستخدم في Firestore إلى resting إذا كان status = studying
+            if (currentUserData && currentUserData.status === 'studying') {
+                await userRef.update({
+                    status: 'resting',
+                    currentSessionStart: null
+                });
+            }
+        }
+
+        // إعادة تعيين المتغيرات
         isStudying = false;
         studyStartTime = null;
         if (timerInterval) clearInterval(timerInterval);
@@ -146,6 +160,7 @@ auth.onAuthStateChanged(async (user) => {
         // مراقبة حالة الخلفية
         document.addEventListener('visibilitychange', handleVisibilityChange);
         window.addEventListener('pagehide', handlePageHide);
+        window.addEventListener('beforeunload', handleBeforeUnload); // للمزيد من الأمان
 
     } else {
         loginScreen.style.display = 'flex';
@@ -155,6 +170,7 @@ auth.onAuthStateChanged(async (user) => {
         if (timerInterval) clearInterval(timerInterval);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         window.removeEventListener('pagehide', handlePageHide);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
     }
 });
 
@@ -173,6 +189,12 @@ function handleVisibilityChange() {
 function handlePageHide(event) {
     if (isStudying) {
         // عند الإغلاق، ننهي الجلسة ولا نحسب النقاط
+        stopStudyOnClose();
+    }
+}
+
+function handleBeforeUnload(event) {
+    if (isStudying) {
         stopStudyOnClose();
     }
 }
@@ -198,7 +220,7 @@ function startTimer() {
     timerInterval = setInterval(updateTimerDisplay, 1000);
 }
 
-// تحديث عرض العداد (لايف)
+// تحديث عرض العداد (لايف كل ثانية)
 function updateTimerDisplay() {
     if (isStudying && studyStartTime) {
         const diff = Math.floor((Date.now() - studyStartTime) / 1000);
@@ -210,7 +232,8 @@ function updateTimerDisplay() {
         const max = 24 * 3600;
         const progress = Math.min(diff / max, 1);
         const dash = 565.48 * (1 - progress);
-        document.querySelector('.timer-progress').style.strokeDashoffset = dash;
+        const progressCircle = document.querySelector('.timer-progress');
+        if (progressCircle) progressCircle.style.strokeDashoffset = dash;
     }
 }
 
@@ -227,8 +250,7 @@ document.getElementById('startStudy').addEventListener('click', async () => {
             dailyPoints: 0,
             dailyStudySeconds: 0
         });
-        // إعادة تعيين localStorage (مع حفظ السابق تلقائياً في init)
-        initLocalStorage();
+        initLocalStorage(); // يعيد تعيين localStorage ويحفظ اليوم السابق
     }
 
     isStudying = true;
@@ -324,9 +346,9 @@ function updateChat(messages) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isMine ? 'message-mine' : 'message-other'}`;
         
-        // محتوى الرسالة يختلف قليلاً حسب الجهة (الصورة تظهر دائماً)
-        let avatarHtml = `<div class="message-avatar">${user.avatar || '?'}</div>`;
-        let contentHtml = `
+        // بناء محتوى الرسالة
+        const avatarHtml = `<div class="message-avatar">${user.avatar || '?'}</div>`;
+        const contentHtml = `
             <div class="message-content">
                 <div class="message-header">
                     <span class="message-author">${user.name || 'مجهول'}</span>
@@ -337,9 +359,10 @@ function updateChat(messages) {
         `;
         
         if (isMine) {
-            // ترتيب مختلف قليلاً (الصورة على اليمين)
+            // رسائلي: الصورة على اليمين، المحتوى على اليسار
             messageDiv.innerHTML = contentHtml + avatarHtml;
         } else {
+            // رسائل الآخرين: الصورة على اليسار، المحتوى على اليمين
             messageDiv.innerHTML = avatarHtml + contentHtml;
         }
         

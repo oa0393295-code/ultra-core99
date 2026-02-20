@@ -512,10 +512,6 @@ body {
     justify-content: flex-end;
 }
 
-.message-mine .message-content {
-    order: -1; /* لجعل المحتوى قبل الصورة؟ لا داعي، نضبط بالـ margin */
-}
-
 .message-avatar {
     width: 35px;
     height: 35px;
