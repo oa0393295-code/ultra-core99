@@ -13,7 +13,6 @@
     </div>
 
     <div id="main-app" style="display: none;">
-        <!-- الشريط العلوي -->
         <header class="glass-header">
             <div class="user-info">
                 <img id="user-photo" src="" alt="user" class="avatar">
@@ -22,7 +21,6 @@
             <button id="logout-btn" class="btn-glass-small">تسجيل خروج</button>
         </header>
 
-        <!-- المحتوى الرئيسي -->
         <div class="dashboard">
             <!-- عداد المذاكرة الدائري -->
             <div class="glass-card timer-card">
@@ -45,12 +43,12 @@
             <div class="glass-card log-card">
                 <h2>تسجيل اليوم</h2>
                 <div class="prayer-checkboxes">
-                    <label><input type="checkbox" id="prayer-fajr" value="fajr"> الفجر</label>
-                    <label><input type="checkbox" id="prayer-dhuhr" value="dhuhr"> الظهر</label>
-                    <label><input type="checkbox" id="prayer-asr" value="asr"> العصر</label>
-                    <label><input type="checkbox" id="prayer-maghrib" value="maghrib"> المغرب</label>
-                    <label><input type="checkbox" id="prayer-ishaa" value="ishaa"> العشاء</label>
-                    <label><input type="checkbox" id="prayer-taraweeh" value="taraweeh"> التراويح</label>
+                    <label><input type="checkbox" id="prayer-fajr"> الفجر</label>
+                    <label><input type="checkbox" id="prayer-dhuhr"> الظهر</label>
+                    <label><input type="checkbox" id="prayer-asr"> العصر</label>
+                    <label><input type="checkbox" id="prayer-maghrib"> المغرب</label>
+                    <label><input type="checkbox" id="prayer-ishaa"> العشاء</label>
+                    <label><input type="checkbox" id="prayer-taraweeh"> التراويح</label>
                 </div>
                 <div class="quran-input">
                     <label>عدد صفحات القرآن:</label>
@@ -60,13 +58,13 @@
                 <button id="edit-log-btn" class="btn-glass">تعديل</button>
             </div>
 
-            <!-- حالة الصديق الحالية (مثال: يمكن وضعها في كارد منفصل) -->
+            <!-- حالة الأصدقاء -->
             <div class="glass-card friend-status">
                 <h2>حالة الأصدقاء الآن</h2>
                 <div id="friends-list"></div>
             </div>
 
-            <!-- لوحة المتصدرين لليوم -->
+            <!-- لوحة المتصدرين -->
             <div class="glass-card leaderboard">
                 <h2>لوحة المتصدرين - اليوم</h2>
                 <div class="leaderboard-tabs">
@@ -78,12 +76,12 @@
             </div>
         </div>
 
-        <!-- قسم السجل (اللوج) اليومي وسجل الأصدقاء -->
+        <!-- قسم السجل -->
         <div class="logs-section glass-card">
             <h2>السجل اليومي</h2>
             <div class="logs-controls">
                 <button id="my-log-btn" class="btn-glass-small">سجلي</button>
-                <input type="date" id="log-date" value="">
+                <input type="date" id="log-date">
                 <select id="friend-select">
                     <option value="">اختر صديقاً</option>
                 </select>
@@ -98,6 +96,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
 </body>
 </html>
