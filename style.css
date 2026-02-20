@@ -1,4 +1,4 @@
-/* style.css - نسخة مطورة برسوميات وأنيميشن */
+/* style.css - النسخة النهائية */
 
 * {
     margin: 0;
@@ -17,9 +17,9 @@ body {
     padding: 20px;
 }
 
-/* ===== تأثير الزجاج المتطور ===== */
+/* ===== تأثير الزجاج ===== */
 .glass-panel, .glass-card, .glass-header {
-    background: rgba(15, 25, 35, 0.5);
+    background: rgba(15, 25, 35, 0.6);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -42,7 +42,7 @@ body {
     background: rgba(10, 20, 30, 0.7);
 }
 
-/* ===== شاشة تسجيل الدخول ===== */
+/* ===== شاشة الدخول ===== */
 #login-screen {
     display: flex;
     flex-direction: column;
@@ -55,14 +55,18 @@ body {
 
 #login-screen h1 {
     font-size: 2rem;
-    background: linear-gradient(135deg, #fff, #aaddff);
+    background: linear-gradient(135deg, #00c3ff, #aaddff);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(0,195,255,0.3);
 }
 
 /* ===== الأزرار ===== */
 .btn-glass {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
     color: white;
@@ -71,30 +75,11 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: 0.3s;
-    backdrop-filter: blur(5px);
     display: inline-flex;
     align-items: center;
     gap: 10px;
     position: relative;
     overflow: hidden;
-}
-
-.btn-glass::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s, height 0.5s;
-}
-
-.btn-glass:hover::after {
-    width: 300px;
-    height: 300px;
 }
 
 .btn-glass:hover {
@@ -106,13 +91,13 @@ body {
 
 .btn-glass-small {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 30px;
     color: white;
     padding: 8px 18px;
     cursor: pointer;
     transition: 0.3s;
-    backdrop-filter: blur(5px);
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -126,25 +111,24 @@ body {
 }
 
 .btn-icon {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid #00c3ff;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     cursor: pointer;
     transition: 0.3s;
-    backdrop-filter: blur(5px);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 0 15px #00c3ff;
 }
 
 .btn-icon:hover {
     background: #00c3ff;
     transform: scale(1.1);
-    box-shadow: 0 0 15px #00c3ff;
 }
 
 .btn-glow {
@@ -157,7 +141,7 @@ body {
     100% { box-shadow: 0 0 5px #00c3ff; }
 }
 
-/* ===== التخطيط العام ===== */
+/* ===== التخطيط الرئيسي ===== */
 #main-app {
     width: 100%;
     max-width: 1400px;
@@ -171,7 +155,7 @@ body {
     padding: 20px;
 }
 
-/* ===== العداد الدائري المتطور ===== */
+/* ===== العداد الدائري ===== */
 .timer-card {
     display: flex;
     flex-direction: column;
@@ -210,14 +194,6 @@ body {
     transition: stroke-dashoffset 0.5s ease;
 }
 
-/* تدرج للعداد */
-.circular-progress svg defs linearGradient stop:first-child {
-    stop-color: #00c3ff;
-}
-.circular-progress svg defs linearGradient stop:last-child {
-    stop-color: #aaff00;
-}
-
 .time-display {
     position: absolute;
     top: 50%;
@@ -233,9 +209,7 @@ body {
 }
 
 .timer-controls {
-    display: flex;
-    gap: 15px;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
 /* ===== عناصر تسجيل اليوم ===== */
@@ -290,19 +264,13 @@ body {
     text-align: center;
 }
 
-.log-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
-
 /* ===== قائمة الأصدقاء ===== */
 .friend-status {
     grid-column: span 2;
 }
 
 #friends-list {
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
     padding: 5px;
 }
@@ -310,20 +278,22 @@ body {
 .friend-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 15px;
+    padding: 15px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     transition: 0.3s;
     border-radius: 15px;
+    cursor: pointer;
 }
 
 .friend-item:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(0, 195, 255, 0.15);
+    transform: translateX(5px);
 }
 
 .friend-item .avatar-small {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     border: 2px solid #00c3ff;
 }
@@ -336,19 +306,40 @@ body {
 
 .friend-name {
     font-weight: bold;
+    font-size: 1.1rem;
 }
 
 .friend-study-time {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: #aaddff;
+    margin-top: 3px;
 }
 
 .status-badge {
-    padding: 5px 12px;
+    padding: 6px 15px;
     border-radius: 30px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: bold;
     background: rgba(0,0,0,0.3);
+    border: 1px solid;
+}
+
+.status-badge.studying {
+    background: rgba(0, 255, 0, 0.2);
+    border-color: #00ff00;
+    color: #aaffaa;
+}
+
+.status-badge.resting {
+    background: rgba(255, 255, 0, 0.2);
+    border-color: #ffff00;
+    color: #ffffaa;
+}
+
+.status-badge.offline {
+    background: rgba(128, 128, 128, 0.3);
+    border-color: #888;
+    color: #ccc;
 }
 
 /* ===== لوحة المتصدرين ===== */
@@ -394,7 +385,6 @@ body {
 
 .leaderboard-item:hover {
     background: rgba(255,255,255,0.05);
-    transform: translateX(5px);
 }
 
 .leaderboard-item .rank {
@@ -418,6 +408,13 @@ body {
     margin-right: auto;
     font-weight: bold;
     color: #00c3ff;
+}
+
+.leaderboard-status {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.3);
 }
 
 /* ===== السجل اليومي ===== */
@@ -449,11 +446,91 @@ body {
 
 .log-display {
     background: rgba(0,0,0,0.3);
-    padding: 20px;
-    border-radius: 20px;
-    line-height: 2;
+    padding: 25px;
+    border-radius: 25px;
     border: 1px solid rgba(255,255,255,0.1);
-    min-height: 150px;
+    min-height: 200px;
+    line-height: 1.8;
+}
+
+.log-header {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #00c3ff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.log-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: #00c3ff33;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-detail {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.prayer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.prayer-badge {
+    padding: 10px;
+    border-radius: 15px;
+    text-align: center;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.prayer-badge.done {
+    background: rgba(0, 255, 0, 0.2);
+    border: 1px solid #00ff00;
+    color: #aaffaa;
+}
+
+.prayer-badge.not-done {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px solid #ff0000;
+    color: #ffaaaa;
 }
 
 /* ===== أدوات التمرير ===== */
@@ -468,15 +545,4 @@ body {
 ::-webkit-scrollbar-thumb {
     background: #00c3ff;
     border-radius: 10px;
-}
-
-/* ===== تأثيرات إضافية ===== */
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-    100% { transform: translateY(0px); }
-}
-
-.glass-card {
-    animation: float 6s infinite ease-in-out;
 }

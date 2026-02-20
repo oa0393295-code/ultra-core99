@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منافسة الأصدقاء</title>
-    <!-- Font Awesome للأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- شاشة تسجيل الدخول -->
     <div id="login-screen" class="glass-panel">
         <i class="fas fa-users fa-3x" style="color: #00c3ff; margin-bottom: 20px;"></i>
         <h1>مرحباً بك في منافسة الأصدقاء</h1>
@@ -18,9 +16,7 @@
         </button>
     </div>
 
-    <!-- التطبيق الرئيسي -->
     <div id="main-app" style="display: none;">
-        <!-- الشريط العلوي -->
         <header class="glass-header">
             <div class="user-info">
                 <img id="user-photo" src="" alt="user" class="avatar">
@@ -32,20 +28,25 @@
         </header>
 
         <div class="dashboard">
-            <!-- بطاقة عداد المذاكرة -->
+            <!-- بطاقة عداد المذاكرة (زر واحد) -->
             <div class="glass-card timer-card">
                 <h2><i class="fas fa-clock"></i> عداد المذاكرة</h2>
                 <div class="circular-progress">
                     <svg viewBox="0 0 100 100">
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00c3ff" />
+                                <stop offset="100%" stop-color="#aaff00" />
+                            </linearGradient>
+                        </defs>
                         <circle class="bg" cx="50" cy="50" r="45"></circle>
                         <circle class="progress" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: 283;"></circle>
                     </svg>
                     <div class="time-display" id="timer-display">00:00:00</div>
                 </div>
                 <div class="timer-controls">
-                    <button id="start-timer" class="btn-icon"><i class="fas fa-play"></i></button>
-                    <button id="pause-timer" class="btn-icon"><i class="fas fa-pause"></i></button>
-                    <button id="stop-timer" class="btn-icon"><i class="fas fa-stop"></i></button>
+                    <button id="toggle-timer" class="btn-icon"><i class="fas fa-play"></i></button>
+                    <!-- زر واحد فقط -->
                 </div>
             </div>
 
@@ -64,19 +65,17 @@
                     <label><i class="fas fa-book-quran"></i> عدد الصفحات:</label>
                     <input type="number" id="quran-pages" min="0" value="0">
                 </div>
-                <div class="log-actions">
-                    <button id="save-log-btn" class="btn-glass"><i class="fas fa-save"></i> حفظ</button>
-                    <button id="edit-log-btn" class="btn-glass"><i class="fas fa-edit"></i> تعديل</button>
-                </div>
+                <button id="save-log-btn" class="btn-glass"><i class="fas fa-save"></i> حفظ</button>
+                <!-- لا يوجد زر تعديل هنا، سيكون في قسم السجل -->
             </div>
 
-            <!-- حالة الأصدقاء (مع وقت المذاكرة لليوم) -->
+            <!-- حالة الأصدقاء -->
             <div class="glass-card friend-status">
                 <h2><i class="fas fa-user-friends"></i> حالة الأصدقاء الآن</h2>
                 <div id="friends-list"></div>
             </div>
 
-            <!-- لوحة المتصدرين -->
+            <!-- لوحة المتصدرين مع الحالة -->
             <div class="glass-card leaderboard">
                 <h2><i class="fas fa-trophy"></i> لوحة المتصدرين - اليوم</h2>
                 <div class="leaderboard-tabs">
@@ -88,16 +87,16 @@
             </div>
         </div>
 
-        <!-- قسم السجل اليومي (يظهر مباشرة ويتغير تلقائياً) -->
+        <!-- قسم السجل (بدون أزرار عرض، مع زر تعديل خاص) -->
         <div class="logs-section glass-card">
             <h2><i class="fas fa-history"></i> السجل اليومي</h2>
             <div class="logs-controls">
-                <button id="my-log-btn" class="btn-glass-small"><i class="fas fa-user"></i> سجلي</button>
                 <input type="date" id="log-date" class="date-input">
                 <select id="friend-select" class="friend-select">
-                    <option value="">اختر صديقاً</option>
+                    <option value="">سجلي أنا</option>
                 </select>
-                <!-- تمت إزالة زر العرض -->
+                <!-- زر التعديل سيظهر فقط إذا كان السجل خاص بالمستخدم الحالي -->
+                <button id="edit-log-btn" class="btn-glass-small" style="display: none;"><i class="fas fa-edit"></i> تعديل</button>
             </div>
             <div id="log-display" class="log-display"></div>
         </div>

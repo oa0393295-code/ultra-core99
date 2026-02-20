@@ -1,14 +1,13 @@
-// app.js - النسخة المطورة
+// app.js - النسخة النهائية
 
 let currentUser = null;
 let currentLog = null;
 let timerInterval = null;
 let studySeconds = 0;
 let timerRunning = false;
-let timerState = 'stopped';
 let friendsList = [];
 
-// تنفيذ بعد تحميل DOM
+// ===== تهيئة Firebase والاستماع للحالة =====
 document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(async user => {
         if (user) {
@@ -25,9 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(error => alert('خطأ: ' + error.message));
     });
+
+    // عند إغلاق المتصفح أو تحديث الصفحة، نرسل حالة offline
+    window.addEventListener('beforeunload', () => {
+        if (currentUser) {
+            const blob = new Blob([JSON.stringify({ status: 'offline' })], { type: 'application/json' });
+            navigator.sendBeacon(`https://firestore.googleapis.com/v1/projects/${firebase.app().options.projectId}/databases/(default)/documents/users/${currentUser.uid}`, blob);
+        }
+    });
 });
 
-// تهيئة التطبيق
+// ===== التهيئة بعد الدخول =====
 async function initApp(user) {
     currentUser = user;
     document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/40';
@@ -40,23 +47,19 @@ async function initApp(user) {
     bindButtons();
     loadLeaderboard('study');
 
-    // إعداد التاريخ الافتراضي لليوم
     document.getElementById('log-date').value = getTodayDate();
-
-    // مراقبة تغييرات اختيار الصديق أو التاريخ لتحديث السجل تلقائياً
+    document.getElementById('friend-select').value = '';
     document.getElementById('friend-select').addEventListener('change', updateLogDisplay);
     document.getElementById('log-date').addEventListener('change', updateLogDisplay);
+    await updateLogDisplay(); // عرض سجل اليوم للمستخدم الحالي
 }
 
-// ربط الأزرار
+// ===== ربط الأزرار =====
 function bindButtons() {
-    document.getElementById('start-timer').addEventListener('click', startTimer);
-    document.getElementById('pause-timer').addEventListener('click', pauseTimer);
-    document.getElementById('stop-timer').addEventListener('click', stopTimer);
+    document.getElementById('toggle-timer').addEventListener('click', toggleTimer);
     document.getElementById('save-log-btn').addEventListener('click', saveLog);
-    document.getElementById('edit-log-btn').addEventListener('click', () => alert('يمكنك تعديل البيانات ثم حفظ'));
     document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
-    document.getElementById('my-log-btn').addEventListener('click', showMyLog);
+    document.getElementById('edit-log-btn').addEventListener('click', enableEditMode);
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -67,11 +70,12 @@ function bindButtons() {
     });
 }
 
-// دوال المساعدة
+// ===== دوال التاريخ =====
 function getTodayDate() {
     return new Date().toISOString().split('T')[0];
 }
 
+// ===== تحميل سجل اليوم للمستخدم =====
 async function loadTodayLog() {
     const today = getTodayDate();
     const logRef = db.collection('dailyLogs').doc(`${currentUser.uid}_${today}`);
@@ -100,6 +104,7 @@ async function loadTodayLog() {
     updateTimerDisplay();
 }
 
+// ===== عداد المذاكرة =====
 function updateTimerDisplay() {
     const hours = Math.floor(studySeconds / 3600);
     const minutes = Math.floor((studySeconds % 3600) / 60);
@@ -115,30 +120,30 @@ function updateTimerDisplay() {
     if (progressCircle) progressCircle.style.strokeDashoffset = offset;
 }
 
-function startTimer() {
-    if (timerRunning) return;
-    timerRunning = true;
-    timerState = 'running';
-    updateUserStatus('studying');
-    timerInterval = setInterval(() => {
-        studySeconds++;
-        updateTimerDisplay();
-    }, 1000);
+function toggleTimer() {
+    const btn = document.getElementById('toggle-timer');
+    if (timerRunning) {
+        // إيقاف التايمر وحفظ
+        clearInterval(timerInterval);
+        timerRunning = false;
+        updateUserStatus('offline');
+        saveStudyTime();
+        btn.innerHTML = '<i class="fas fa-play"></i>';
+        btn.style.background = 'rgba(255,255,255,0.15)';
+    } else {
+        // بدء التايمر
+        timerRunning = true;
+        updateUserStatus('studying');
+        timerInterval = setInterval(() => {
+            studySeconds++;
+            updateTimerDisplay();
+        }, 1000);
+        btn.innerHTML = '<i class="fas fa-stop"></i>';
+        btn.style.background = '#ff4444';
+    }
 }
 
-function pauseTimer() {
-    if (!timerRunning) return;
-    clearInterval(timerInterval);
-    timerRunning = false;
-    timerState = 'paused';
-    updateUserStatus('resting');
-}
-
-async function stopTimer() {
-    clearInterval(timerInterval);
-    timerRunning = false;
-    timerState = 'stopped';
-    updateUserStatus('offline');
+async function saveStudyTime() {
     if (currentLog) {
         currentLog.studySeconds = studySeconds;
         currentLog.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -147,6 +152,7 @@ async function stopTimer() {
     }
 }
 
+// ===== تحديث حالة المستخدم =====
 async function updateUserStatus(status) {
     if (!currentUser) return;
     await db.collection('users').doc(currentUser.uid).set({
@@ -159,6 +165,7 @@ async function updateUserStatus(status) {
     }, { merge: true });
 }
 
+// ===== حفظ بيانات اليوم (صلوات + قرآن) =====
 async function saveLog() {
     if (!currentLog) return;
     currentLog.prayers = {
@@ -174,10 +181,11 @@ async function saveLog() {
     const logRef = db.collection('dailyLogs').doc(`${currentUser.uid}_${getTodayDate()}`);
     await logRef.set(currentLog, { merge: true });
     alert('تم الحفظ');
-    // تحديث قائمة الأصدقاء بعد الحفظ (لوقت المذاكرة)
-    subscribeToFriendsStatus();
+    subscribeToFriendsStatus(); // تحديث قائمة الأصدقاء بعد الحفظ
+    updateLogDisplay(); // تحديث السجل المعروض إذا كان خاصاً بالمستخدم
 }
 
+// ===== تحميل قائمة الأصدقاء =====
 async function loadAllUsersAsFriends() {
     const snapshot = await db.collection('users').get();
     friendsList = snapshot.docs.map(doc => doc.data());
@@ -186,7 +194,7 @@ async function loadAllUsersAsFriends() {
 
 function populateFriendSelect() {
     const select = document.getElementById('friend-select');
-    select.innerHTML = '<option value="">اختر صديقاً</option>';
+    select.innerHTML = '<option value="">سجلي أنا</option>';
     friendsList.forEach(friend => {
         if (friend.uid !== currentUser.uid) {
             const option = document.createElement('option');
@@ -197,13 +205,12 @@ function populateFriendSelect() {
     });
 }
 
-// تحديث حالة الأصدقاء مع إظهار وقت المذاكرة لليوم
+// ===== مراقبة حالة الأصدقاء + وقت مذاكرتهم اليوم =====
 function subscribeToFriendsStatus() {
     db.collection('users').onSnapshot(async snapshot => {
         const friendsDiv = document.getElementById('friends-list');
         friendsDiv.innerHTML = '';
 
-        // نجلب سجلات اليوم لجميع الأصدقاء
         const today = getTodayDate();
         const logsSnapshot = await db.collection('dailyLogs').where('date', '==', today).get();
         const logsMap = {};
@@ -220,23 +227,27 @@ function subscribeToFriendsStatus() {
                 const minutes = Math.floor((studyTime % 3600) / 60);
                 const timeStr = hours > 0 ? `${hours}س ${minutes}د` : `${minutes}د`;
 
-                const statusText = {
-                    'studying': '🟢 يذاكر',
-                    'resting': '🟡 استراحة',
-                    'offline': '⚫ غير متصل'
-                }[friend.status] || '⚫ غير متصل';
+                let statusClass = 'offline';
+                let statusText = 'غير متصل';
+                if (friend.status === 'studying') {
+                    statusClass = 'studying';
+                    statusText = 'يذاكر';
+                } else if (friend.status === 'resting') {
+                    statusClass = 'resting';
+                    statusText = 'استراحة';
+                }
 
                 const card = document.createElement('div');
                 card.className = 'friend-item';
+                card.setAttribute('data-uid', friend.uid);
                 card.innerHTML = `
-                    <img src="${friend.photoURL || 'https://via.placeholder.com/40'}" class="avatar-small">
+                    <img src="${friend.photoURL || 'https://via.placeholder.com/45'}" class="avatar-small">
                     <div class="friend-info">
                         <span class="friend-name">${friend.displayName || 'مستخدم'}</span>
                         <span class="friend-study-time">📚 ${timeStr}</span>
                     </div>
-                    <span class="status-badge">${statusText}</span>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
                 `;
-                // عند النقر على الصديق نعرض سجله
                 card.addEventListener('click', () => {
                     document.getElementById('friend-select').value = friend.uid;
                     updateLogDisplay();
@@ -247,45 +258,7 @@ function subscribeToFriendsStatus() {
     });
 }
 
-// دالة عرض السجل (تستدعى تلقائياً عند تغيير الصديق أو التاريخ)
-async function updateLogDisplay() {
-    const selectedFriendId = document.getElementById('friend-select').value;
-    const selectedDate = document.getElementById('log-date').value || getTodayDate();
-    let targetUserId = selectedFriendId || currentUser.uid;
-    const logRef = db.collection('dailyLogs').doc(`${targetUserId}_${selectedDate}`);
-    const doc = await logRef.get();
-    const logDisplay = document.getElementById('log-display');
-    if (doc.exists) {
-        const data = doc.data();
-        const userDoc = await db.collection('users').doc(targetUserId).get();
-        const userName = userDoc.data()?.displayName || 'مستخدم';
-        let html = `<div class="log-header"><i class="fas fa-user-circle"></i> <strong>${userName}</strong> - ${selectedDate}</div>`;
-        html += `<p><i class="fas fa-clock"></i> وقت المذاكرة: ${Math.floor(data.studySeconds/3600)}:${Math.floor((data.studySeconds%3600)/60)}:${data.studySeconds%60}</p>`;
-        html += `<p><i class="fas fa-book-quran"></i> صفحات القرآن: ${data.quranPages || 0}</p>`;
-        html += `<p><i class="fas fa-mosque"></i> الصلوات: `;
-        const prayers = data.prayers || {};
-        const performed = [];
-        if (prayers.fajr) performed.push('الفجر');
-        if (prayers.dhuhr) performed.push('الظهر');
-        if (prayers.asr) performed.push('العصر');
-        if (prayers.maghrib) performed.push('المغرب');
-        if (prayers.ishaa) performed.push('العشاء');
-        if (prayers.taraweeh) performed.push('التراويح');
-        html += performed.join('، ') || 'لم يسجل صلوات';
-        html += '</p>';
-        logDisplay.innerHTML = html;
-    } else {
-        logDisplay.innerHTML = '<p class="no-data">لا يوجد سجل لهذا اليوم</p>';
-    }
-}
-
-async function showMyLog() {
-    document.getElementById('friend-select').value = '';
-    document.getElementById('log-date').value = getTodayDate();
-    await updateLogDisplay();
-}
-
-// دوال لوحة المتصدرين (كما هي محسنة قليلاً)
+// ===== لوحة المتصدرين مع الحالة =====
 async function loadLeaderboard(type) {
     const today = getTodayDate();
     let logsSnapshot;
@@ -296,11 +269,18 @@ async function loadLeaderboard(type) {
         return;
     }
 
+    // نجلب حالة كل مستخدم
+    const usersSnapshot = await db.collection('users').get();
+    const usersMap = {};
+    usersSnapshot.forEach(doc => {
+        const user = doc.data();
+        usersMap[user.uid] = user;
+    });
+
     const leaderboard = [];
     for (const doc of logsSnapshot.docs) {
         const log = doc.data();
-        const userDoc = await db.collection('users').doc(log.userId).get();
-        const user = userDoc.data() || { displayName: 'مستخدم', photoURL: '' };
+        const user = usersMap[log.userId] || { displayName: 'مستخدم', photoURL: '', status: 'offline' };
         let value = 0;
         if (type === 'study') value = log.studySeconds || 0;
         else if (type === 'quran') value = log.quranPages || 0;
@@ -312,7 +292,8 @@ async function loadLeaderboard(type) {
             name: user.displayName || 'مستخدم',
             photo: user.photoURL || '',
             value: value,
-            unit: type
+            unit: type,
+            status: user.status || 'offline'
         });
     }
 
@@ -324,14 +305,156 @@ async function loadLeaderboard(type) {
         if (item.unit === 'study') displayValue = (item.value / 3600).toFixed(2) + ' ساعة';
         else if (item.unit === 'quran') displayValue = item.value + ' صفحة';
         else displayValue = item.value + ' صلاة';
+
+        let statusIcon = '';
+        if (item.status === 'studying') statusIcon = '🟢';
+        else if (item.status === 'resting') statusIcon = '🟡';
+        else statusIcon = '⚫';
+
         return `
             <div class="leaderboard-item">
                 <span class="rank">#${index+1}</span>
                 <img src="${item.photo || 'https://via.placeholder.com/40'}">
                 <span>${item.name}</span>
+                <span class="leaderboard-status">${statusIcon}</span>
                 <span class="value">${displayValue}</span>
             </div>
         `;
     }).join('');
     if (leaderboard.length === 0) container.innerHTML = '<p class="no-data">لا توجد بيانات لليوم</p>';
+}
+
+// ===== عرض السجل اليومي (بدون أزرار) =====
+async function updateLogDisplay() {
+    const selectedFriendId = document.getElementById('friend-select').value;
+    const selectedDate = document.getElementById('log-date').value || getTodayDate();
+    let targetUserId = selectedFriendId || currentUser.uid;
+    const logRef = db.collection('dailyLogs').doc(`${targetUserId}_${selectedDate}`);
+    const doc = await logRef.get();
+    const logDisplay = document.getElementById('log-display');
+    const editBtn = document.getElementById('edit-log-btn');
+
+    // إظهار زر التعديل فقط إذا كان السجل خاص بالمستخدم الحالي والتاريخ هو اليوم (أو أي تاريخ؟ نسمح بالتعديل لأي يوم؟ سنسمح لأي يوم)
+    if (!selectedFriendId && targetUserId === currentUser.uid) {
+        editBtn.style.display = 'inline-flex';
+        editBtn.dataset.date = selectedDate; // نمرر التاريخ لاستخدامه في التعديل
+    } else {
+        editBtn.style.display = 'none';
+    }
+
+    if (doc.exists) {
+        const data = doc.data();
+        const userDoc = await db.collection('users').doc(targetUserId).get();
+        const userName = userDoc.data()?.displayName || 'مستخدم';
+
+        // تنسيق الصلوات
+        const prayers = data.prayers || {};
+        const prayerList = [
+            { name: 'الفجر', key: 'fajr', icon: 'fa-sun' },
+            { name: 'الظهر', key: 'dhuhr', icon: 'fa-sun' },
+            { name: 'العصر', key: 'asr', icon: 'fa-sun' },
+            { name: 'المغرب', key: 'maghrib', icon: 'fa-moon' },
+            { name: 'العشاء', key: 'ishaa', icon: 'fa-moon' },
+            { name: 'التراويح', key: 'taraweeh', icon: 'fa-star' }
+        ];
+
+        let prayersHtml = '<div class="prayer-grid">';
+        prayerList.forEach(p => {
+            const done = prayers[p.key] || false;
+            prayersHtml += `
+                <div class="prayer-badge ${done ? 'done' : 'not-done'}">
+                    <i class="fas ${p.icon}"></i> ${p.name}
+                </div>
+            `;
+        });
+        prayersHtml += '</div>';
+
+        const studyHours = Math.floor(data.studySeconds / 3600);
+        const studyMinutes = Math.floor((data.studySeconds % 3600) / 60);
+
+        logDisplay.innerHTML = `
+            <div class="log-header">
+                <i class="fas fa-user-circle"></i> <strong>${userName}</strong> - ${selectedDate}
+            </div>
+            <div class="log-stats">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-detail">
+                        <div class="stat-label">المذاكرة</div>
+                        <div class="stat-value">${studyHours}:${studyMinutes.toString().padStart(2,'0')}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-book-quran"></i></div>
+                    <div class="stat-detail">
+                        <div class="stat-label">القرآن</div>
+                        <div class="stat-value">${data.quranPages || 0} صفحة</div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:20px;">
+                <div style="font-size:1.1rem; margin-bottom:10px;"><i class="fas fa-mosque"></i> الصلوات</div>
+                ${prayersHtml}
+            </div>
+        `;
+    } else {
+        logDisplay.innerHTML = '<p class="no-data">لا يوجد سجل لهذا اليوم</p>';
+    }
+}
+
+// ===== تفعيل وضع التعديل للسجل (نقوم بتعبئة البيانات في بطاقة التسجيل) =====
+function enableEditMode() {
+    const selectedDate = document.getElementById('edit-log-btn').dataset.date;
+    if (!selectedDate) return;
+    if (selectedDate !== getTodayDate()) {
+        // نحتاج تحميل بيانات ذلك اليوم إلى واجهة التسجيل
+        loadLogForDate(selectedDate);
+    }
+    // التمرير إلى بطاقة التسجيل
+    document.querySelector('.log-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function loadLogForDate(date) {
+    const logRef = db.collection('dailyLogs').doc(`${currentUser.uid}_${date}`);
+    const doc = await logRef.get();
+    if (doc.exists) {
+        const logData = doc.data();
+        document.getElementById('prayer-fajr').checked = logData.prayers.fajr || false;
+        document.getElementById('prayer-dhuhr').checked = logData.prayers.dhuhr || false;
+        document.getElementById('prayer-asr').checked = logData.prayers.asr || false;
+        document.getElementById('prayer-maghrib').checked = logData.prayers.maghrib || false;
+        document.getElementById('prayer-ishaa').checked = logData.prayers.ishaa || false;
+        document.getElementById('prayer-taraweeh').checked = logData.prayers.taraweeh || false;
+        document.getElementById('quran-pages').value = logData.quranPages || 0;
+        // نعدل currentLog مؤقتاً؟ الأفضل حفظ التغييرات في نفس الوثيقة
+        // سنقوم بحفظها عند الضغط على حفظ
+        currentLog = logData; // تحديث currentLog بهذا السجل (وليس سجل اليوم)
+        alert(`الآن يمكنك تعديل بيانات يوم ${date} ثم الضغط على حفظ`);
+    } else {
+        alert('لا يوجد سجل لهذا اليوم');
+    }
+}
+
+// تعديل saveLog ليعمل مع currentLog الحالي (قد يكون ليوم مختلف)
+// نضيف التحقق: إذا كان currentLog يحمل تاريخاً غير اليوم، نحفظ في ذلك التاريخ
+async function saveLog() {
+    if (!currentLog) return;
+    currentLog.prayers = {
+        fajr: document.getElementById('prayer-fajr').checked,
+        dhuhr: document.getElementById('prayer-dhuhr').checked,
+        asr: document.getElementById('prayer-asr').checked,
+        maghrib: document.getElementById('prayer-maghrib').checked,
+        ishaa: document.getElementById('prayer-ishaa').checked,
+        taraweeh: document.getElementById('prayer-taraweeh').checked
+    };
+    currentLog.quranPages = parseInt(document.getElementById('quran-pages').value) || 0;
+    currentLog.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    const logRef = db.collection('dailyLogs').doc(`${currentUser.uid}_${currentLog.date}`);
+    await logRef.set(currentLog, { merge: true });
+    alert(`تم حفظ سجل يوم ${currentLog.date}`);
+    // بعد الحفظ، نعيد تحميل سجل اليوم إذا كنا في يوم مختلف
+    if (currentLog.date !== getTodayDate()) {
+        await loadTodayLog(); // نعيد تحميل سجل اليوم
+    }
+    updateLogDisplay(); // تحديث العرض
 }
