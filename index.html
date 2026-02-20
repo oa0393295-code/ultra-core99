@@ -4,27 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منافسة الأصدقاء</title>
+    <!-- Font Awesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- شاشة تسجيل الدخول -->
     <div id="login-screen" class="glass-panel">
+        <i class="fas fa-users fa-3x" style="color: #00c3ff; margin-bottom: 20px;"></i>
         <h1>مرحباً بك في منافسة الأصدقاء</h1>
-        <button id="google-login" class="btn-glass">تسجيل الدخول بـ Google</button>
+        <button id="google-login" class="btn-glass btn-glow">
+            <i class="fab fa-google"></i> تسجيل الدخول بـ Google
+        </button>
     </div>
 
+    <!-- التطبيق الرئيسي -->
     <div id="main-app" style="display: none;">
+        <!-- الشريط العلوي -->
         <header class="glass-header">
             <div class="user-info">
                 <img id="user-photo" src="" alt="user" class="avatar">
                 <span id="user-name"></span>
             </div>
-            <button id="logout-btn" class="btn-glass-small">تسجيل خروج</button>
+            <button id="logout-btn" class="btn-glass-small">
+                <i class="fas fa-sign-out-alt"></i> خروج
+            </button>
         </header>
 
         <div class="dashboard">
-            <!-- عداد المذاكرة الدائري -->
+            <!-- بطاقة عداد المذاكرة -->
             <div class="glass-card timer-card">
-                <h2>عداد المذاكرة</h2>
+                <h2><i class="fas fa-clock"></i> عداد المذاكرة</h2>
                 <div class="circular-progress">
                     <svg viewBox="0 0 100 100">
                         <circle class="bg" cx="50" cy="50" r="45"></circle>
@@ -33,65 +43,67 @@
                     <div class="time-display" id="timer-display">00:00:00</div>
                 </div>
                 <div class="timer-controls">
-                    <button id="start-timer" class="btn-glass">ابدأ</button>
-                    <button id="pause-timer" class="btn-glass">استراحة</button>
-                    <button id="stop-timer" class="btn-glass">إنهاء</button>
+                    <button id="start-timer" class="btn-icon"><i class="fas fa-play"></i></button>
+                    <button id="pause-timer" class="btn-icon"><i class="fas fa-pause"></i></button>
+                    <button id="stop-timer" class="btn-icon"><i class="fas fa-stop"></i></button>
                 </div>
             </div>
 
-            <!-- تسجيل الصلوات والقرآن -->
+            <!-- بطاقة تسجيل اليوم -->
             <div class="glass-card log-card">
-                <h2>تسجيل اليوم</h2>
+                <h2><i class="fas fa-pen"></i> تسجيل اليوم</h2>
                 <div class="prayer-checkboxes">
-                    <label><input type="checkbox" id="prayer-fajr"> الفجر</label>
-                    <label><input type="checkbox" id="prayer-dhuhr"> الظهر</label>
-                    <label><input type="checkbox" id="prayer-asr"> العصر</label>
-                    <label><input type="checkbox" id="prayer-maghrib"> المغرب</label>
-                    <label><input type="checkbox" id="prayer-ishaa"> العشاء</label>
-                    <label><input type="checkbox" id="prayer-taraweeh"> التراويح</label>
+                    <label class="prayer-item"><input type="checkbox" id="prayer-fajr"> <i class="fas fa-sun"></i> الفجر</label>
+                    <label class="prayer-item"><input type="checkbox" id="prayer-dhuhr"> <i class="fas fa-sun"></i> الظهر</label>
+                    <label class="prayer-item"><input type="checkbox" id="prayer-asr"> <i class="fas fa-sun"></i> العصر</label>
+                    <label class="prayer-item"><input type="checkbox" id="prayer-maghrib"> <i class="fas fa-moon"></i> المغرب</label>
+                    <label class="prayer-item"><input type="checkbox" id="prayer-ishaa"> <i class="fas fa-moon"></i> العشاء</label>
+                    <label class="prayer-item"><input type="checkbox" id="prayer-taraweeh"> <i class="fas fa-star"></i> التراويح</label>
                 </div>
                 <div class="quran-input">
-                    <label>عدد صفحات القرآن:</label>
+                    <label><i class="fas fa-book-quran"></i> عدد الصفحات:</label>
                     <input type="number" id="quran-pages" min="0" value="0">
                 </div>
-                <button id="save-log-btn" class="btn-glass">حفظ</button>
-                <button id="edit-log-btn" class="btn-glass">تعديل</button>
+                <div class="log-actions">
+                    <button id="save-log-btn" class="btn-glass"><i class="fas fa-save"></i> حفظ</button>
+                    <button id="edit-log-btn" class="btn-glass"><i class="fas fa-edit"></i> تعديل</button>
+                </div>
             </div>
 
-            <!-- حالة الأصدقاء -->
+            <!-- حالة الأصدقاء (مع وقت المذاكرة لليوم) -->
             <div class="glass-card friend-status">
-                <h2>حالة الأصدقاء الآن</h2>
+                <h2><i class="fas fa-user-friends"></i> حالة الأصدقاء الآن</h2>
                 <div id="friends-list"></div>
             </div>
 
             <!-- لوحة المتصدرين -->
             <div class="glass-card leaderboard">
-                <h2>لوحة المتصدرين - اليوم</h2>
+                <h2><i class="fas fa-trophy"></i> لوحة المتصدرين - اليوم</h2>
                 <div class="leaderboard-tabs">
-                    <button class="tab-btn active" data-type="study">المذاكرة</button>
-                    <button class="tab-btn" data-type="quran">القرآن</button>
-                    <button class="tab-btn" data-type="prayer">الصلوات</button>
+                    <button class="tab-btn active" data-type="study"><i class="fas fa-clock"></i> المذاكرة</button>
+                    <button class="tab-btn" data-type="quran"><i class="fas fa-book-quran"></i> القرآن</button>
+                    <button class="tab-btn" data-type="prayer"><i class="fas fa-mosque"></i> الصلوات</button>
                 </div>
-                <div id="leaderboard-content"></div>
+                <div id="leaderboard-content" class="leaderboard-list"></div>
             </div>
         </div>
 
-        <!-- قسم السجل -->
+        <!-- قسم السجل اليومي (يظهر مباشرة ويتغير تلقائياً) -->
         <div class="logs-section glass-card">
-            <h2>السجل اليومي</h2>
+            <h2><i class="fas fa-history"></i> السجل اليومي</h2>
             <div class="logs-controls">
-                <button id="my-log-btn" class="btn-glass-small">سجلي</button>
-                <input type="date" id="log-date">
-                <select id="friend-select">
+                <button id="my-log-btn" class="btn-glass-small"><i class="fas fa-user"></i> سجلي</button>
+                <input type="date" id="log-date" class="date-input">
+                <select id="friend-select" class="friend-select">
                     <option value="">اختر صديقاً</option>
                 </select>
-                <button id="view-log-btn" class="btn-glass-small">عرض</button>
+                <!-- تمت إزالة زر العرض -->
             </div>
-            <div id="log-display"></div>
+            <div id="log-display" class="log-display"></div>
         </div>
     </div>
 
-    <!-- Firebase SDK (compat) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
