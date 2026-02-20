@@ -3,114 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TITAN X-GEN | النسخة الاحترافية</title>
+    <title>TITAN LIQUID GLASS OS</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#050505] text-white overflow-x-hidden">
+<body class="bg-[#050505] text-white overflow-hidden font-['Cairo']">
 
-    <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="liquid-bg">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <div id="auth-gate" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
-        <div class="liquid-card p-12 text-center max-w-md w-full border border-white/10 shadow-2xl">
-            <div class="mb-8">
-                <h1 class="text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">TITAN</h1>
-                <p class="text-[10px] font-bold tracking-[0.5em] text-slate-500 mt-2">NEXT GEN CORE</p>
-            </div>
-            <button id="login-btn" class="btn-liquid w-full py-5 text-xl font-bold">بدء النظام المركزي</button>
+    <div id="auth-gate" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 backdrop-blur-3xl">
+        <div class="liquid-panel p-16 text-center max-w-lg w-full border border-white/20 animate-float">
+            <h1 class="text-7xl font-black mb-2 tracking-tighter">TITAN<span class="text-cyan-400">.</span></h1>
+            <p class="text-cyan-500/60 font-bold text-xs uppercase tracking-[0.5em] mb-12">Next-Gen Productivity</p>
+            <button id="login-btn" class="glass-btn w-full py-6 text-xl font-black">الدخول للنظام</button>
         </div>
     </div>
 
-    <main id="app-shell" class="hidden opacity-0 transition-all duration-1000 p-4 lg:p-8 min-h-screen">
-        <div class="max-w-[1800px] mx-auto grid grid-cols-12 gap-8">
+    <main id="app-shell" class="hidden h-screen w-screen p-4 lg:p-8 flex flex-col gap-6 relative z-10 opacity-0 transition-all duration-1000">
+        
+        <header class="flex justify-between items-center px-8 py-4 liquid-panel-soft">
+            <div class="flex items-center gap-6">
+                <div id="u-avatar" class="w-14 h-14 rounded-full border-2 border-cyan-500/50 flex items-center justify-center text-2xl font-black shadow-[0_0_20px_rgba(6,182,212,0.3)]">؟</div>
+                <div>
+                    <h2 id="u-name" class="text-2xl font-black italic">القائد</h2>
+                    <p id="live-clock" class="mono text-cyan-400 text-sm opacity-70">00:00:00</p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="location.reload()" class="p-3 rounded-full hover:bg-white/10 transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
             
-            <aside class="col-span-12 lg:col-span-3 space-y-6">
-                <div class="liquid-card p-6 flex items-center gap-5 relative overflow-hidden group">
-                    <div id="u-avatar" class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-4xl font-black shadow-lg shadow-cyan-500/20">؟</div>
-                    <div class="z-10">
-                        <h2 id="u-name" class="font-black text-2xl truncate">القائد</h2>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <p id="live-clock" class="mono text-slate-400 text-xs font-bold">00:00:00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="liquid-card p-6">
-                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                        <h3 class="text-sm font-black text-slate-400 italic">سجل الفروض</h3>
-                        <div id="prayer-count-label" class="text-[10px] bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full font-bold">0/6</div>
-                    </div>
-                    <div id="prayer-checklist" class="space-y-3">
+            <aside class="col-span-12 lg:col-span-3 flex flex-col gap-6 overflow-y-auto custom-scroll p-1">
+                <div class="liquid-panel p-6">
+                    <h3 class="text-xs font-black text-cyan-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">سجل الصلوات اليومية</h3>
+                    <div id="prayer-checklist" class="space-y-4">
                         </div>
                 </div>
 
-                <div class="liquid-card p-6">
-                    <h3 class="text-sm font-black text-slate-400 mb-4 italic">ورد القرآن</h3>
-                    <div class="flex gap-2">
-                        <input type="number" id="quran-in" class="input-liquid flex-1 text-center font-black" placeholder="كم صفحة؟">
-                        <button id="quran-save" class="btn-liquid px-8 text-sm">حفظ</button>
+                <div class="liquid-panel p-6">
+                    <h3 class="text-xs font-black text-cyan-500 uppercase tracking-widest mb-4">ورد القرآن اليومي</h3>
+                    <div class="relative group">
+                        <input type="number" id="quran-in" class="input-glass w-full text-center text-2xl font-black py-4" placeholder="0">
+                        <button id="quran-save" class="absolute left-2 top-2 bottom-2 px-4 bg-cyan-500 rounded-xl font-black text-xs hover:scale-105 transition-all">حفظ</button>
                     </div>
                 </div>
             </aside>
 
-            <section class="col-span-12 lg:col-span-6 space-y-8">
-                <div class="liquid-card p-12 flex flex-col items-center relative min-h-[500px] justify-center">
+            <section class="col-span-12 lg:col-span-6 flex flex-col gap-6 overflow-hidden">
+                <div class="liquid-panel flex-1 flex flex-col items-center justify-center relative py-12">
                     <div class="orb-container">
-                        <svg viewBox="0 0 400 400" class="orb-svg">
-                            <defs>
-                                <linearGradient id="orbGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-                                </linearGradient>
-                            </defs>
-                            <circle class="orb-track" cx="200" cy="200" r="180"></circle>
-                            <circle id="orb-fill" class="orb-progress" cx="200" cy="200" r="180"></circle>
+                        <svg viewBox="0 0 400 400" class="orb-visual">
+                            <circle class="orb-path" cx="200" cy="200" r="180"></circle>
+                            <circle id="orb-fill" class="orb-glow" cx="200" cy="200" r="180"></circle>
                         </svg>
-                        <div class="orb-inner flex flex-col items-center">
-                            <h2 id="timer-display" class="text-8xl font-black mono tracking-tighter">00:00</h2>
-                            <p id="status-tag" class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 mt-6">System_Idle</p>
+                        <div class="orb-content text-center">
+                            <span id="timer-display" class="text-9xl font-black mono leading-none tracking-tighter">00:00</span>
+                            <div id="status-tag" class="status-pill mt-8">مريح شوية</div>
                         </div>
                     </div>
+                    
+                    <button id="timer-btn" class="ignite-btn mt-12 px-20 py-6 text-4xl font-black italic">START SESSION</button>
 
-                    <button id="timer-btn" class="btn-liquid w-full max-w-md py-8 text-4xl font-black italic mt-12 shadow-2xl">IGNITE</button>
-
-                    <div class="grid grid-cols-2 gap-10 w-full mt-16 pt-12 border-t border-white/5">
+                    <div class="flex gap-16 mt-12 w-full justify-center">
                         <div class="text-center group">
-                            <p class="text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-widest">إجمالي اليوم</p>
-                            <p class="text-5xl font-black mono text-white"><span id="stat-mins">0</span></p>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 group-hover:text-cyan-400 transition-all">إجمالي المذاكرة</p>
+                            <p class="text-4xl font-black mono"><span id="stat-mins">0</span> <span class="text-sm opacity-40">الوقت</span></p>
                         </div>
-                        <div class="text-center group border-r border-white/5">
-                            <p class="text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-widest">صفحات القرآن</p>
-                            <p class="text-5xl font-black mono text-emerald-500" id="stat-quran">0</p>
+                        <div class="w-px h-12 bg-white/10"></div>
+                        <div class="text-center group">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 group-hover:text-emerald-400 transition-all">صفحات القرآن</p>
+                            <p class="text-4xl font-black mono text-emerald-500" id="stat-quran">0</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="liquid-card p-8">
-                    <h3 class="text-3xl font-black italic mb-8">الأرشيف <span class="text-cyan-500">الزمني</span></h3>
-                    <div id="history-feed" class="space-y-4 max-h-[600px] overflow-y-auto custom-scroll px-2">
+                <div class="liquid-panel-soft h-1/3 p-6 flex flex-col">
+                    <h3 class="text-xl font-black mb-4">السجل <span class="text-cyan-400">التاريخي</span></h3>
+                    <div id="history-feed" class="flex-1 overflow-y-auto custom-scroll space-y-3 pr-2">
                         </div>
                 </div>
             </section>
 
-            <aside class="col-span-12 lg:col-span-3 space-y-8 h-full flex flex-col">
-                <div class="liquid-card p-6 flex-1 flex flex-col min-h-[500px]">
-                    <h3 class="text-center text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] mb-8 italic">لوحة النخبة</h3>
-                    <div id="rankings" class="space-y-4 overflow-y-auto flex-1 custom-scroll">
+            <aside class="col-span-12 lg:col-span-3 flex flex-col gap-6 overflow-hidden">
+                <div class="liquid-panel flex-[1.5] p-6 flex flex-col overflow-hidden">
+                    <h3 class="text-center text-[10px] font-black text-cyan-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">لوحة الصدارة (LIVE)</h3>
+                    <div id="rankings" class="flex-1 overflow-y-auto custom-scroll space-y-3 pr-2">
                         </div>
                 </div>
 
-                <div class="liquid-card h-[450px] flex flex-col overflow-hidden">
-                    <div id="chat-box" class="flex-1 overflow-y-auto p-5 space-y-5 custom-scroll bg-black/20">
+                <div class="liquid-panel flex-1 flex flex-col overflow-hidden">
+                    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll bg-black/20">
                         </div>
-                    <div class="p-4 bg-white/5 flex gap-2 border-t border-white/5">
-                        <input id="chat-in" type="text" placeholder="أرسل رسالة مشفرة..." class="flex-1 bg-transparent text-white font-bold outline-none border-b border-white/10 focus:border-cyan-500 px-2 transition-all">
-                        <button id="chat-send" class="btn-liquid px-6 text-xs uppercase font-black">Send</button>
+                    <div class="p-3 flex gap-2 border-t border-white/5">
+                        <input id="chat-in" type="text" placeholder="أرسل رسالة..." class="flex-1 bg-transparent border-none outline-none text-sm font-bold px-3">
+                        <button id="chat-send" class="p-3 bg-white/10 rounded-xl hover:bg-cyan-500 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -118,31 +116,35 @@
     </main>
 
     <div id="inspect-modal" class="modal-overlay hidden">
-        <div class="liquid-card modal-body max-w-6xl w-full">
-            <div class="flex justify-between items-center mb-10 border-b border-white/5 pb-6">
-                <h4 id="inspect-name" class="text-5xl font-black italic tracking-tighter">...</h4>
-                <button onclick="UI.toggleModal('inspect-modal', false)" class="text-5xl text-slate-700 hover:text-white transition-all">&times;</button>
+        <div class="liquid-panel p-10 max-w-4xl w-full border-t-2 border-cyan-500 animate-in">
+            <div class="flex justify-between items-center mb-10 border-b border-white/10 pb-6">
+                <div>
+                    <h4 id="inspect-name" class="text-4xl font-black italic">اسم المستخدم</h4>
+                    <p class="text-xs text-cyan-500 mono mt-2">USER_DATABASE_LOGS</p>
+                </div>
+                <button onclick="UI.toggleModal('inspect-modal', false)" class="text-5xl text-white/20 hover:text-white transition-all">&times;</button>
             </div>
-            <div id="inspect-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto custom-scroll max-h-[65vh] p-2"></div>
+            <div id="inspect-content" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pr-4">
+                </div>
         </div>
     </div>
 
     <div id="edit-modal" class="modal-overlay hidden">
-        <div class="liquid-card modal-body max-w-md w-full border-t-4 border-emerald-500">
-            <h4 class="text-2xl font-black italic mb-8 text-center">تحديث السجل التاريخي</h4>
+        <div class="liquid-panel p-10 max-w-md w-full border border-cyan-500/50">
+            <h4 class="text-2xl font-black mb-8 border-b border-white/5 pb-4">تحديث السجل</h4>
             <div class="space-y-6">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-500 mb-2 block">الدقائق الكلية</label>
-                    <input type="number" id="edit-mins" class="input-liquid w-full text-center text-3xl font-black">
+                    <label class="text-[10px] font-bold text-slate-500 mb-2 block">وقت المذاكرة (بالدقائق)</label>
+                    <input type="number" id="edit-mins" class="input-glass w-full text-center text-3xl font-black">
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-slate-500 mb-2 block">صفحات القرآن</label>
-                    <input type="number" id="edit-quran" class="input-liquid w-full text-center text-3xl font-black">
+                    <input type="number" id="edit-quran" class="input-glass w-full text-center text-3xl font-black">
                 </div>
-                <div id="edit-habits" class="grid grid-cols-3 gap-2 py-4"></div>
-                <div class="flex gap-4 pt-4">
-                    <button id="save-edit" class="btn-liquid flex-1 py-5 text-xl">تأكيد</button>
-                    <button onclick="UI.toggleModal('edit-modal', false)" class="flex-1 bg-slate-900 rounded-2xl font-bold">إلغاء</button>
+                <div id="edit-habits" class="grid grid-cols-3 gap-2"></div>
+                <div class="flex gap-4 pt-6">
+                    <button id="save-edit" class="ignite-btn flex-1 py-4 text-sm">حفظ التغييرات</button>
+                    <button onclick="UI.toggleModal('edit-modal', false)" class="flex-1 bg-white/5 rounded-2xl font-black text-sm">إلغاء</button>
                 </div>
             </div>
         </div>

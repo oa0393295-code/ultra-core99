@@ -1,71 +1,95 @@
 :root {
     --cyan: #06b6d4;
-    --blue: #3b82f6;
     --emerald: #10b981;
-    --red: #ef4444;
+    --danger: #ef4444;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --liquid-border: rgba(255, 255, 255, 0.08);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; scroll-behavior: smooth; cursor: default; }
-
-/* Mesh Gradient Blobs */
+/* خلفية Liquid Blobs */
+.liquid-bg {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden; background: #020617;
+}
 .blob {
-    position: absolute; width: 600px; height: 600px; filter: blur(120px); border-radius: 50%; opacity: 0.15; z-index: -1;
+    position: absolute; width: 600px; height: 600px; border-radius: 50%;
+    filter: blur(80px); opacity: 0.15; animation: move 25s infinite alternate;
 }
-.blob-1 { background: var(--cyan); top: -200px; left: -200px; animation: move 20s infinite alternate; }
-.blob-2 { background: var(--blue); bottom: -200px; right: -200px; animation: move 25s infinite alternate-reverse; }
+.blob-1 { background: #0ea5e9; top: -10%; left: -10%; }
+.blob-2 { background: #8b5cf6; bottom: -10%; right: -10%; animation-delay: -5s; }
+.blob-3 { background: #06b6d4; top: 40%; left: 30%; animation-delay: -10s; }
 
-@keyframes move { from { transform: translate(0,0); } to { transform: translate(100px, 100px); } }
+@keyframes move {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(100px, 50px) scale(1.2); }
+}
 
-/* Liquid Glass Cards */
-.liquid-card {
-    background: rgba(20, 20, 20, 0.4);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* Liquid Panels */
+.liquid-panel {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid var(--liquid-border);
     border-radius: 2.5rem;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
-.liquid-card:hover { border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 40px 80px rgba(0,0,0,0.9); }
-
-/* Buttons */
-.btn-liquid {
-    background: linear-gradient(135deg, var(--cyan) 0%, var(--blue) 100%);
-    color: white; border-radius: 1.5rem; transition: 0.3s; cursor: pointer;
-}
-.btn-liquid:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(6, 182, 212, 0.3); filter: brightness(1.1); }
-.btn-liquid:active { transform: translateY(1px); }
-
-.input-liquid {
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 1.2rem;
-    padding: 1rem; color: white; outline: none; transition: 0.3s;
-}
-.input-liquid:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.1); }
-
-/* The Orb */
-.orb-container { position: relative; width: 380px; height: 380px; display: flex; align-items: center; justify-content: center; }
-.orb-svg { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 30px rgba(6, 182, 212, 0.1)); }
-.orb-track { fill: none; stroke: rgba(255,255,255,0.02); stroke-width: 10; }
-.orb-progress {
-    fill: none; stroke: url(#orbGradient); stroke-width: 10; stroke-linecap: round;
-    stroke-dasharray: 1162; stroke-dashoffset: 1162; transition: stroke-dashoffset 1s linear;
-}
-.orb-inner { position: absolute; text-align: center; }
-
-/* Status Labels & Habit Squares */
-.habit-sq { width: 20px; height: 20px; border-radius: 6px; transition: 0.3s; position: relative; }
-.habit-sq.done { background: var(--emerald); box-shadow: 0 0 12px var(--emerald); }
-.habit-sq.fail { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
-
-/* Chat Custom Style */
-.chat-msg { max-width: 80%; padding: 12px 16px; border-radius: 1.2rem; font-size: 0.85rem; font-weight: 700; line-height: 1.6; }
-.msg-me { align-self: flex-start; background: var(--cyan); color: white; border-bottom-right-radius: 4px; }
-.msg-other { align-self: flex-end; background: rgba(255,255,255,0.05); color: #cbd5e1; border-bottom-left-radius: 4px; }
-
-/* Modals */
-.modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px);
-    z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 2rem;
+.liquid-panel-soft {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Orb & UI Elements */
+.orb-container { position: relative; width: 360px; height: 360px; display: flex; align-items: center; justify-content: center; }
+.orb-visual { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 30px rgba(6,182,212,0.2)); }
+.orb-path { fill: none; stroke: rgba(255,255,255,0.02); stroke-width: 8; }
+.orb-glow {
+    fill: none; stroke: var(--cyan); stroke-width: 10; stroke-linecap: round;
+    stroke-dasharray: 1131; stroke-dashoffset: 1131; transition: stroke-dashoffset 1s linear;
+}
+.orb-content { position: absolute; width: 100%; }
+
+.ignite-btn {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white; border-radius: 2rem; border: none;
+    box-shadow: 0 15px 35px rgba(6, 182, 212, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.ignite-btn:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 20px 45px rgba(6, 182, 212, 0.6); }
+
+.status-pill {
+    background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 24px; border-radius: 100px; font-size: 12px; font-weight: 900;
+}
+
+.input-glass {
+    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1.5rem; color: white; outline: none; transition: 0.3s;
+}
+.input-glass:focus { border-color: var(--cyan); background: rgba(255,255,255,0.06); }
+
+/* Prayer Blocks */
+.p-block {
+    padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 800;
+    transition: 0.3s; text-align: center; border: 1px solid transparent;
+}
+.p-block.active { background: var(--emerald); color: white; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
+.p-block.inactive { background: rgba(239, 68, 68, 0.1); color: rgba(239, 68, 68, 0.8); border-color: rgba(239, 68, 68, 0.2); }
+
+/* Chat Bubbles */
+.chat-entry { display: flex; flex-direction: column; max-width: 80%; }
+.chat-right { align-self: flex-start; }
+.chat-left { align-self: flex-end; }
+.bubble {
+    padding: 12px 18px; border-radius: 1.2rem; font-size: 14px; font-weight: 700;
+}
+.chat-right .bubble { background: var(--cyan); color: white; border-bottom-left-radius: 2px; }
+.chat-left .bubble { background: rgba(255,255,255,0.05); color: #ccc; border-bottom-right-radius: 2px; }
+
+/* Custom Scroll */
 .custom-scroll::-webkit-scrollbar { width: 4px; }
 .custom-scroll::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 10px; }
+
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(20px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 2rem;
+}
