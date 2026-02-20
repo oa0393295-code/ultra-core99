@@ -424,12 +424,6 @@ body {
     border-color: rgba(251, 146, 60, 0.3);
 }
 
-.status-offline {
-    background: rgba(156, 163, 175, 0.2);
-    color: #9ca3af;
-    border-color: rgba(156, 163, 175, 0.3);
-}
-
 .session-time {
     font-size: 11px;
     color: rgba(255,255,255,0.5);
@@ -445,6 +439,7 @@ body {
     border-radius: 20px;
 }
 
+/* قسم الشات (معدل للعرض العمودي) */
 .chat-card {
     padding: 20px;
 }
@@ -474,13 +469,16 @@ body {
 }
 
 .chat-messages {
-    height: 220px;
+    height: 300px;
     overflow-y: auto;
     margin-bottom: 15px;
     padding: 15px;
     background: rgba(0,0,0,0.2);
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -498,10 +496,10 @@ body {
 }
 
 .message {
-    margin-bottom: 15px;
     display: flex;
     align-items: flex-start;
     gap: 10px;
+    width: 100%;
 }
 
 .message-avatar {
@@ -520,6 +518,7 @@ body {
 
 .message-content {
     flex: 1;
+    max-width: 80%;
 }
 
 .message-header {
@@ -548,7 +547,6 @@ body {
     word-break: break-word;
     border: 1px solid rgba(255,255,255,0.05);
     display: inline-block;
-    max-width: 85%;
 }
 
 .chat-input {
@@ -600,21 +598,6 @@ body {
     box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);
 }
 
-@media (max-width: 900px) {
-    .main-dashboard {
-        grid-template-columns: 1fr;
-    }
-    
-    .circular-timer {
-        width: 220px;
-        height: 220px;
-    }
-    
-    .timer-text {
-        font-size: 30px;
-    }
-}
-
 /* شاشة تسجيل الدخول */
 .login-screen {
     display: flex;
@@ -643,4 +626,20 @@ body {
 .login-card p {
     color: rgba(255,255,255,0.7);
     margin-bottom: 30px;
+}
+
+/* تجاوب مع الشاشات الصغيرة */
+@media (max-width: 900px) {
+    .main-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .circular-timer {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .timer-text {
+        font-size: 30px;
+    }
 }
