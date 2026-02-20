@@ -1,4 +1,3 @@
-// إعدادات Firebase - استخدم إعدادات مشروعك
 const firebaseConfig = {
     apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
     authDomain: "ultra-core.firebaseapp.com",

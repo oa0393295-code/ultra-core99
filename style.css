@@ -439,7 +439,7 @@ body {
     border-radius: 20px;
 }
 
-/* قسم الشات (معدل للعرض العمودي) */
+/* قسم الشات العمودي مع تمايز الجهات */
 .chat-card {
     padding: 20px;
 }
@@ -502,6 +502,20 @@ body {
     width: 100%;
 }
 
+/* رسائل الآخرين تظهر على اليسار */
+.message-other {
+    justify-content: flex-start;
+}
+
+/* رسائل المستخدم الحالي تظهر على اليمين */
+.message-mine {
+    justify-content: flex-end;
+}
+
+.message-mine .message-content {
+    order: -1; /* لجعل المحتوى قبل الصورة؟ لا داعي، نضبط بالـ margin */
+}
+
 .message-avatar {
     width: 35px;
     height: 35px;
@@ -518,13 +532,23 @@ body {
 
 .message-content {
     flex: 1;
-    max-width: 80%;
+    max-width: 70%;
+}
+
+.message-mine .message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .message-header {
     display: flex;
     gap: 10px;
     margin-bottom: 4px;
+}
+
+.message-mine .message-header {
+    flex-direction: row-reverse;
 }
 
 .message-author {
@@ -547,6 +571,11 @@ body {
     word-break: break-word;
     border: 1px solid rgba(255,255,255,0.05);
     display: inline-block;
+}
+
+.message-mine .message-text {
+    background: rgba(107, 91, 255, 0.3);
+    border-color: rgba(107, 91, 255, 0.5);
 }
 
 .chat-input {
@@ -628,7 +657,6 @@ body {
     margin-bottom: 30px;
 }
 
-/* تجاوب مع الشاشات الصغيرة */
 @media (max-width: 900px) {
     .main-dashboard {
         grid-template-columns: 1fr;

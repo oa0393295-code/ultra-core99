@@ -19,17 +19,34 @@ let timerInterval = null;
 
 // مفاتيح localStorage
 const STORAGE_KEYS = {
-    STUDY_SESSION_START: 'studySessionStart',
     DAILY_SECONDS: 'dailySeconds',
     DAILY_POINTS: 'dailyPoints',
     LAST_RESET_DATE: 'lastResetDate',
-    SESSION_ACTIVE: 'sessionActive'
+    SESSION_START: 'sessionStart',     // وقت بدء الجلسة (نستخدمه فقط أثناء الجلسة)
+    HISTORY: 'studyHistory'            // سجل الأيام السابقة
 };
 
-// تهيئة localStorage
+// تهيئة localStorage: التحقق من بداية يوم جديد وحفظ اليوم السابق
 function initLocalStorage() {
     const today = new Date().toDateString();
     const lastReset = localStorage.getItem(STORAGE_KEYS.LAST_RESET_DATE);
+    
+    // إذا كان اليوم مختلفاً عن آخر يوم مسجل، ننقل إحصائيات الأمس إلى السجل
+    if (lastReset && lastReset !== today) {
+        const yesterdayStats = {
+            date: lastReset,
+            seconds: parseInt(localStorage.getItem(STORAGE_KEYS.DAILY_SECONDS) || '0'),
+            points: parseInt(localStorage.getItem(STORAGE_KEYS.DAILY_POINTS) || '0')
+        };
+        // حفظ السجل
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        history.push(yesterdayStats);
+        // نحتفظ بآخر 30 يوم فقط
+        if (history.length > 30) history.shift();
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+    }
+    
+    // إعادة تعيين إحصائيات اليوم إذا كان يوم جديد
     if (lastReset !== today) {
         localStorage.setItem(STORAGE_KEYS.DAILY_SECONDS, '0');
         localStorage.setItem(STORAGE_KEYS.DAILY_POINTS, '0');
@@ -45,7 +62,7 @@ function getDailyStats() {
     };
 }
 
-// تحديث إحصائيات اليوم
+// تحديث إحصائيات اليوم (عند إيقاف المذاكرة)
 function updateDailyStats(additionalSeconds) {
     const stats = getDailyStats();
     const newSeconds = stats.seconds + additionalSeconds;
@@ -53,31 +70,6 @@ function updateDailyStats(additionalSeconds) {
     localStorage.setItem(STORAGE_KEYS.DAILY_SECONDS, newSeconds.toString());
     localStorage.setItem(STORAGE_KEYS.DAILY_POINTS, newPoints.toString());
     return { seconds: newSeconds, points: newPoints };
-}
-
-// استرجاع وقت بدء الجلسة المخزنة
-function getStoredSessionStart() {
-    const stored = localStorage.getItem(STORAGE_KEYS.STUDY_SESSION_START);
-    return stored ? parseInt(stored) : null;
-}
-
-// تخزين وقت بدء الجلسة
-function setStoredSessionStart(timestamp) {
-    if (timestamp) {
-        localStorage.setItem(STORAGE_KEYS.STUDY_SESSION_START, timestamp.toString());
-    } else {
-        localStorage.removeItem(STORAGE_KEYS.STUDY_SESSION_START);
-    }
-}
-
-// تخزين حالة الجلسة نشطة
-function setSessionActive(active) {
-    localStorage.setItem(STORAGE_KEYS.SESSION_ACTIVE, active ? 'true' : 'false');
-}
-
-// التحقق من وجود جلسة نشطة مخزنة
-function hasActiveSession() {
-    return localStorage.getItem(STORAGE_KEYS.SESSION_ACTIVE) === 'true';
 }
 
 // تسجيل الدخول
@@ -93,7 +85,6 @@ logoutBtn.addEventListener('click', () => {
 // مراقبة حالة المصادقة
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // مستخدم مسجل
         loginScreen.style.display = 'none';
         mainApp.style.display = 'block';
 
@@ -108,22 +99,20 @@ auth.onAuthStateChanged(async (user) => {
             totalStudyHours: 0,
             dailyPoints: 0,
             dailyStudySeconds: 0,
-            status: 'resting', // الحالة الافتراضية
+            status: 'resting', // الحالة الافتراضية (لن تظهر للآخرين)
             currentSessionStart: null,
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // استماع لتغييرات المستخدم الحالي
         userRef.onSnapshot((doc) => {
             currentUserData = { id: doc.id, ...doc.data() };
             document.getElementById('currentUser').textContent = currentUserData.name;
             document.getElementById('userAvatar').textContent = currentUserData.avatar;
-            // عرض إجمالي ساعات اليوم من localStorage
             const dailyStats = getDailyStats();
             document.getElementById('todayHours').textContent = (dailyStats.seconds / 3600).toFixed(1);
         });
 
-        // استماع لقائمة المتصدرين (ترتيب حسب النقاط اليومية)
+        // الاستماع لقائمة المتصدرين (ترتيب حسب النقاط اليومية)
         if (unsubscribeLeaderboard) unsubscribeLeaderboard();
         unsubscribeLeaderboard = db.collection('users')
             .orderBy('dailyPoints', 'desc')
@@ -133,7 +122,7 @@ auth.onAuthStateChanged(async (user) => {
                 updateOnlineCount(users);
             });
 
-        // استماع للرسائل
+        // الاستماع للرسائل
         if (unsubscribeMessages) unsubscribeMessages();
         unsubscribeMessages = db.collection('messages')
             .orderBy('timestamp', 'asc')
@@ -142,34 +131,23 @@ auth.onAuthStateChanged(async (user) => {
                 updateChat(msgs);
             });
 
-        // استعادة الجلسة إذا كانت نشطة
+        // تهيئة localStorage والتأكد من عدم وجود جلسة سابقة (الرفريش يلغي الجلسة)
         initLocalStorage();
-        if (hasActiveSession()) {
-            const storedStart = getStoredSessionStart();
-            if (storedStart) {
-                // استعادة الجلسة
-                isStudying = true;
-                studyStartTime = storedStart;
-                document.getElementById('startStudy').disabled = true;
-                document.getElementById('stopStudy').disabled = false;
-                startTimer();
-                // تحديث حالة المستخدم في Firestore
-                await userRef.update({
-                    status: 'studying',
-                    currentSessionStart: firebase.firestore.Timestamp.fromMillis(storedStart)
-                });
-            } else {
-                // لا يوجد وقت بدء مخزن، ننهي الجلسة
-                setSessionActive(false);
-            }
-        }
+        // عند تحميل الصفحة، نمسح أي جلسة مخزنة (العداد لا يستأنف)
+        localStorage.removeItem(STORAGE_KEYS.SESSION_START);
+        isStudying = false;
+        studyStartTime = null;
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('startStudy').disabled = false;
+        document.getElementById('stopStudy').disabled = true;
+        document.querySelector('.timer-progress').style.strokeDashoffset = '565.48';
+        document.getElementById('timer').textContent = '00:00:00';
 
-        // مراقبة حالة الخلفية (visibility change)
+        // مراقبة حالة الخلفية
         document.addEventListener('visibilitychange', handleVisibilityChange);
         window.addEventListener('pagehide', handlePageHide);
 
     } else {
-        // غير مسجل
         loginScreen.style.display = 'flex';
         mainApp.style.display = 'none';
         if (unsubscribeLeaderboard) unsubscribeLeaderboard();
@@ -183,32 +161,28 @@ auth.onAuthStateChanged(async (user) => {
 // معالج تغيير الرؤية (التبويب في الخلفية)
 function handleVisibilityChange() {
     if (document.hidden) {
-        // التبويب في الخلفية: العداد يستمر في العمل
-        console.log('التبويب في الخلفية، العداد مستمر');
+        // في الخلفية: العداد يستمر
+        console.log('العداد مستمر في الخلفية');
     } else {
-        // العودة للتبويب: تحديث العداد إذا كانت جلسة نشطة
-        if (isStudying) {
-            updateTimerDisplay();
-        }
+        // العودة: تحديث العرض
+        if (isStudying) updateTimerDisplay();
     }
 }
 
 // معالج إغلاق الصفحة أو الرفريش
 function handlePageHide(event) {
     if (isStudying) {
-        // عند الرفريش أو الإغلاق، نوقف الجلسة ولا نضيف نقاط
+        // عند الإغلاق، ننهي الجلسة ولا نحسب النقاط
         stopStudyOnClose();
     }
 }
 
-// إيقاف الجلسة عند الإغلاق (بدون حفظ النقاط)
+// إنهاء الجلسة عند الإغلاق بدون حفظ
 function stopStudyOnClose() {
     if (isStudying) {
         isStudying = false;
-        setSessionActive(false);
-        setStoredSessionStart(null);
+        localStorage.removeItem(STORAGE_KEYS.SESSION_START);
         clearInterval(timerInterval);
-        // تحديث حالة المستخدم في Firestore إلى resting
         if (currentUserData) {
             db.collection('users').doc(currentUserData.uid).update({
                 status: 'resting',
@@ -253,15 +227,13 @@ document.getElementById('startStudy').addEventListener('click', async () => {
             dailyPoints: 0,
             dailyStudySeconds: 0
         });
-        localStorage.setItem(STORAGE_KEYS.LAST_RESET_DATE, today);
-        localStorage.setItem(STORAGE_KEYS.DAILY_SECONDS, '0');
-        localStorage.setItem(STORAGE_KEYS.DAILY_POINTS, '0');
+        // إعادة تعيين localStorage (مع حفظ السابق تلقائياً في init)
+        initLocalStorage();
     }
 
     isStudying = true;
     studyStartTime = Date.now();
-    setStoredSessionStart(studyStartTime);
-    setSessionActive(true);
+    localStorage.setItem(STORAGE_KEYS.SESSION_START, studyStartTime.toString());
 
     await db.collection('users').doc(currentUserData.uid).update({
         status: 'studying',
@@ -296,8 +268,7 @@ document.getElementById('stopStudy').addEventListener('click', async () => {
 
     // إنهاء الجلسة
     isStudying = false;
-    setSessionActive(false);
-    setStoredSessionStart(null);
+    localStorage.removeItem(STORAGE_KEYS.SESSION_START);
     clearInterval(timerInterval);
     document.getElementById('startStudy').disabled = false;
     document.getElementById('stopStudy').disabled = true;
@@ -306,28 +277,16 @@ document.getElementById('stopStudy').addEventListener('click', async () => {
     document.getElementById('todayHours').textContent = (dailyStats.seconds / 3600).toFixed(1);
 });
 
-// تحديث لوحة المتصدرين (تظهر النقاط اليومية فقط)
+// تحديث لوحة المتصدرين (تظهر النقاط اليومية فقط، ولا تظهر حالة "بيذاكر دلوقتي")
 function updateLeaderboard(users) {
     const leaderboardDiv = document.getElementById('leaderboard');
     leaderboardDiv.innerHTML = '';
     users.forEach((user, index) => {
         const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-        let statusText = '', statusClass = '', sessionInfo = '';
-
-        if (user.status === 'studying') {
-            statusText = 'بيذاكر دلوقتي';
-            statusClass = 'status-studying';
-            if (user.currentSessionStart) {
-                const start = user.currentSessionStart.toDate ? user.currentSessionStart.toDate() : new Date(user.currentSessionStart);
-                const diff = Math.floor((new Date() - start) / 60000);
-                const h = Math.floor(diff / 60);
-                const m = diff % 60;
-                sessionInfo = h > 0 ? `منذ ${h} س و ${m} د` : `منذ ${m} د`;
-            }
-        } else {
-            statusText = 'بيريح';
-            statusClass = 'status-resting';
-        }
+        
+        // إزالة كلمة "بيذاكر دلوقتي" تماماً، نعرض دائماً "بيريح"
+        const statusText = 'بيريح';
+        const statusClass = 'status-resting';
 
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
@@ -337,7 +296,6 @@ function updateLeaderboard(users) {
                 <div class="player-name">${user.name}</div>
                 <div class="player-status">
                     <span class="status-badge ${statusClass}">${statusText}</span>
-                    ${sessionInfo ? `<span class="session-time">(${sessionInfo})</span>` : ''}
                 </div>
             </div>
             <div class="points">${Math.round(user.dailyPoints || 0)}</div>
@@ -346,13 +304,13 @@ function updateLeaderboard(users) {
     });
 }
 
-// تحديث عدد المتصلين (حسب الحالة studying)
+// تحديث عدد المتصلين (حسب الحالة studying، لكننا لا نظهرها في اللوحة، فقط للعدد)
 function updateOnlineCount(users) {
     const online = users.filter(u => u.status === 'studying').length;
     document.getElementById('onlineCount').textContent = online + ' متصل';
 }
 
-// تحديث الشات
+// تحديث الشات مع تمايز الجهات (رسائلي على اليمين، رسائل الآخرين على اليسار)
 function updateChat(messages) {
     const chatDiv = document.getElementById('chatMessages');
     chatDiv.innerHTML = '';
@@ -361,10 +319,14 @@ function updateChat(messages) {
         if (!user) return;
         const time = msg.timestamp ? msg.timestamp.toDate() : new Date();
         const timeStr = formatTime(time);
-        const div = document.createElement('div');
-        div.className = 'message';
-        div.innerHTML = `
-            <div class="message-avatar">${user.avatar || '?'}</div>
+        const isMine = currentUserData && user.uid === currentUserData.uid;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isMine ? 'message-mine' : 'message-other'}`;
+        
+        // محتوى الرسالة يختلف قليلاً حسب الجهة (الصورة تظهر دائماً)
+        let avatarHtml = `<div class="message-avatar">${user.avatar || '?'}</div>`;
+        let contentHtml = `
             <div class="message-content">
                 <div class="message-header">
                     <span class="message-author">${user.name || 'مجهول'}</span>
@@ -373,7 +335,15 @@ function updateChat(messages) {
                 <div class="message-text">${msg.text}</div>
             </div>
         `;
-        chatDiv.appendChild(div);
+        
+        if (isMine) {
+            // ترتيب مختلف قليلاً (الصورة على اليمين)
+            messageDiv.innerHTML = contentHtml + avatarHtml;
+        } else {
+            messageDiv.innerHTML = avatarHtml + contentHtml;
+        }
+        
+        chatDiv.appendChild(messageDiv);
     });
     chatDiv.scrollTop = chatDiv.scrollHeight;
 }
@@ -404,8 +374,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
-        // هنا يمكن إضافة منطق تغيير الترتيب حسب الفلتر (مثلاً أسبوعي/شهري)
-        // لكن المطلوب عرض اليوم فقط، لذلك نتركها كما هي.
+        // يمكن لاحقاً تعديل الاستعلام حسب الفلتر
     });
 });
 
