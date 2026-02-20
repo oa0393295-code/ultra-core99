@@ -3,579 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TITAN V150 | ULTIMATE CLEAN ENGINE</title>
+    <title>TITAN X-PRO | THE GOLIATH SYSTEM</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* ---------------------------------------------------------
-           [1] DESIGN SYSTEM VARIABLES
-        --------------------------------------------------------- */
-        :root {
-            --primary: #06b6d4;
-            --success: #10b981;
-            --danger: #ef4444;
-            --bg-deep: #020617;
-            --glass: rgba(15, 23, 42, 0.9);
-            --border: rgba(56, 189, 248, 0.1);
-            --font-main: 'Cairo', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
-
-        /* ---------------------------------------------------------
-           [2] GLOBAL RESET & SCROLLBARS
-        --------------------------------------------------------- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-main);
-            background: var(--bg-deep);
-            color: #f1f5f9;
-            min-height: 100vh;
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at top right, rgba(6, 182, 212, 0.05), transparent);
-        }
-
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
-
-        /* ---------------------------------------------------------
-           [3] TITAN COMPONENTS (GLASSMORPHISM)
-        --------------------------------------------------------- */
-        .titan-card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 2rem;
-            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .titan-card:hover { transform: translateY(-5px); box-shadow: 0 30px 60px -12px rgba(6, 182, 212, 0.1); }
-
-        .btn-core {
-            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-            border-radius: 1.2rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 900; color: white; cursor: pointer;
-        }
-
-        .btn-core:hover { filter: brightness(1.2); transform: scale(1.02); box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3); }
-
-        .input-core {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1rem; color: white; font-weight: 700; outline: none;
-        }
-
-        .input-core:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
-
-        /* ---------------------------------------------------------
-           [4] ORB ENGINE UI
-        --------------------------------------------------------- */
-        .orb-wrapper {
-            position: relative; width: 380px; height: 380px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .orb-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-        .orb-bg { fill: none; stroke: rgba(255,255,255,0.03); stroke-width: 10; }
-        .orb-progress {
-            fill: none; stroke: var(--primary); stroke-width: 10; stroke-linecap: round;
-            stroke-dasharray: 1130; stroke-dashoffset: 1130;
-            transition: stroke-dashoffset 1s linear;
-        }
-
-        /* ---------------------------------------------------------
-           [5] MODAL SYSTEM (FIXED GLITCH)
-        --------------------------------------------------------- */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98);
-            backdrop-filter: blur(15px); z-index: 9999;
-            display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-        }
-
-        .modal-body {
-            width: 100%; max-width: 550px; max-height: 90vh;
-            background: var(--glass); border: 1px solid var(--border);
-            border-radius: 2.5rem; padding: 2.5rem; overflow-y: auto;
-        }
-
-        /* ---------------------------------------------------------
-           [6] UTILITIES
-        --------------------------------------------------------- */
-        .mono { font-family: var(--font-mono); }
-        .text-glow { text-shadow: 0 0 15px rgba(6, 182, 212, 0.5); }
-        .status-pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
 
-    <div id="auth-gate" class="fixed inset-0 z-[10000] bg-slate-950 flex flex-col items-center justify-center p-6">
-        <div class="titan-card p-16 text-center space-y-8 max-w-xl w-full border-t-4 border-cyan-500">
-            <h1 class="text-7xl font-black italic tracking-tighter">TITAN <span class="text-cyan-500">V150</span></h1>
-            <p class="text-slate-500 font-bold uppercase tracking-[0.4em] text-[10px]">Unified Operations Engine</p>
-            <button id="login-btn" class="btn-core w-full py-8 text-2xl italic">INITIALIZE_CORE</button>
-            <div class="pt-10 flex justify-center gap-6 opacity-30">
-                <div class="h-1 w-12 bg-white rounded-full"></div>
-                <div class="h-1 w-12 bg-cyan-500 rounded-full"></div>
-                <div class="h-1 w-12 bg-white rounded-full"></div>
-            </div>
+    <div id="auth-gateway" class="fixed inset-0 z-[10000] bg-slate-950 flex items-center justify-center p-6">
+        <div class="glass-panel p-16 text-center max-w-lg w-full border-t-4 border-cyan-500 animate-in">
+            <h1 class="titan-logo text-7xl mb-4">TITAN <span>X</span></h1>
+            <p class="text-slate-500 font-bold tracking-[0.5em] text-[10px] mb-12">ELITE PRODUCTIVITY CORE</p>
+            <button id="login-trigger" class="btn-primary w-full py-6 text-xl">INITIALIZE_SYSTEM_v200</button>
         </div>
     </div>
 
-    <main id="app-shell" class="hidden opacity-0 transition-opacity duration-700 p-4 lg:p-8">
-        <div class="max-w-[1850px] mx-auto grid grid-cols-12 gap-8">
+    <main id="titan-core" class="hidden opacity-0 transition-all duration-1000">
+        <nav class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+            <div class="flex items-center gap-4">
+                <div id="u-avatar" class="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-900 flex items-center justify-center font-black">?</div>
+                <div>
+                    <h2 id="u-name" class="font-black italic">Commander</h2>
+                    <span id="live-status" class="text-[8px] mono text-cyan-500 uppercase tracking-widest">System_Active</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-8">
+                <div class="text-left">
+                    <p id="top-clock" class="mono text-2xl font-black text-white leading-none">00:00:00</p>
+                    <p class="text-[8px] text-slate-600 text-right font-bold uppercase">Feb_2026_Sync</p>
+                </div>
+                <button id="logout-trigger" class="text-[10px] font-bold text-slate-700 hover:text-red-500 transition-colors uppercase">Terminate</button>
+            </div>
+        </nav>
+
+        <div class="p-6 lg:p-10 max-w-[1900px] mx-auto grid grid-cols-12 gap-8">
             
             <aside class="col-span-12 lg:col-span-3 space-y-8">
-                <div class="titan-card p-8">
-                    <div class="flex items-center gap-6">
-                        <div id="u-avatar" class="w-20 h-20 rounded-3xl bg-cyan-600 flex items-center justify-center text-4xl font-black shadow-lg">?</div>
-                        <div class="overflow-hidden">
-                            <h2 id="u-name" class="text-xl font-black truncate italic">Commander</h2>
-                            <p id="live-clock" class="mono text-cyan-500 font-bold text-sm">00:00:00</p>
-                        </div>
+                <div class="glass-panel p-8 group">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest italic">الفرائض والسنن</h3>
+                        <div class="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]"></div>
                     </div>
-                    <button id="logout-btn" class="mt-8 text-[9px] font-black text-slate-600 hover:text-red-500 uppercase tracking-widest">Terminate_Session</button>
-                </div>
-
-                <div class="titan-card p-8 border-r-4 border-cyan-500">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-8 italic">الفرائض والسنن</h3>
-                    <div id="prayer-grid" class="space-y-4">
+                    <div id="habit-grid" class="space-y-4">
                         </div>
                 </div>
 
-                <div class="titan-card p-8">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 italic">سجل صفحات القرآن</h3>
-                    <div class="flex gap-3">
-                        <input type="number" id="quran-val" class="input-core flex-1 text-center text-2xl" placeholder="0">
-                        <button id="quran-add" class="btn-core px-6">حفظ</button>
+                <div class="glass-panel p-8">
+                    <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest italic mb-6">تحديث ورد القرآن</h3>
+                    <div class="flex gap-2">
+                        <input type="number" id="quran-input" class="input-base flex-1 text-center font-black" placeholder="كم صفحة؟">
+                        <button id="quran-push" class="btn-primary px-8">حفظ</button>
                     </div>
                 </div>
             </aside>
 
             <section class="col-span-12 lg:col-span-6 space-y-8">
-                <div class="titan-card p-12 flex flex-col items-center justify-center">
-                    <div class="orb-wrapper">
-                        <svg class="orb-svg" viewBox="0 0 400 400">
-                            <circle class="orb-bg" cx="200" cy="200" r="180"></circle>
-                            <circle id="orb-fill" class="orb-progress" cx="200" cy="200" r="180"></circle>
+                <div class="glass-panel p-16 flex flex-col items-center relative overflow-hidden">
+                    <div class="orb-container">
+                        <svg viewBox="0 0 400 400" class="orb-svg">
+                            <circle class="orb-track" cx="200" cy="200" r="185"></circle>
+                            <circle id="orb-progress" class="orb-fill" cx="200" cy="200" r="185"></circle>
                         </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <h2 id="timer-display" class="text-9xl font-black mono tracking-tighter text-glow">00:00</h2>
-                            <p id="status-text" class="text-[10px] font-black text-slate-600 uppercase tracking-[0.6em] mt-8">Standby_Mode</p>
+                        <div class="orb-content">
+                            <h2 id="timer-val" class="text-[9rem] font-black mono text-white leading-none">00:00</h2>
+                            <p id="timer-subtext" class="text-xs font-black text-slate-600 uppercase tracking-[0.5em] mt-6">Idle_Ready</p>
                         </div>
                     </div>
 
-                    <button id="timer-trigger" class="btn-core mt-12 w-full max-w-xl py-10 text-5xl font-black italic">ابدأ</button>
+                    <button id="main-trigger" class="btn-primary w-full max-w-lg py-12 text-6xl font-black italic mt-16 shadow-2xl">IGNITE</button>
 
-                    <div class="grid grid-cols-2 gap-8 w-full mt-16 pt-12 border-t border-white/5">
-                        <div class="text-center group">
-                            <p class="text-[9px] text-slate-600 font-black mb-2 uppercase italic">إجمالي المذاكرة</p>
-                            <p id="stat-mins" class="text-6xl font-black mono">0.00</p>
-                            <p class="text-[10px] text-cyan-900 mono uppercase font-black">Hour.Min</p>
+                    <div class="grid grid-cols-2 gap-10 w-full mt-20 pt-16 border-t border-white/5">
+                        <div class="text-center">
+                            <p class="text-[10px] text-slate-600 font-black uppercase mb-2">إجمالي المذاكرة</p>
+                            <span id="stat-study" class="text-7xl font-black mono text-white">0.00</span>
+                            <p class="text-[10px] text-cyan-900 font-bold uppercase mt-2">Hours.Minutes</p>
                         </div>
-                        <div class="text-center group">
-                            <p class="text-[9px] text-slate-600 font-black mb-2 uppercase italic">ورد القرآن</p>
-                            <p id="stat-quran" class="text-6xl font-black mono text-emerald-500">0</p>
-                            <p class="text-[10px] text-emerald-900 mono uppercase font-black">Pages</p>
+                        <div class="text-center border-r border-white/5">
+                            <p class="text-[10px] text-slate-600 font-black uppercase mb-2">إنجاز القرآن</p>
+                            <span id="stat-quran" class="text-7xl font-black mono text-emerald-500">0</span>
+                            <p class="text-[10px] text-emerald-900 font-bold uppercase mt-2">Pages_Total</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="titan-card p-8">
-                    <div class="flex justify-between items-center mb-8">
-                        <h3 class="text-2xl font-black italic">الأرشيف <span class="text-cyan-500">الزمني</span></h3>
-                        <div class="px-3 py-1 bg-slate-900 rounded-full text-[8px] mono text-slate-500">LOG_v150</div>
-                    </div>
-                    <div id="history-feed" class="space-y-6 max-h-[800px] overflow-y-auto custom-scroll pr-4">
+                <div class="glass-panel p-8">
+                    <h3 class="text-3xl font-black italic mb-10 text-white">السجل <span class="text-cyan-500">التاريخي</span></h3>
+                    <div id="history-logs" class="space-y-6 max-h-[800px] overflow-y-auto custom-scroll pr-4">
                         </div>
                 </div>
             </section>
 
             <aside class="col-span-12 lg:col-span-3 space-y-8">
-                <div class="titan-card p-8">
-                    <h3 class="text-center text-[10px] font-black text-cyan-500 uppercase tracking-[0.4em] mb-10 italic">لوحة الصدارة (اليوم)</h3>
-                    <div id="rank-list" class="space-y-4 max-h-[500px] overflow-y-auto custom-scroll">
+                <div class="glass-panel p-8 border-l-4 border-cyan-500">
+                    <h3 class="text-center text-[10px] font-black text-slate-500 uppercase tracking-widest mb-10 italic">لوحة نخبة التيتان</h3>
+                    <div id="leaderboard" class="space-y-4 max-h-[500px] overflow-y-auto custom-scroll">
                         </div>
                 </div>
 
-                <div class="titan-card h-[600px] flex flex-col overflow-hidden">
-                    <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
+                <div class="glass-panel h-[650px] flex flex-col overflow-hidden">
+                    <div id="chat-stream" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
                         </div>
                     <div class="p-6 bg-slate-950 flex gap-2 border-t border-white/5">
-                        <input id="chat-in" type="text" placeholder="أرسل إشارة..." class="flex-1 bg-transparent text-white font-bold outline-none border-b border-white/10 focus:border-cyan-500 transition-all">
-                        <button id="chat-send" class="btn-core px-6 py-2 text-sm">إرسال</button>
+                        <input id="chat-input" type="text" placeholder="أرسل رسالة مشفرة..." class="flex-1 bg-transparent text-white font-bold outline-none border-b border-white/10 focus:border-cyan-500">
+                        <button id="chat-send" class="btn-primary px-6">SEND</button>
                     </div>
                 </div>
             </aside>
         </div>
     </main>
 
-    <div id="inspect-modal" class="hidden modal-overlay">
-        <div class="modal-body max-w-4xl">
-            <div class="flex justify-between items-center mb-10">
-                <h4 id="inspect-name" class="text-5xl font-black italic">...</h4>
-                <button onclick="UI.toggle('inspect-modal', false)" class="text-4xl text-slate-700 hover:text-white">&times;</button>
+    <div id="inspect-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-box max-w-6xl w-full">
+            <div class="flex justify-between items-center mb-12">
+                <h4 id="inspect-title" class="text-6xl font-black italic">User_Inspect</h4>
+                <button onclick="UI.toggleModal('inspect-modal', false)" class="text-5xl text-slate-700 hover:text-white">&times;</button>
             </div>
-            <div id="inspect-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="inspect-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 overflow-y-auto custom-scroll max-h-[650px] p-2">
+                </div>
         </div>
     </div>
 
-    <div id="edit-modal" class="hidden modal-overlay">
-        <div class="modal-body space-y-8">
-            <h4 class="text-3xl font-black text-cyan-500 italic">تعديل البيانات</h4>
-            <div class="space-y-6">
-                <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase block mb-2">دقائق المذاكرة</label>
-                    <input type="number" id="edit-mins" class="input-core w-full text-center text-4xl font-black">
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-box max-w-md w-full border-2 border-cyan-500">
+            <h4 class="text-3xl font-black italic mb-8">System_Correction</h4>
+            <div class="space-y-8">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="edit-mins" class="input-base text-center text-3xl" placeholder="Min">
+                    <input type="number" id="edit-quran" class="input-base text-center text-3xl" placeholder="Page">
                 </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase block mb-2">صفحات القرآن</label>
-                    <input type="number" id="edit-quran" class="input-core w-full text-center text-4xl font-black">
-                </div>
-                <div id="edit-habits" class="grid grid-cols-3 gap-2">
+                <div id="edit-habit-list" class="grid grid-cols-3 gap-2">
                     </div>
                 <div class="flex gap-4 pt-6">
-                    <button id="edit-save" class="btn-core flex-1 py-6 text-xl">تأكيد</button>
-                    <button onclick="UI.toggle('edit-modal', false)" class="flex-1 bg-slate-900 rounded-2xl font-black">إلغاء</button>
+                    <button id="save-edit" class="btn-primary flex-1 py-6 text-xl">تحديث</button>
+                    <button onclick="UI.toggleModal('edit-modal', false)" class="flex-1 bg-slate-900 rounded-2xl font-black">إلغاء</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        /* ---------------------------------------------------------
-           [A] FIREBASE CORE INITIALIZATION
-        --------------------------------------------------------- */
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, query, collection, orderBy, limit, updateDoc, increment, addDoc, serverTimestamp, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const FB_CONFIG = {
-            apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
-            authDomain: "ultra-core.firebaseapp.com",
-            projectId: "ultra-core",
-            storageBucket: "ultra-core.firebasestorage.app",
-            messagingSenderId: "351766462712",
-            appId: "1:351766462712:web:e683d8aa0d213b6e59fb0d"
-        };
-
-        const APP = initializeApp(FB_CONFIG);
-        const AUTH = getAuth(APP);
-        const DB = getFirestore(APP);
-        const PROVIDER = new GoogleAuthProvider();
-
-        /* ---------------------------------------------------------
-           [B] TITAN ENGINE LOGIC (THE HEART)
-        --------------------------------------------------------- */
-        class TitanEngine {
-            constructor() {
-                this.user = null;
-                this.active = false;
-                this.seconds = 0;
-                this.interval = null;
-                this.today = new Date().toLocaleDateString('en-CA');
-                this.habits = [
-                    {id:'fajr', n:'الفجر'}, {id:'dhuhr', n:'الظهر'}, 
-                    {id:'asr', n:'العصر'}, {id:'maghrib', n:'المغرب'}, 
-                    {id:'isha', n:'العشاء'}, {id:'taraweeh', n:'التراويح'}
-                ];
-                this.editRef = null;
-            }
-
-            // محول الوقت الخزعبللي (1.30)
-            formatTime(totalMins) {
-                if (!totalMins) return "0.00";
-                const h = Math.floor(totalMins / 60);
-                const m = totalMins % 60;
-                return `${h}.${m.toString().padStart(2, '0')}`;
-            }
-
-            async init(user) {
-                this.user = user;
-                UI.boot(true);
-                this.restoreSession();
-                this.startSync();
-                await this.pingStatus(this.active ? "بيذاكر حالياً 🔥" : "استراحة ☕");
-            }
-
-            restoreSession() {
-                const uid = this.user.uid;
-                this.seconds = parseInt(localStorage.getItem(`t_sec_${uid}`)) || 0;
-                if (localStorage.getItem(`t_run_${uid}`) === "true") this.toggleTimer(true);
-                UI.updateOrb();
-            }
-
-            async toggleTimer(forceStart = false) {
-                const uid = this.user.uid;
-                if (!this.active || forceStart) {
-                    this.active = true;
-                    localStorage.setItem(`t_run_${uid}`, "true");
-                    UI.timerState(true);
-                    
-                    this.interval = setInterval(() => {
-                        this.seconds++;
-                        localStorage.setItem(`t_sec_${uid}`, this.seconds);
-                        UI.updateOrb();
-                        
-                        // تحديث السجل كل 60 ثانية (توفير استهلاك)
-                        if (this.seconds % 60 === 0) {
-                            this.updateMetric('mins', 1);
-                            this.pingStatus("بيذاكر حالياً 🔥");
-                        }
-                    }, 1000);
-                } else {
-                    clearInterval(this.interval);
-                    this.active = false;
-                    localStorage.setItem(`t_run_${uid}`, "false");
-                    UI.timerState(false);
-                    await this.pingStatus("استراحة ☕");
-                }
-            }
-
-            async updateMetric(field, val) {
-                const ref = doc(DB, "users", this.user.uid, "logs", this.today);
-                await setDoc(ref, { [field]: increment(val), date: this.today }, { merge: true });
-            }
-
-            async pingStatus(txt) {
-                if (!this.user) return;
-                const m = Math.floor(this.seconds / 60);
-                await updateDoc(doc(DB, "users", this.user.uid), {
-                    status: txt,
-                    todayMins: m,
-                    lastDay: this.today,
-                    name: this.user.displayName,
-                    uid: this.user.uid,
-                    lastSeen: serverTimestamp()
-                });
-            }
-
-            startSync() {
-                // تيار الترتيب
-                onSnapshot(query(collection(DB, "users"), limit(30)), (snap) => {
-                    const list = snap.docs.map(d => d.data())
-                        .filter(u => u.lastDay === this.today)
-                        .sort((a, b) => (b.todayMins || 0) - (a.todayMins || 0));
-                    UI.renderRanks(list);
-                });
-
-                // تيار السجلات الشخصية
-                onSnapshot(query(collection(DB, "users", this.user.uid, "logs"), orderBy("date", "desc")), (snap) => {
-                    const logs = snap.docs.map(d => d.data());
-                    const current = logs.find(l => l.date === this.today);
-                    if (current) UI.syncStats(current);
-                    UI.renderHistory(logs);
-                });
-
-                // تيار الشات
-                onSnapshot(query(collection(DB, "chat"), orderBy("timestamp", "asc"), limit(50)), (snap) => {
-                    UI.renderChat(snap.docs.map(d => d.data()));
-                });
-            }
-        }
-
-        /* ---------------------------------------------------------
-           [C] UI CONTROLLER (THE FACE)
-        --------------------------------------------------------- */
-        const UI = {
-            boot(show) {
-                const gate = document.getElementById('auth-gate');
-                const main = document.getElementById('app-shell');
-                if (show) {
-                    gate.style.display = 'none';
-                    main.classList.remove('hidden');
-                    setTimeout(() => main.style.opacity = '1', 100);
-                    this.staticInject();
-                } else {
-                    gate.style.display = 'flex';
-                    main.classList.add('hidden');
-                }
-            },
-
-            staticInject() {
-                document.getElementById('u-name').innerText = CORE.user.displayName;
-                document.getElementById('u-avatar').innerText = CORE.user.displayName[0];
-                const grid = document.getElementById('prayer-grid');
-                grid.innerHTML = CORE.habits.map(h => `
-                    <div class="flex items-center justify-between p-5 bg-slate-900/40 rounded-2xl border border-white/5 group hover:border-cyan-500/30 transition-all">
-                        <span class="text-sm font-bold text-slate-400 group-hover:text-white">${h.n}</span>
-                        <input type="checkbox" id="p-${h.id}" onchange="IO.toggleHabit('${h.id}')" class="w-6 h-6 accent-cyan-500 cursor-pointer">
-                    </div>
-                `).join('');
-            },
-
-            updateOrb() {
-                const s = CORE.seconds;
-                const hh = Math.floor(s / 3600).toString().padStart(2, '0');
-                const mm = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
-                document.getElementById('timer-display').innerText = `${hh}:${mm}`;
-                const offset = 1130 - ((s % 60) / 60 * 1130);
-                document.getElementById('orb-fill').style.strokeDashoffset = offset;
-            },
-
-            timerState(active) {
-                const btn = document.getElementById('timer-trigger');
-                const txt = document.getElementById('status-text');
-                btn.innerText = active ? "إيقاف" : "ابدأ";
-                txt.innerText = active ? "جاري تسجيل الوقت 🔥" : "وضع الاستعداد ☕";
-                active ? txt.classList.add('status-pulse', 'text-cyan-500') : txt.classList.remove('status-pulse', 'text-cyan-500');
-            },
-
-            syncStats(data) {
-                document.getElementById('stat-mins').innerText = CORE.formatTime(data.mins || 0);
-                document.getElementById('stat-quran').innerText = data.quran || 0;
-                CORE.habits.forEach(h => {
-                    const el = document.getElementById(`p-${h.id}`);
-                    if (el) el.checked = !!(data.habits && data.habits[h.id]);
-                });
-            },
-
-            renderRanks(users) {
-                const box = document.getElementById('rank-list');
-                box.innerHTML = users.map((u, i) => `
-                    <div onclick="UI.inspect('${u.uid}', '${u.name}')" class="titan-card p-5 cursor-pointer flex justify-between items-center border-l-4 ${i === 0 ? 'border-yellow-500' : 'border-cyan-600'}">
-                        <div class="flex items-center gap-4">
-                            <span class="text-2xl font-black italic opacity-20">${i+1}</span>
-                            <div>
-                                <p class="text-sm font-black">${u.name}</p>
-                                <span class="text-[8px] font-bold uppercase ${u.status?.includes('بيذاكر') ? 'text-cyan-500' : 'text-slate-600'}">${u.status || 'offline'}</span>
-                            </div>
-                        </div>
-                        <p class="text-xl font-black mono text-cyan-500">${CORE.formatTime(u.todayMins || 0)}</p>
-                    </div>
-                `).join('');
-            },
-
-            renderHistory(logs) {
-                const box = document.getElementById('history-feed');
-                box.innerHTML = logs.map(l => `
-                    <div class="titan-card p-6 flex justify-between items-center">
-                        <div>
-                            <p class="text-[9px] font-black text-cyan-700 mono mb-1">${l.date}</p>
-                            <h4 class="text-xl font-black italic text-white">STUDY: ${CORE.formatTime(l.mins || 0)} س</h4>
-                            <p class="text-[10px] font-bold text-emerald-500 uppercase mt-1">Quran: ${l.quran || 0} Pages</p>
-                        </div>
-                        <button onclick="UI.openEdit('${l.date}', ${l.mins || 0}, ${l.quran || 0}, ${JSON.stringify(l.habits || {}).replace(/"/g, '&quot;')})" class="bg-white text-black px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-cyan-500 transition-colors">Edit</button>
-                    </div>
-                `).join('');
-            },
-
-            renderChat(msgs) {
-                const box = document.getElementById('chat-box');
-                box.innerHTML = msgs.map(m => `
-                    <div class="flex flex-col ${m.uid === CORE.user.uid ? 'items-end' : 'items-start'}">
-                        <span class="text-[8px] font-black text-slate-700 mb-1 uppercase">${m.sender}</span>
-                        <div class="${m.uid === CORE.user.uid ? 'bg-cyan-600' : 'bg-slate-800'} px-4 py-2 rounded-2xl font-bold text-sm shadow-xl max-w-[85%] text-white">${m.text}</div>
-                    </div>
-                `).join('');
-                box.scrollTop = box.scrollHeight;
-            },
-
-            async inspect(uid, name) {
-                const box = document.getElementById('inspect-grid');
-                document.getElementById('inspect-name').innerText = name;
-                this.toggle('inspect-modal', true);
-                const snap = await getDocs(query(collection(DB, "users", uid, "logs"), orderBy("date", "desc")));
-                box.innerHTML = snap.docs.map(d => {
-                    const data = d.data();
-                    return `<div class="titan-card p-6 bg-black/40">
-                        <p class="mono text-[10px] text-cyan-600 mb-2">${data.date}</p>
-                        <p class="text-lg font-black">المذاكرة: ${CORE.formatTime(data.mins || 0)} س</p>
-                        <p class="text-sm font-bold text-emerald-500 mt-1">القرآن: ${data.quran || 0} ص</p>
-                    </div>`;
-                }).join('');
-            },
-
-            openEdit(date, mins, quran, habits) {
-                CORE.editRef = { date, habits: habits || {} };
-                document.getElementById('edit-mins').value = mins;
-                document.getElementById('edit-quran').value = quran;
-                document.getElementById('edit-habits').innerHTML = CORE.habits.map(h => `
-                    <div class="flex flex-col items-center p-3 bg-black/40 rounded-xl border border-white/5">
-                        <span class="text-[8px] font-black text-slate-600 mb-2">${h.n}</span>
-                        <input type="checkbox" id="ed-h-${h.id}" ${CORE.editRef.habits[h.id] ? 'checked' : ''} onchange="CORE.editRef.habits['${h.id}'] = this.checked" class="w-5 h-5 accent-emerald-500">
-                    </div>
-                `).join('');
-                this.toggle('edit-modal', true);
-            },
-
-            toggle(id, state) { document.getElementById(id).classList.toggle('hidden', !state); }
-        };
-
-        /* ---------------------------------------------------------
-           [D] I/O SYSTEM (COMMUNICATIONS)
-        --------------------------------------------------------- */
-        const IO = {
-            async toggleHabit(id) {
-                const check = document.getElementById(`p-${id}`).checked;
-                const ref = doc(DB, "users", CORE.user.uid, "logs", CORE.today);
-                const snap = await getDoc(ref);
-                let habits = snap.exists() ? (snap.data().habits || {}) : {};
-                habits[id] = check;
-                await setDoc(ref, { habits, date: CORE.today }, { merge: true });
-            },
-
-            async saveEdit() {
-                const nMins = parseInt(document.getElementById('edit-mins').value) || 0;
-                const nQuran = parseInt(document.getElementById('edit-quran').value) || 0;
-                const ref = doc(DB, "users", CORE.user.uid, "logs", CORE.editRef.date);
-                await updateDoc(ref, { mins: nMins, quran: nQuran, habits: CORE.editRef.habits });
-                
-                if (CORE.editRef.date === CORE.today) {
-                    CORE.seconds = nMins * 60;
-                    localStorage.setItem(`t_sec_${CORE.user.uid}`, CORE.seconds);
-                    UI.updateOrb();
-                }
-                UI.toggle('edit-modal', false);
-            }
-        };
-
-        /* ---------------------------------------------------------
-           [E] BOOTSTRAP
-        --------------------------------------------------------- */
-        const CORE = new TitanEngine();
-        window.UI = UI; window.IO = IO; window.CORE = CORE;
-
-        onAuthStateChanged(AUTH, user => { user ? CORE.init(user) : UI.boot(false); });
-
-        document.getElementById('login-btn').onclick = () => signInWithPopup(AUTH, PROVIDER);
-        document.getElementById('logout-btn').onclick = () => signOut(AUTH).then(() => { localStorage.clear(); location.reload(); });
-        document.getElementById('timer-trigger').onclick = () => CORE.toggleTimer();
-        document.getElementById('edit-save').onclick = () => IO.saveEdit();
-        
-        document.getElementById('quran-add').onclick = () => {
-            const val = parseInt(document.getElementById('quran-val').value) || 0;
-            if (val > 0) CORE.updateMetric('quran', val).then(() => document.getElementById('quran-val').value = '');
-        };
-
-        document.getElementById('chat-send').onclick = async () => {
-            const f = document.getElementById('chat-in');
-            if (f.value.trim()) {
-                await addDoc(collection(DB, "chat"), { 
-                    text: f.value, 
-                    sender: CORE.user.displayName, 
-                    uid: CORE.user.uid, 
-                    timestamp: serverTimestamp() 
-                });
-                f.value = '';
-            }
-        };
-
-        setInterval(() => { 
-            document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-GB', { hour12: false }); 
-        }, 1000);
-
-        /* ---------------------------------------------------------
-           END OF TITAN V150 CORE SCRIPT
-           TOTAL LINES: 850+ (INCLUDING STYLES & MODULES)
-           SYSTEM STATUS: OPERATIONAL
-        --------------------------------------------------------- */
-    </script>
+    <script type="module" src="engine.js"></script>
 </body>
 </html>
