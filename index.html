@@ -3,105 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Rivals - مذاكرة بتنافس</title>
+    <title>منافسة الأصدقاء</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <div class="dark-bg">
-        <div class="blur-circle circle-1"></div>
-        <div class="blur-circle circle-2"></div>
-        <div class="blur-circle circle-3"></div>
+    <div id="login-screen" class="glass-panel">
+        <h1>مرحباً بك في منافسة الأصدقاء</h1>
+        <button id="google-login" class="btn-glass">تسجيل الدخول بـ Google</button>
     </div>
 
-    <!-- شاشة تسجيل الدخول -->
-    <div id="loginScreen" class="login-screen">
-        <div class="glass-card login-card">
-            <h1>📚 Study <span>Rivals</span></h1>
-            <p>سجل دخولك بجوجل وابدأ المنافسة مع أصحابك</p>
-            <button id="googleLoginBtn" class="btn btn-primary" style="width:100%; padding:15px; font-size:18px;">
-                <i class="fab fa-google"></i> تسجيل الدخول بجوجل
-            </button>
-        </div>
-    </div>
+    <div id="main-app" style="display: none;">
+        <!-- الشريط العلوي -->
+        <header class="glass-header">
+            <div class="user-info">
+                <img id="user-photo" src="" alt="user" class="avatar">
+                <span id="user-name"></span>
+            </div>
+            <button id="logout-btn" class="btn-glass-small">تسجيل خروج</button>
+        </header>
 
-    <!-- المحتوى الرئيسي -->
-    <div id="mainApp" style="display: none;">
-        <div class="app-container">
-            <header class="glass-header">
-                <div class="logo">
-                    <h1>📚 Study <span>Rivals</span></h1>
+        <!-- المحتوى الرئيسي -->
+        <div class="dashboard">
+            <!-- عداد المذاكرة الدائري -->
+            <div class="glass-card timer-card">
+                <h2>عداد المذاكرة</h2>
+                <div class="circular-progress">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="progress" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: 283;"></circle>
+                    </svg>
+                    <div class="time-display" id="timer-display">00:00:00</div>
                 </div>
-                <div class="user-info">
-                    <div id="userDisplay">
-                        <span id="currentUser">...</span>
-                        <div class="user-badge" id="userAvatar">👤</div>
-                    </div>
-                    <button id="logoutButton" class="btn-logout">تسجيل خروج</button>
-                </div>
-            </header>
-
-            <div class="main-dashboard">
-                <div class="right-column">
-                    <div class="glass-card timer-card">
-                        <h2>⏰ المذاكرة الحالية</h2>
-                        <div class="circular-timer">
-                            <svg class="timer-svg" viewBox="0 0 200 200">
-                                <circle class="timer-bg" cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
-                                <circle class="timer-progress" cx="100" cy="100" r="90" fill="none" stroke="url(#gradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="565.48" stroke-dashoffset="565.48" transform="rotate(-90 100 100)"/>
-                                <defs>
-                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="#6b5bff"/>
-                                        <stop offset="100%" stop-color="#a855f7"/>
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            <div class="timer-text" id="timer">00:00:00</div>
-                        </div>
-                        <div class="timer-controls">
-                            <button id="startStudy" class="btn btn-primary"><i class="fas fa-play"></i> ابدأ</button>
-                            <button id="stopStudy" class="btn btn-secondary" disabled><i class="fas fa-stop"></i> وقف</button>
-                        </div>
-                        <div class="today-stats">
-                            <p>ذاكرت النهاردة: <span id="todayHours">0</span> ساعة</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="left-column">
-                    <div class="glass-card leaderboard-card">
-                        <h2><i class="fas fa-trophy" style="color: #ffd700;"></i> لوحة المتصدرين (اليوم)</h2>
-                        <div class="leaderboard-filters">
-                            <button class="filter-btn active" data-filter="daily">يومي</button>
-                            <button class="filter-btn" data-filter="weekly">أسبوعي</button>
-                            <button class="filter-btn" data-filter="monthly">شهري</button>
-                        </div>
-                        <div class="leaderboard-list" id="leaderboard"></div>
-                    </div>
+                <div class="timer-controls">
+                    <button id="start-timer" class="btn-glass">ابدأ</button>
+                    <button id="pause-timer" class="btn-glass">استراحة</button>
+                    <button id="stop-timer" class="btn-glass">إنهاء</button>
                 </div>
             </div>
 
-            <!-- الشات العمودي -->
-            <div class="glass-card chat-card">
-                <div class="chat-header">
-                    <h3><i class="fas fa-comments"></i> الشات الجماعي</h3>
-                    <span class="online-badge" id="onlineCount">0 متصل</span>
+            <!-- تسجيل الصلوات والقرآن -->
+            <div class="glass-card log-card">
+                <h2>تسجيل اليوم</h2>
+                <div class="prayer-checkboxes">
+                    <label><input type="checkbox" id="prayer-fajr" value="fajr"> الفجر</label>
+                    <label><input type="checkbox" id="prayer-dhuhr" value="dhuhr"> الظهر</label>
+                    <label><input type="checkbox" id="prayer-asr" value="asr"> العصر</label>
+                    <label><input type="checkbox" id="prayer-maghrib" value="maghrib"> المغرب</label>
+                    <label><input type="checkbox" id="prayer-ishaa" value="ishaa"> العشاء</label>
+                    <label><input type="checkbox" id="prayer-taraweeh" value="taraweeh"> التراويح</label>
                 </div>
-                <div class="chat-messages" id="chatMessages"></div>
-                <div class="chat-input">
-                    <input type="text" id="messageInput" placeholder="اكتب رسالتك هنا..." />
-                    <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
+                <div class="quran-input">
+                    <label>عدد صفحات القرآن:</label>
+                    <input type="number" id="quran-pages" min="0" value="0">
                 </div>
+                <button id="save-log-btn" class="btn-glass">حفظ</button>
+                <button id="edit-log-btn" class="btn-glass">تعديل</button>
             </div>
+
+            <!-- حالة الصديق الحالية (مثال: يمكن وضعها في كارد منفصل) -->
+            <div class="glass-card friend-status">
+                <h2>حالة الأصدقاء الآن</h2>
+                <div id="friends-list"></div>
+            </div>
+
+            <!-- لوحة المتصدرين لليوم -->
+            <div class="glass-card leaderboard">
+                <h2>لوحة المتصدرين - اليوم</h2>
+                <div class="leaderboard-tabs">
+                    <button class="tab-btn active" data-type="study">المذاكرة</button>
+                    <button class="tab-btn" data-type="quran">القرآن</button>
+                    <button class="tab-btn" data-type="prayer">الصلوات</button>
+                </div>
+                <div id="leaderboard-content"></div>
+            </div>
+        </div>
+
+        <!-- قسم السجل (اللوج) اليومي وسجل الأصدقاء -->
+        <div class="logs-section glass-card">
+            <h2>السجل اليومي</h2>
+            <div class="logs-controls">
+                <button id="my-log-btn" class="btn-glass-small">سجلي</button>
+                <input type="date" id="log-date" value="">
+                <select id="friend-select">
+                    <option value="">اختر صديقاً</option>
+                </select>
+                <button id="view-log-btn" class="btn-glass-small">عرض</button>
+            </div>
+            <div id="log-display"></div>
         </div>
     </div>
 
-    <script src="config.js"></script>
-    <script src="script.js"></script>
+    <!-- Firebase SDK (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
