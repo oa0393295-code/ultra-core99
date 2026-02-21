@@ -381,6 +381,11 @@
     todayData.studySeconds = Math.round(hours * 3600);
     studySeconds = todayData.studySeconds;
 
+    // لو العداد شغال، حدّث نقطة البداية عشان يكمل من الرقم الجديد
+    if (isStudying) {
+      studyStartTime = Date.now() - (studySeconds * 1000);
+    }
+
     await saveTodayData();
     renderTodayUI();
     updateTimerDisplay();
