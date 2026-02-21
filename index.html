@@ -62,13 +62,39 @@
       showApp();
       loadTodayData();
       startRealtimeLeaderboard();
-      await updateUserStatus('online');
-      setInterval(() => updateUserStatus(isStudying ? 'studying' : 'online'), 30000);
+      startChat();
+      await updateUserStatus(isStudying ? 'studying' : 'online');
+
+      // تحديث الحالة كل 20 ثانية عشان يبين إنه لسه موجود
+      setInterval(() => {
+        if (document.visibilityState !== 'hidden') {
+          updateUserStatus(isStudying ? 'studying' : 'online');
+        }
+      }, 20000);
+
     } else {
       currentUser = null;
       showLogin();
       if (allUsersUnsub) allUsersUnsub();
     }
+  });
+
+  // لما الصفحة تتخفى أو تظهر
+  document.addEventListener('visibilitychange', () => {
+    if (!currentUser) return;
+    if (document.visibilityState === 'hidden') {
+      updateUserStatus('offline');
+    } else {
+      updateUserStatus(isStudying ? 'studying' : 'online');
+    }
+  });
+
+  // لما يقفل التاب أو يخرج
+  window.addEventListener('pagehide', () => {
+    updateUserStatus('offline');
+  });
+  window.addEventListener('beforeunload', () => {
+    updateUserStatus('offline');
   });
 
   async function initUser(user) {
@@ -295,14 +321,27 @@
 
   function renderFriendsStatus(users) {
     const container = document.getElementById('friendsStatus');
-    const statusMap = { studying: { icon: '📚', label: 'بيذاكر دلوقتي', color: '#00e676' }, online: { icon: '🟢', label: 'متصل', color: '#4fc3f7' }, offline: { icon: '⭕', label: 'مش موجود', color: '#666' } };
+    const now = Date.now();
+    // لو آخر نشاط أكتر من 60 ثانية يبقى offline فعلاً
+    const getEffectiveStatus = (u) => {
+      const lastSeen = u.lastSeen?.toDate ? u.lastSeen.toDate().getTime() : 0;
+      const secondsAgo = (now - lastSeen) / 1000;
+      if (secondsAgo > 60) return 'offline';
+      return u.status || 'offline';
+    };
+    const statusMap = {
+      studying: { icon: '📚', label: 'بيذاكر دلوقتي', color: '#00e676' },
+      online:   { icon: '🟢', label: 'متصل', color: '#4fc3f7' },
+      offline:  { icon: '⭕', label: 'مش موجود', color: '#666' }
+    };
     container.innerHTML = users.map(u => {
-      const st = statusMap[u.status] || statusMap.offline;
+      const effectiveStatus = getEffectiveStatus(u);
+      const st = statusMap[effectiveStatus] || statusMap.offline;
       const isMe = u.id === currentUser?.uid;
       return `
         <div class="friend-status-card ${isMe ? 'me' : ''}">
-          <img src="${u.photo || ''}" class="friend-photo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22/></svg>'">
-          <div class="friend-status-dot" style="background:${st.color}; ${u.status === 'studying' ? 'animation: statusPulse 1.5s infinite;' : ''}"></div>
+          <img src="${u.photo || ''}" class="friend-photo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22 rx=%2220%22/></svg>'">
+          <div class="friend-status-dot" style="background:${st.color}; ${effectiveStatus === 'studying' ? 'animation: statusPulse 1.5s infinite;' : ''}"></div>
           <div class="friend-name-text">${u.name?.split(' ')[0] || '؟'} ${isMe ? '(أنا)' : ''}</div>
           <div class="friend-status-label" style="color:${st.color}">${st.icon} ${st.label}</div>
         </div>`;
@@ -449,13 +488,17 @@
   let chatUnsub = null;
 
   function startChat() {
-    if (chatUnsub) return;
+    if (chatUnsub) return; // شغال بالفعل
     const chatRef = collection(db, 'chat');
     const q = query(chatRef, orderBy('createdAt', 'asc'), limit(100));
     chatUnsub = onSnapshot(q, (snapshot) => {
       const msgs = [];
       snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
       renderChat(msgs);
+    }, (err) => {
+      console.error('Chat error:', err);
+      const container = document.getElementById('chatMessages');
+      if (container) container.innerHTML = '<div class="chat-loading">فيه مشكلة في الشات، حاول تاني 😕</div>';
     });
   }
 
@@ -504,11 +547,6 @@
       showToast('مش قادر يبعت، حاول تاني!', 'error');
     }
   };
-
-  window.addEventListener('beforeunload', () => {
-    if (isStudying) stopStudy();
-    updateUserStatus('offline');
-  });
 </script>
 
 <style>
@@ -1226,7 +1264,9 @@ function showTab(name, btn) {
       d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
   }
   if (name === 'chat') {
-    if (typeof startChat === 'function') startChat();
+    // الشات بيبدأ أوتوماتيك من أول تسجيل دخول
+    const msgs = document.getElementById('chatMessages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 }
 </script>
