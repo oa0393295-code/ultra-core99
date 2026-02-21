@@ -10,7 +10,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot, serverTimestamp, query, orderBy, addDoc, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
@@ -45,7 +45,7 @@
     } catch (e) {
       console.error(e);
       showLoading(false);
-      showToast('فشل تسجيل الدخول، حاول تاني!', 'error');
+      showToast('فشل تسجيل الدخول، حاول تاني يسطا!', 'error');
     }
   };
 
@@ -163,7 +163,7 @@
     const val = parseInt(document.getElementById('quranInput').value) || 0;
     todayData.quranPages = Math.max(0, val);
     await saveTodayData();
-    showToast(`✅ تم حفظ ${val} صفحة`, 'success');
+    showToast(`✅ تمام! حفظنا إنك اتقرأت ${val} صفحة`, 'success');
     updateMyStats();
   };
 
@@ -180,9 +180,9 @@
     isStudying = true;
     studyStartTime = Date.now() - (studySeconds * 1000);
     await updateUserStatus('studying');
-    document.getElementById('timerBtn').textContent = '⏸ إيقاف مؤقت';
+    document.getElementById('timerBtn').textContent = '⏸ استنّى شوية';
     document.getElementById('timerBtn').classList.add('studying');
-    document.getElementById('timerStatus').textContent = 'جاري المذاكرة...';
+    document.getElementById('timerStatus').textContent = 'شغّال بيذاكر...';
     document.getElementById('timerStatus').classList.add('active');
 
     studyTimer = setInterval(async () => {
@@ -201,12 +201,12 @@
     todayData.studySeconds = studySeconds;
     await saveTodayData();
     await updateUserStatus('online');
-    document.getElementById('timerBtn').textContent = '▶ ابدأ المذاكرة';
+    document.getElementById('timerBtn').textContent = '▶ يلا نذاكر';
     document.getElementById('timerBtn').classList.remove('studying');
-    document.getElementById('timerStatus').textContent = 'وقف';
+    document.getElementById('timerStatus').textContent = 'واقف';
     document.getElementById('timerStatus').classList.remove('active');
     updateMyStats();
-    showToast('✅ تم حفظ وقت المذاكرة!', 'success');
+    showToast('✅ تم حفظ وقت المذاكرة يسطا!', 'success');
   }
 
   function updateTimerDisplay() {
@@ -284,17 +284,17 @@
           <div class="board-rank">${medals[i] || '#' + (i+1)}</div>
           <img class="board-avatar" src="${u.photo || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22white%22 font-size=%2218%22>${(u.name||'?')[0]}</text></svg>'">
           <div class="board-info">
-            <div class="board-name">${u.name || 'مجهول'} ${isMe ? '(أنا)' : ''}</div>
+            <div class="board-name">${u.name || 'مجهول'} ${isMe ? '(أنا 😎)' : ''}</div>
             <div class="board-progress-bar"><div class="board-progress-fill" style="width:${pct}%"></div></div>
           </div>
           <div class="board-value">${valueFn(u)}</div>
         </div>`;
-    }).join('') || '<div class="empty-board">لا يوجد بيانات اليوم</div>';
+    }).join('') || '<div class="empty-board">مفيش بيانات النهارده لسه 😅</div>';
   }
 
   function renderFriendsStatus(users) {
     const container = document.getElementById('friendsStatus');
-    const statusMap = { studying: { icon: '📚', label: 'بيذاكر', color: '#00e676' }, online: { icon: '🟢', label: 'متصل', color: '#4fc3f7' }, offline: { icon: '⭕', label: 'مش متصل', color: '#666' } };
+    const statusMap = { studying: { icon: '📚', label: 'بيذاكر دلوقتي', color: '#00e676' }, online: { icon: '🟢', label: 'متصل', color: '#4fc3f7' }, offline: { icon: '⭕', label: 'مش موجود', color: '#666' } };
     container.innerHTML = users.map(u => {
       const st = statusMap[u.status] || statusMap.offline;
       const isMe = u.id === currentUser?.uid;
@@ -312,7 +312,7 @@
   window.openUserLog = async (uid, name) => {
     document.getElementById('logModal').style.display = 'flex';
     document.getElementById('logModalTitle').textContent = `📋 سجل ${name}`;
-    document.getElementById('logContent').innerHTML = '<div class="log-loading">جاري التحميل...</div>';
+    document.getElementById('logContent').innerHTML = '<div class="log-loading">استنّى بنجيب البيانات...</div>';
 
     try {
       const logsRef = collection(db, 'logs', uid, 'days');
@@ -323,7 +323,7 @@
       snap.forEach(d => days.push(d.data()));
 
       if (!days.length) {
-        document.getElementById('logContent').innerHTML = '<div class="log-empty">لا يوجد سجلات</div>';
+        document.getElementById('logContent').innerHTML = '<div class="log-empty">مفيش سجلات لسه 📭</div>';
         return;
       }
 
@@ -350,7 +350,7 @@
           </div>`;
       }).join('');
     } catch (e) {
-      document.getElementById('logContent').innerHTML = '<div class="log-empty">خطأ في التحميل</div>';
+      document.getElementById('logContent').innerHTML = '<div class="log-empty">فيه مشكلة في التحميل، حاول تاني 😕</div>';
     }
   };
 
@@ -386,7 +386,7 @@
     updateMyStats();
     document.getElementById('editModal').style.display = 'none';
     closeLogModal();
-    showToast('✅ تم تعديل السجل!', 'success');
+    showToast('✅ تمام يسطا! السجل اتعدّل', 'success');
   };
 
   window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; };
@@ -438,6 +438,66 @@
       setTimeout(() => p.remove(), 700);
     }
   }
+
+  // ==================== CHAT ====================
+  let chatUnsub = null;
+
+  function startChat() {
+    if (chatUnsub) return;
+    const chatRef = collection(db, 'chat');
+    const q = query(chatRef, orderBy('createdAt', 'asc'), limit(100));
+    chatUnsub = onSnapshot(q, (snapshot) => {
+      const msgs = [];
+      snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
+      renderChat(msgs);
+    });
+  }
+
+  function renderChat(msgs) {
+    const container = document.getElementById('chatMessages');
+    if (!msgs.length) {
+      container.innerHTML = '<div class="chat-loading">مفيش رسايل لسه، ابدأ الكلام! 😄</div>';
+      return;
+    }
+    container.innerHTML = msgs.map(msg => {
+      const isMe = msg.uid === currentUser?.uid;
+      const time = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+      return `
+        <div class="chat-bubble-wrap ${isMe ? 'me' : ''}">
+          <img class="chat-bubble-avatar" src="${msg.photo || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%2216%22/></svg>'">
+          <div>
+            <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+            <div class="chat-bubble-meta">
+              ${!isMe ? `<span class="chat-bubble-name">${msg.name?.split(' ')[0] || '؟'}</span> •` : ''}
+              <span>${time}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function escapeHtml(text) {
+    return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window.sendChat = async () => {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text || !currentUser) return;
+    input.value = '';
+    try {
+      await addDoc(collection(db, 'chat'), {
+        uid: currentUser.uid,
+        name: currentUser.displayName,
+        photo: currentUser.photoURL,
+        text,
+        createdAt: serverTimestamp()
+      });
+    } catch (e) {
+      showToast('مش قادر يبعت، حاول تاني!', 'error');
+    }
+  };
 
   window.addEventListener('beforeunload', () => {
     if (isStudying) stopStudy();
@@ -861,7 +921,65 @@ nav {
 
 .gap-md { display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* ===== SCROLLBAR ===== */
+/* ===== CHAT ===== */
+.chat-container { display: flex; flex-direction: column; height: 70vh; }
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 0.5rem 0;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  scrollbar-width: thin;
+}
+.chat-loading { text-align: center; color: var(--sub); padding: 2rem; }
+
+.chat-bubble-wrap {
+  display: flex; align-items: flex-end; gap: 0.6rem;
+  animation: fadeInUp 0.3s ease both;
+}
+.chat-bubble-wrap.me { flex-direction: row-reverse; }
+
+.chat-bubble-avatar {
+  width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+  flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);
+}
+
+.chat-bubble {
+  max-width: 70%; padding: 0.65rem 1rem;
+  border-radius: 18px; font-size: 0.9rem; line-height: 1.5;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  word-break: break-word;
+}
+.chat-bubble-wrap.me .chat-bubble {
+  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.15));
+  border-color: rgba(79,195,247,0.25);
+}
+
+.chat-bubble-meta {
+  font-size: 0.7rem; color: var(--sub); margin-top: 3px;
+  display: flex; gap: 0.4rem; align-items: center;
+}
+.chat-bubble-name { font-weight: 700; color: var(--accent); }
+
+.chat-input-row {
+  display: flex; gap: 0.6rem; margin-top: 1rem;
+  padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07);
+}
+.chat-input {
+  flex: 1; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; padding: 0.7rem 1rem;
+  color: var(--text); font-family: 'Cairo', sans-serif; font-size: 0.95rem;
+  outline: none; transition: border-color 0.3s;
+}
+.chat-input:focus { border-color: var(--accent2); }
+.chat-send-btn {
+  padding: 0.7rem 1.2rem; border-radius: 14px;
+  background: linear-gradient(135deg, rgba(206,147,216,0.3), rgba(79,195,247,0.2));
+  border: 1px solid var(--accent2); color: var(--accent2);
+  font-family: 'Cairo', sans-serif; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: all 0.3s; white-space: nowrap;
+}
+.chat-send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(206,147,216,0.3); }
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
@@ -884,13 +1002,13 @@ nav {
     <div class="login-title">منافسة الصحاب</div>
     <div class="login-sub">
       تابع مذاكرتك وصلواتك وقرآنك<br>
-      وتنافس مع أصحابك في الوقت الحقيقي
+      وتنافس مع صحابك في الوقت الحقيقي 🔥
     </div>
     <button class="google-btn" onclick="googleSignIn()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-      سجّل دخول بـ Google
+      ادخل بحساب جوجل بتاعك
     </button>
-    <div id="loginLoading">⏳ جاري تسجيل الدخول...</div>
+    <div id="loginLoading">⏳ استنّى بنسجّل دخولك...</div>
   </div>
 </div>
 
@@ -910,8 +1028,9 @@ nav {
   <!-- Tab Bar -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="showTab('home', this)">🏠 الرئيسية</button>
-    <button class="tab-btn" onclick="showTab('leaderboard', this)">🏆 المتصدرون</button>
-    <button class="tab-btn" onclick="showTab('friends', this)">👥 الأصحاب</button>
+    <button class="tab-btn" onclick="showTab('leaderboard', this)">🏆 المتصدرين</button>
+    <button class="tab-btn" onclick="showTab('friends', this)">👥 الصحاب</button>
+    <button class="tab-btn" onclick="showTab('chat', this)">💬 الشات</button>
   </div>
 
   <!-- ===== MAIN CONTENT ===== -->
@@ -922,7 +1041,7 @@ nav {
       <div class="my-stats-row">
         <div class="my-stat-card">
           <div class="my-stat-num" id="myStudyHours">0h</div>
-          <div class="my-stat-label">📚 مذاكرة</div>
+          <div class="my-stat-label">📚 اتذاكر</div>
         </div>
         <div class="my-stat-card">
           <div class="my-stat-num" id="myPrayersCount">0/6</div>
@@ -955,10 +1074,10 @@ nav {
                 <div class="timer-digits">
                   <span id="timerHours">00</span>:<span id="timerMins">00</span>:<span id="timerSecs">00</span>
                 </div>
-                <div id="timerStatus">وقف</div>
+                <div id="timerStatus">واقف</div>
               </div>
             </div>
-            <button class="timer-btn" id="timerBtn" onclick="toggleStudy()">▶ ابدأ المذاكرة</button>
+            <button class="timer-btn" id="timerBtn" onclick="toggleStudy()">▶ يلا نذاكر</button>
           </div>
         </div>
 
@@ -967,7 +1086,7 @@ nav {
 
           <!-- Prayers -->
           <div class="glass-card">
-            <div class="section-title"><div class="dot" style="background:var(--green)"></div> الصلوات</div>
+            <div class="section-title"><div class="dot" style="background:var(--green)"></div> صلوات النهارده</div>
             <div class="prayers-grid">
               <button class="prayer-btn" data-prayer="الفجر" onclick="togglePrayer('الفجر')">🌅 الفجر</button>
               <button class="prayer-btn" data-prayer="الظهر" onclick="togglePrayer('الظهر')">☀️ الظهر</button>
@@ -980,10 +1099,10 @@ nav {
 
           <!-- Quran -->
           <div class="glass-card">
-            <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> قرآن اليوم</div>
+            <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> قرآن النهارده</div>
             <div class="quran-input-wrap">
-              <input type="number" id="quranInput" class="quran-input" placeholder="عدد الصفحات" min="0" max="604">
-              <button class="save-btn" onclick="saveQuran()">💾 حفظ</button>
+              <input type="number" id="quranInput" class="quran-input" placeholder="كام صفحة اتقرأت؟" min="0" max="604">
+              <button class="save-btn" onclick="saveQuran()">💾 احفظ</button>
             </div>
           </div>
 
@@ -996,26 +1115,26 @@ nav {
     <div id="tab-leaderboard" class="tab-section">
       <div class="glass-card" style="margin-bottom:1.2rem">
         <div style="display:flex;align-items:center;gap:0.5rem;color:var(--sub);font-size:0.85rem">
-          🗓 إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> فقط
+          🗓 دي إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> بس — مش فاتت 😤
         </div>
       </div>
       <div class="boards-grid">
 
         <!-- Study Board -->
         <div class="glass-card">
-          <div class="board-title">📚 المذاكرة</div>
+          <div class="board-title">📚 ترتيب المذاكرة</div>
           <div id="studyBoard"></div>
         </div>
 
         <!-- Prayers Board -->
         <div class="glass-card">
-          <div class="board-title">🕌 الصلوات</div>
+          <div class="board-title">🕌 ترتيب الصلوات</div>
           <div id="prayersBoard"></div>
         </div>
 
         <!-- Quran Board -->
         <div class="glass-card" style="grid-column: 1 / -1">
-          <div class="board-title">📖 القرآن</div>
+          <div class="board-title">📖 ترتيب القرآن</div>
           <div id="quranBoard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.3rem"></div>
         </div>
 
@@ -1025,8 +1144,22 @@ nav {
     <!-- FRIENDS TAB -->
     <div id="tab-friends" class="tab-section">
       <div class="glass-card">
-        <div class="section-title"><div class="dot"></div> حالة الأصحاب دلوقتي</div>
+        <div class="section-title"><div class="dot"></div> الصحاب دلوقتي بيعملوا إيه؟</div>
         <div class="friends-grid" id="friendsStatus"></div>
+      </div>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div id="tab-chat" class="tab-section">
+      <div class="glass-card chat-container">
+        <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> شات الصحاب 💬</div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-loading">استنّى بنجيب الرسايل...</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" class="chat-input" placeholder="اكتب حاجة للصحاب..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send-btn" onclick="sendChat()">إرسال ✈️</button>
+        </div>
       </div>
     </div>
 
@@ -1048,7 +1181,7 @@ nav {
 <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
   <div class="modal-box">
     <div class="modal-header">
-      <h3>✏️ تعديل بيانات اليوم</h3>
+      <h3>✏️ عدّل بيانات النهارده</h3>
       <button class="modal-close" onclick="closeEditModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -1062,14 +1195,14 @@ nav {
         <label class="edit-check-item"><input type="checkbox" id="edit_التراويح"> 🕌 التراويح</label>
       </div>
       <div class="edit-field">
-        <label class="edit-label">📖 صفحات القرآن</label>
+        <label class="edit-label">📖 كام صفحة قرآن اتقرأت؟</label>
         <input type="number" id="editQuran" class="edit-input" min="0" max="604">
       </div>
       <div class="edit-field">
-        <label class="edit-label">📚 ساعات المذاكرة (مثال: 2.5 = ساعتين ونص)</label>
+        <label class="edit-label">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label>
         <input type="number" id="editStudy" class="edit-input" min="0" max="24" step="0.1">
       </div>
-      <button class="save-edit-btn" onclick="saveEditLog()">✅ حفظ التعديلات</button>
+      <button class="save-edit-btn" onclick="saveEditLog()">✅ احفظ التعديلات</button>
     </div>
   </div>
 </div>
@@ -1088,6 +1221,9 @@ function showTab(name, btn) {
     const d = new Date();
     document.getElementById('todayLabel').textContent =
       d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+  if (name === 'chat') {
+    if (typeof startChat === 'function') startChat();
   }
 }
 </script>
