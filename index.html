@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>دايما على بعض نسند واهي مواقفنا بتثبت 📚</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-<!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -34,16 +34,17 @@
   let isStudying = false;
   let todayData = {};
   let allUsersUnsub = null;
+  let chatUnsub = null;
+  let editingDate = null;
 
   const TODAY = () => new Date().toISOString().split('T')[0];
 
-  // ==================== AUTH ====================
+  // ===== AUTH =====
   window.googleSignIn = async () => {
     try {
       showLoading(true);
-      const result = await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error(e);
+      await signInWithPopup(auth, provider);
+    } catch(e) {
       showLoading(false);
       showToast('فشل تسجيل الدخول، حاول تاني يسطا!', 'error');
     }
@@ -60,18 +61,14 @@
       currentUser = user;
       await initUser(user);
       showApp();
-      loadTodayData();
+      await loadTodayData();
       startRealtimeLeaderboard();
       startChat();
-      await updateUserStatus(isStudying ? 'studying' : 'online');
-
-      // تحديث الحالة كل 20 ثانية عشان يبين إنه لسه موجود
+      await updateUserStatus('online');
       setInterval(() => {
-        if (document.visibilityState !== 'hidden') {
+        if (document.visibilityState !== 'hidden')
           updateUserStatus(isStudying ? 'studying' : 'online');
-        }
       }, 20000);
-
     } else {
       currentUser = null;
       showLogin();
@@ -79,36 +76,20 @@
     }
   });
 
-  // لما الصفحة تتخفى أو تظهر
   document.addEventListener('visibilitychange', () => {
     if (!currentUser) return;
-    if (document.visibilityState === 'hidden') {
-      updateUserStatus('offline');
-    } else {
-      updateUserStatus(isStudying ? 'studying' : 'online');
-    }
+    document.visibilityState === 'hidden'
+      ? updateUserStatus('offline')
+      : updateUserStatus(isStudying ? 'studying' : 'online');
   });
-
-  // لما يقفل التاب أو يخرج
-  window.addEventListener('pagehide', () => {
-    updateUserStatus('offline');
-  });
-  window.addEventListener('beforeunload', () => {
-    updateUserStatus('offline');
-  });
+  window.addEventListener('pagehide',     () => updateUserStatus('offline'));
+  window.addEventListener('beforeunload', () => updateUserStatus('offline'));
 
   async function initUser(user) {
     const ref = doc(db, 'users', user.uid);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
-      await setDoc(ref, {
-        uid: user.uid,
-        name: user.displayName,
-        photo: user.photoURL,
-        status: 'online',
-        lastSeen: serverTimestamp(),
-        createdAt: serverTimestamp()
-      });
+      await setDoc(ref, { uid: user.uid, name: user.displayName, photo: user.photoURL, status: 'online', lastSeen: serverTimestamp(), createdAt: serverTimestamp() });
     } else {
       await updateDoc(ref, { name: user.displayName, photo: user.photoURL });
     }
@@ -118,24 +99,14 @@
 
   async function updateUserStatus(status) {
     if (!currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        status,
-        lastSeen: serverTimestamp()
-      });
-    } catch (e) {}
+    try { await updateDoc(doc(db, 'users', currentUser.uid), { status, lastSeen: serverTimestamp() }); } catch(e) {}
   }
 
-  // ==================== TODAY DATA ====================
+  // ===== TODAY DATA =====
   async function loadTodayData() {
     if (!currentUser) return;
-    const ref = doc(db, 'logs', currentUser.uid, 'days', TODAY());
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      todayData = snap.data();
-    } else {
-      todayData = { prayers: [], quranPages: 0, studySeconds: 0, date: TODAY() };
-    }
+    const snap = await getDoc(doc(db, 'logs', currentUser.uid, 'days', TODAY()));
+    todayData = snap.exists() ? snap.data() : { prayers:[], quranPages:0, studySeconds:0, date:TODAY() };
     renderTodayUI();
     studySeconds = todayData.studySeconds || 0;
     updateTimerDisplay();
@@ -144,64 +115,45 @@
 
   async function saveTodayData() {
     if (!currentUser) return;
-    const ref = doc(db, 'logs', currentUser.uid, 'days', TODAY());
-    await setDoc(ref, { ...todayData, uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL, updatedAt: serverTimestamp() });
+    await setDoc(doc(db, 'logs', currentUser.uid, 'days', TODAY()),
+      { ...todayData, uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL, updatedAt: serverTimestamp() });
     await updateDoc(doc(db, 'users', currentUser.uid), {
       todayStudySeconds: todayData.studySeconds || 0,
-      todayPrayers: todayData.prayers || [],
-      todayQuranPages: todayData.quranPages || 0,
+      todayPrayers:      todayData.prayers      || [],
+      todayQuranPages:   todayData.quranPages    || 0,
       todayDate: TODAY()
     });
   }
 
   function renderTodayUI() {
     const prayers = todayData.prayers || [];
-    document.querySelectorAll('.prayer-btn').forEach(btn => {
-      const p = btn.dataset.prayer;
-      btn.classList.toggle('active', prayers.includes(p));
-    });
+    document.querySelectorAll('.prayer-btn').forEach(btn =>
+      btn.classList.toggle('active', prayers.includes(btn.dataset.prayer)));
     document.getElementById('quranInput').value = todayData.quranPages || 0;
   }
 
-  // ==================== PRAYERS ====================
+  // ===== PRAYERS =====
   window.togglePrayer = async (prayer) => {
     let prayers = todayData.prayers || [];
-    if (prayers.includes(prayer)) {
-      prayers = prayers.filter(p => p !== prayer);
-    } else {
-      prayers.push(prayer);
-      triggerPrayerEffect();
-    }
+    if (prayers.includes(prayer)) { prayers = prayers.filter(p => p !== prayer); }
+    else { prayers.push(prayer); spawnParticles(event.currentTarget); }
     todayData.prayers = prayers;
     await saveTodayData();
     renderTodayUI();
     updateMyStats();
   };
 
-  function triggerPrayerEffect() {
-    const btn = event.currentTarget;
-    btn.style.transform = 'scale(1.3)';
-    setTimeout(() => btn.style.transform = '', 300);
-    spawnParticles(btn);
-  }
-
-  // ==================== QURAN ====================
+  // ===== QURAN =====
   window.saveQuran = async () => {
     const val = parseInt(document.getElementById('quranInput').value) || 0;
     todayData.quranPages = Math.max(0, val);
     await saveTodayData();
-    showToast(`✅ تمام! حفظنا إنك اتقرأت ${val} صفحة`, 'success');
+    showToast(`✅ تمام! اتقرأت ${val} صفحة`, 'success');
     updateMyStats();
   };
 
-  // ==================== STUDY TIMER ====================
-  window.toggleStudy = async () => {
-    if (!isStudying) {
-      await startStudy();
-    } else {
-      await stopStudy();
-    }
-  };
+  // ===== TIMER =====
+  window.toggleStudy = async () => { isStudying ? await stopStudy() : await startStudy(); };
 
   async function startStudy() {
     isStudying = true;
@@ -211,14 +163,10 @@
     document.getElementById('timerBtn').classList.add('studying');
     document.getElementById('timerStatus').textContent = 'شغّال بيذاكر...';
     document.getElementById('timerStatus').classList.add('active');
-
     studyTimer = setInterval(async () => {
       studySeconds = Math.floor((Date.now() - studyStartTime) / 1000);
       updateTimerDisplay();
-      if (studySeconds % 30 === 0) {
-        todayData.studySeconds = studySeconds;
-        await saveTodayData();
-      }
+      if (studySeconds % 30 === 0) { todayData.studySeconds = studySeconds; await saveTodayData(); }
     }, 1000);
   }
 
@@ -240,809 +188,598 @@
     const h = Math.floor(studySeconds / 3600);
     const m = Math.floor((studySeconds % 3600) / 60);
     const s = studySeconds % 60;
-    document.getElementById('timerHours').textContent = String(h).padStart(2, '0');
-    document.getElementById('timerMins').textContent = String(m).padStart(2, '0');
-    document.getElementById('timerSecs').textContent = String(s).padStart(2, '0');
-
-    // Update circle progress (max 8 hours)
-    const pct = Math.min(studySeconds / (8 * 3600), 1);
-    const circle = document.getElementById('timerCircle');
-    const circumference = 2 * Math.PI * 90;
-    circle.style.strokeDashoffset = circumference * (1 - pct);
+    document.getElementById('timerHours').textContent = String(h).padStart(2,'0');
+    document.getElementById('timerMins').textContent  = String(m).padStart(2,'0');
+    document.getElementById('timerSecs').textContent  = String(s).padStart(2,'0');
+    document.getElementById('timerCircle').style.strokeDashoffset =
+      2 * Math.PI * 90 * (1 - Math.min(studySeconds / (8*3600), 1));
   }
 
   function updateMyStats() {
-    const hours = (studySeconds / 3600).toFixed(1);
-    document.getElementById('myStudyHours').textContent = hours + 'h';
-    document.getElementById('myPrayersCount').textContent = (todayData.prayers || []).length + '/6';
-    document.getElementById('myQuranPages').textContent = (todayData.quranPages || 0);
+    const h = Math.floor(studySeconds / 3600);
+    const m = Math.floor((studySeconds % 3600) / 60);
+    document.getElementById('myStudyHours').textContent   = `${h}h ${m}m`;
+    document.getElementById('myPrayersCount').textContent = (todayData.prayers||[]).length + '/6';
+    document.getElementById('myQuranPages').textContent   = todayData.quranPages || 0;
   }
 
-  // ==================== LEADERBOARD ====================
+  // ===== LEADERBOARD =====
   function startRealtimeLeaderboard() {
-    const usersRef = collection(db, 'users');
-    allUsersUnsub = onSnapshot(usersRef, (snapshot) => {
+    allUsersUnsub = onSnapshot(collection(db, 'users'), snap => {
       const users = [];
-      snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
+      snap.forEach(d => users.push({ id:d.id, ...d.data() }));
       renderLeaderboards(users);
     });
   }
 
   function renderLeaderboards(users) {
     const today = TODAY();
-
     const withToday = users.map(u => ({
       ...u,
-      studySecs: u.todayDate === today ? (u.todayStudySeconds || 0) : 0,
-      prayers: u.todayDate === today ? (u.todayPrayers || []) : [],
-      quranPages: u.todayDate === today ? (u.todayQuranPages || 0) : 0,
+      studySecs:  u.todayDate === today ? (u.todayStudySeconds||0) : 0,
+      prayers:    u.todayDate === today ? (u.todayPrayers||[])     : [],
+      quranPages: u.todayDate === today ? (u.todayQuranPages||0)   : 0,
     }));
-
-    // Study leaderboard
-    const byStudy = [...withToday].sort((a, b) => b.studySecs - a.studySecs);
-    renderBoard('studyBoard', byStudy, u => {
-      const h = Math.floor(u.studySecs / 3600);
-      const m = Math.floor((u.studySecs % 3600) / 60);
-      return `${h}h ${m}m`;
-    }, u => u.studySecs);
-
-    // Prayers leaderboard
-    const byPrayers = [...withToday].sort((a, b) => b.prayers.length - a.prayers.length);
-    renderBoard('prayersBoard', byPrayers, u => `${u.prayers.length} / 6 صلوات`, u => u.prayers.length / 6);
-
-    // Quran leaderboard
-    const byQuran = [...withToday].sort((a, b) => b.quranPages - a.quranPages);
-    renderBoard('quranBoard', byQuran, u => `${u.quranPages} صفحة`, u => u.quranPages);
-
-    // Friends status
+    const byStudy   = [...withToday].sort((a,b) => b.studySecs - a.studySecs);
+    const byPrayers = [...withToday].sort((a,b) => b.prayers.length - a.prayers.length);
+    const byQuran   = [...withToday].sort((a,b) => b.quranPages - a.quranPages);
+    renderBoard('studyBoard',   byStudy,   u => { const h=Math.floor(u.studySecs/3600),m=Math.floor((u.studySecs%3600)/60); return `${h}h ${m}m`; }, u=>u.studySecs);
+    renderBoard('prayersBoard', byPrayers, u => `${u.prayers.length}/6`, u => u.prayers.length/6);
+    renderBoard('quranBoard',   byQuran,   u => `${u.quranPages} ص`,     u => u.quranPages);
     renderFriendsStatus(withToday);
   }
 
-  function renderBoard(containerId, users, valueFn, progressFn) {
-    const container = document.getElementById(containerId);
-    const medals = ['🥇', '🥈', '🥉'];
-    const maxVal = Math.max(...users.map(progressFn), 1);
-
-    container.innerHTML = users.slice(0, 10).map((u, i) => {
+  function renderBoard(id, users, valFn, pctFn) {
+    const medals = ['🥇','🥈','🥉'];
+    const maxVal = Math.max(...users.map(pctFn), 1);
+    document.getElementById(id).innerHTML = users.slice(0,10).map((u,i) => {
       const isMe = u.id === currentUser?.uid;
-      const pct = Math.round((progressFn(u) / maxVal) * 100);
-      return `
-        <div class="board-row ${isMe ? 'me' : ''}" onclick="openUserLog('${u.id}','${(u.name||'').replace(/'/g,"\\'")}')">
-          <div class="board-rank">${medals[i] || '#' + (i+1)}</div>
-          <img class="board-avatar" src="${u.photo || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22white%22 font-size=%2218%22>${(u.name||'?')[0]}</text></svg>'">
-          <div class="board-info">
-            <div class="board-name">${u.name || 'مجهول'} ${isMe ? '(أنا 😎)' : ''}</div>
-            <div class="board-progress-bar"><div class="board-progress-fill" style="width:${pct}%"></div></div>
-          </div>
-          <div class="board-value">${valueFn(u)}</div>
-        </div>`;
+      const pct  = Math.round((pctFn(u)/maxVal)*100);
+      const avatar = u.photo
+        ? `<img class="board-avatar" src="${u.photo}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 36 36%22><rect fill=%22%23333%22 width=%2236%22 height=%2236%22 rx=%2218%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22white%22 font-size=%2216%22>${(u.name||'?')[0]}</text></svg>'">`
+        : `<div class="board-avatar" style="background:#333;display:flex;align-items:center;justify-content:center;font-size:1rem">${(u.name||'?')[0]}</div>`;
+      return `<div class="board-row ${isMe?'me':''}" style="animation-delay:${i*0.04}s" onclick="openUserLog('${u.id}','${(u.name||'').replace(/'/g,"\\'")}')">
+        <div class="board-rank">${medals[i]||'#'+(i+1)}</div>
+        ${avatar}
+        <div class="board-info">
+          <div class="board-name">${u.name||'مجهول'} ${isMe?'(أنا 😎)':''}</div>
+          <div class="board-progress-bar"><div class="board-progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="board-value">${valFn(u)}</div>
+      </div>`;
     }).join('') || '<div class="empty-board">مفيش بيانات النهارده لسه 😅</div>';
   }
 
   function renderFriendsStatus(users) {
-    const container = document.getElementById('friendsStatus');
     const now = Date.now();
-    // لو آخر نشاط أكتر من 60 ثانية يبقى offline فعلاً
-    const getEffectiveStatus = (u) => {
+    const getStatus = u => {
       const lastSeen = u.lastSeen?.toDate ? u.lastSeen.toDate().getTime() : 0;
-      const secondsAgo = (now - lastSeen) / 1000;
-      if (secondsAgo > 60) return 'offline';
-      return u.status || 'offline';
+      return (now-lastSeen)/1000 > 60 ? 'offline' : (u.status||'offline');
     };
-    const statusMap = {
-      studying: { icon: '📚', label: 'بيذاكر دلوقتي', color: '#00e676' },
-      online:   { icon: '🟢', label: 'متصل', color: '#4fc3f7' },
-      offline:  { icon: '⭕', label: 'مش موجود', color: '#666' }
+    const map = {
+      studying: { icon:'📚', label:'بيذاكر دلوقتي', color:'#00e676' },
+      online:   { icon:'🟢', label:'متصل',           color:'#4fc3f7' },
+      offline:  { icon:'⭕', label:'مش موجود',       color:'#555' }
     };
-    container.innerHTML = users.map(u => {
-      const effectiveStatus = getEffectiveStatus(u);
-      const st = statusMap[effectiveStatus] || statusMap.offline;
+    document.getElementById('friendsStatus').innerHTML = users.map(u => {
+      const st = map[getStatus(u)] || map.offline;
       const isMe = u.id === currentUser?.uid;
-      return `
-        <div class="friend-status-card ${isMe ? 'me' : ''}">
-          <img src="${u.photo || ''}" class="friend-photo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22 rx=%2220%22/></svg>'">
-          <div class="friend-status-dot" style="background:${st.color}; ${effectiveStatus === 'studying' ? 'animation: statusPulse 1.5s infinite;' : ''}"></div>
-          <div class="friend-name-text">${u.name?.split(' ')[0] || '؟'} ${isMe ? '(أنا)' : ''}</div>
-          <div class="friend-status-label" style="color:${st.color}">${st.icon} ${st.label}</div>
-        </div>`;
+      return `<div class="friend-status-card ${isMe?'me':''}">
+        <img src="${u.photo||''}" class="friend-photo" onerror="this.style.background='#333';this.src=''">
+        <div class="friend-status-dot" style="background:${st.color};${getStatus(u)==='studying'?'animation:statusPulse 1.5s infinite;':''}"></div>
+        <div class="friend-name-text">${u.name?.split(' ')[0]||'؟'} ${isMe?'(أنا)':''}</div>
+        <div class="friend-status-label" style="color:${st.color}">${st.icon} ${st.label}</div>
+      </div>`;
     }).join('');
   }
 
-  // ==================== USER LOG ====================
+  // ===== USER LOG =====
   window.openUserLog = async (uid, name) => {
-    document.getElementById('logModal').style.display = 'flex';
+    const modal = document.getElementById('logModal');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('open'));
     document.getElementById('logModalTitle').textContent = `📋 سجل ${name}`;
-    document.getElementById('logContent').innerHTML = '<div class="log-loading">استنّى بنجيب البيانات...</div>';
-
+    document.getElementById('logContent').innerHTML = '<div class="log-loading">⏳ استنّى بنجيب البيانات...</div>';
     try {
-      const logsRef = collection(db, 'logs', uid, 'days');
-      const q = query(logsRef, orderBy('date', 'desc'));
+      const q = query(collection(db,'logs',uid,'days'), orderBy('date','desc'));
       const snap = await getDocs(q);
-
       const days = [];
       snap.forEach(d => days.push(d.data()));
-
-      if (!days.length) {
-        document.getElementById('logContent').innerHTML = '<div class="log-empty">مفيش سجلات لسه 📭</div>';
-        return;
-      }
-
+      if (!days.length) { document.getElementById('logContent').innerHTML = '<div class="log-empty">مفيش سجلات لسه 📭</div>'; return; }
       const isMe = uid === currentUser?.uid;
-
       document.getElementById('logContent').innerHTML = days.map(day => {
-        const h = Math.floor((day.studySeconds || 0) / 3600);
-        const m = Math.floor(((day.studySeconds || 0) % 3600) / 60);
-        const prayers = day.prayers || [];
+        const h = Math.floor((day.studySeconds||0)/3600);
+        const m = Math.floor(((day.studySeconds||0)%3600)/60);
+        const prayers = day.prayers||[];
         const isToday = day.date === TODAY();
-
-        return `
-          <div class="log-day-card ${isToday ? 'today' : ''}">
-            <div class="log-day-header">
-              <span class="log-date">${formatDate(day.date)} ${isToday ? '🔵 اليوم' : ''}</span>
-              ${isMe && isToday ? `<button class="edit-log-btn" onclick="openEditLog()">✏️ تعديل</button>` : ''}
-            </div>
-            <div class="log-stats-row">
-              <div class="log-stat"><span class="log-stat-icon">📚</span><span>${h}h ${m}m مذاكرة</span></div>
-              <div class="log-stat"><span class="log-stat-icon">🕌</span><span>${prayers.length}/6 صلوات</span></div>
-              <div class="log-stat"><span class="log-stat-icon">📖</span><span>${day.quranPages || 0} صفحة</span></div>
-            </div>
-            <div class="log-prayers-row">${['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].map(p => `<span class="log-prayer-badge ${prayers.includes(p) ? 'done' : ''}">${p}</span>`).join('')}</div>
-          </div>`;
+        return `<div class="log-day-card ${isToday?'today':''}">
+          <div class="log-day-header">
+            <span class="log-date">${formatDate(day.date)} ${isToday?'🔵 النهارده':''}</span>
+            ${isMe ? `<button class="edit-log-btn" onclick="openEditLog('${day.date}')">✏️ تعديل</button>` : ''}
+          </div>
+          <div class="log-stats-row">
+            <div class="log-stat">📚 ${h}h ${m}m</div>
+            <div class="log-stat">🕌 ${prayers.length}/6</div>
+            <div class="log-stat">📖 ${day.quranPages||0} ص</div>
+          </div>
+          <div class="log-prayers-row">${['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].map(p=>`<span class="log-prayer-badge ${prayers.includes(p)?'done':''}">${p}</span>`).join('')}</div>
+        </div>`;
       }).join('');
-    } catch (e) {
-      document.getElementById('logContent').innerHTML = '<div class="log-empty">فيه مشكلة في التحميل، حاول تاني 😕</div>';
-    }
+    } catch(e) { document.getElementById('logContent').innerHTML = '<div class="log-empty">فيه مشكلة، حاول تاني 😕</div>'; }
   };
 
-  window.closeLogModal = () => { document.getElementById('logModal').style.display = 'none'; };
+  window.closeLogModal = () => {
+    const m = document.getElementById('logModal');
+    m.classList.remove('open');
+    setTimeout(() => m.style.display = 'none', 300);
+  };
 
-  window.openEditLog = () => {
-    document.getElementById('editModal').style.display = 'flex';
-    const d = todayData;
+  // ===== EDIT ALL DAYS =====
+  window.openEditLog = async (date) => {
+    editingDate = date;
+    const isToday = date === TODAY();
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('open'));
+    document.getElementById('editModalTitle').textContent = `✏️ تعديل ${formatDate(date)}`;
+
+    let dayData;
+    if (isToday) {
+      dayData = todayData;
+    } else {
+      const snap = await getDoc(doc(db,'logs',currentUser.uid,'days',date));
+      dayData = snap.exists() ? snap.data() : { prayers:[], quranPages:0, studySeconds:0, date };
+    }
+    const prayers = dayData.prayers||[];
     ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].forEach(p => {
-      const el = document.getElementById('edit_' + p);
-      if (el) el.checked = (d.prayers || []).includes(p);
+      const el = document.getElementById('edit_'+p);
+      if (el) el.checked = prayers.includes(p);
     });
-    document.getElementById('editQuran').value = d.quranPages || 0;
-    document.getElementById('editStudy').value = Math.floor((d.studySeconds || 0) / 3600 * 100) / 100;
+    document.getElementById('editQuran').value = dayData.quranPages || 0;
+    document.getElementById('editStudy').value = Math.round((dayData.studySeconds||0)/36)/100;
   };
 
   window.saveEditLog = async () => {
-    const prayers = ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].filter(p => {
-      const el = document.getElementById('edit_' + p);
-      return el && el.checked;
-    });
-    const pages = parseInt(document.getElementById('editQuran').value) || 0;
-    const hours = parseFloat(document.getElementById('editStudy').value) || 0;
+    const prayers = ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].filter(p => document.getElementById('edit_'+p)?.checked);
+    const pages   = parseInt(document.getElementById('editQuran').value)  || 0;
+    const hours   = parseFloat(document.getElementById('editStudy').value) || 0;
+    const newSecs = Math.round(hours * 3600);
+    const isToday = editingDate === TODAY();
 
-    todayData.prayers = prayers;
-    todayData.quranPages = pages;
-    todayData.studySeconds = Math.round(hours * 3600);
-    studySeconds = todayData.studySeconds;
+    await setDoc(doc(db,'logs',currentUser.uid,'days',editingDate),
+      { prayers, quranPages:pages, studySeconds:newSecs, date:editingDate,
+        uid:currentUser.uid, name:currentUser.displayName, photo:currentUser.photoURL, updatedAt:serverTimestamp() });
 
-    // لو العداد شغال، حدّث نقطة البداية عشان يكمل من الرقم الجديد
-    if (isStudying) {
-      studyStartTime = Date.now() - (studySeconds * 1000);
+    if (isToday) {
+      todayData = { ...todayData, prayers, quranPages:pages, studySeconds:newSecs };
+      studySeconds = newSecs;
+      if (isStudying) studyStartTime = Date.now() - (studySeconds * 1000);
+      await updateDoc(doc(db,'users',currentUser.uid), {
+        todayStudySeconds:newSecs, todayPrayers:prayers, todayQuranPages:pages, todayDate:TODAY()
+      });
+      renderTodayUI();
+      updateTimerDisplay();
+      updateMyStats();
     }
 
-    await saveTodayData();
-    renderTodayUI();
-    updateTimerDisplay();
-    updateMyStats();
-    document.getElementById('editModal').style.display = 'none';
-    closeLogModal();
+    closeEditModal();
     showToast('✅ تمام يسطا! السجل اتعدّل', 'success');
+    setTimeout(() => closeLogModal(), 100);
   };
 
-  window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; };
-
-  // ==================== HELPERS ====================
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  }
-
-  window.showLoading = (show) => {
-    document.getElementById('loginLoading').style.display = show ? 'block' : 'none';
+  window.closeEditModal = () => {
+    const m = document.getElementById('editModal');
+    m.classList.remove('open');
+    setTimeout(() => m.style.display = 'none', 300);
   };
 
-  window.showToast = (msg, type = 'info') => {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show ' + type;
-    setTimeout(() => t.className = 'toast', 3000);
-  };
+  // ===== STATS CHARTS =====
+  window.loadStats = async (period) => {
+    if (!currentUser) return;
+    document.querySelectorAll('.stats-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+    document.getElementById('statsLoading').style.display = 'block';
+    document.getElementById('chartsArea').style.display   = 'none';
+    try {
+      const q = query(collection(db,'logs',currentUser.uid,'days'), orderBy('date','desc'), limit(period==='week'?7:30));
+      const snap = await getDocs(q);
+      const days = [];
+      snap.forEach(d => days.push(d.data()));
+      days.reverse();
 
-  function showLogin() {
-    document.getElementById('loginPage').style.display = 'flex';
-    document.getElementById('appPage').style.display = 'none';
-    showLoading(false);
-  }
+      if (!days.length) {
+        document.getElementById('statsLoading').innerHTML = '<div style="text-align:center;padding:2rem;color:#78909c">مفيش بيانات كافية لسه 😅<br>ابدأ تسجّل نشاطك!</div>';
+        return;
+      }
 
-  function showApp() {
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('appPage').style.display = 'block';
-    showLoading(false);
-  }
+      document.getElementById('statsLoading').style.display = 'none';
+      document.getElementById('chartsArea').style.display   = 'block';
 
-  function spawnParticles(el) {
-    const rect = el.getBoundingClientRect();
-    for (let i = 0; i < 8; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = (rect.left + rect.width/2) + 'px';
-      p.style.top = (rect.top + rect.height/2) + 'px';
-      const angle = (i / 8) * 360;
-      const dist = 40 + Math.random() * 30;
-      const dx = Math.cos(angle * Math.PI/180) * dist;
-      const dy = Math.sin(angle * Math.PI/180) * dist;
-      p.style.setProperty('--dx', dx + 'px');
-      p.style.setProperty('--dy', dy + 'px');
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 700);
+      const labels      = days.map(d => new Date(d.date).toLocaleDateString('ar-EG',{weekday:'short',day:'numeric'}));
+      const studyHours  = days.map(d => +((d.studySeconds||0)/3600).toFixed(2));
+      const prayerCount = days.map(d => (d.prayers||[]).length);
+      const quranPages  = days.map(d => d.quranPages||0);
+
+      const totalStudy   = days.reduce((s,d) => s+(d.studySeconds||0), 0);
+      const totalPrayers = days.reduce((s,d) => s+(d.prayers||[]).length, 0);
+      const totalQuran   = days.reduce((s,d) => s+(d.quranPages||0), 0);
+      const sh = Math.floor(totalStudy/3600), sm = Math.floor((totalStudy%3600)/60);
+      document.getElementById('statsTotalStudy').textContent   = `${sh}h ${sm}m`;
+      document.getElementById('statsAvgStudy').textContent     = days.length ? ((totalStudy/days.length)/3600).toFixed(1)+'h' : '0h';
+      document.getElementById('statsTotalPrayers').textContent = totalPrayers;
+      document.getElementById('statsTotalQuran').textContent   = totalQuran + ' ص';
+
+      drawChart('studyChart',   labels, studyHours,  'ساعات المذاكرة', '#4fc3f7', 'rgba(79,195,247,0.12)');
+      drawChart('prayersChart', labels, prayerCount, 'عدد الصلوات',    '#69f0ae', 'rgba(105,240,174,0.12)');
+      drawChart('quranChart',   labels, quranPages,  'صفحات القرآن',   '#ce93d8', 'rgba(206,147,216,0.12)');
+    } catch(e) {
+      document.getElementById('statsLoading').innerHTML = '<div style="text-align:center;padding:2rem;color:#78909c">مفيش بيانات كافية لسه 😅</div>';
     }
+  };
+
+  function drawChart(canvasId, labels, data, label, color, bgColor) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const existing = Chart.getChart(canvas);
+    if (existing) existing.destroy();
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label, data,
+          borderColor: color, backgroundColor: bgColor,
+          borderWidth: 2.5, pointBackgroundColor: color,
+          pointRadius: 4, pointHoverRadius: 7,
+          fill: true, tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor:'rgba(8,8,22,0.95)',
+            borderColor: color, borderWidth: 1,
+            titleColor: color, bodyColor:'#e8eaf6',
+            padding: 10,
+            titleFont:{ family:'Cairo', size:12 },
+            bodyFont:{ family:'Cairo', size:11 }
+          }
+        },
+        scales: {
+          x: { ticks:{ color:'#78909c', font:{family:'Cairo',size:10}, maxRotation:40 }, grid:{ color:'rgba(255,255,255,0.04)' } },
+          y: { beginAtZero:true, ticks:{ color:'#78909c', font:{family:'Cairo',size:10} }, grid:{ color:'rgba(255,255,255,0.06)' } }
+        },
+        animation: { duration:900, easing:'easeInOutQuart' }
+      }
+    });
   }
 
-  // ==================== CHAT ====================
-  let chatUnsub = null;
-
+  // ===== CHAT =====
   function startChat() {
-    if (chatUnsub) return; // شغال بالفعل
-    const chatRef = collection(db, 'chat');
-    const q = query(chatRef, orderBy('createdAt', 'asc'), limit(100));
-    chatUnsub = onSnapshot(q, (snapshot) => {
+    if (chatUnsub) return;
+    const q = query(collection(db,'chat'), orderBy('createdAt','asc'), limit(100));
+    chatUnsub = onSnapshot(q, snap => {
       const msgs = [];
-      snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
+      snap.forEach(d => msgs.push({ id:d.id, ...d.data() }));
       renderChat(msgs);
-    }, (err) => {
-      console.error('Chat error:', err);
-      const container = document.getElementById('chatMessages');
-      if (container) container.innerHTML = '<div class="chat-loading">فيه مشكلة في الشات، حاول تاني 😕</div>';
+    }, () => {
+      const c = document.getElementById('chatMessages');
+      if (c) c.innerHTML = '<div class="chat-loading">فيه مشكلة في الشات 😕</div>';
     });
   }
 
   function renderChat(msgs) {
     const container = document.getElementById('chatMessages');
-    if (!msgs.length) {
-      container.innerHTML = '<div class="chat-loading">مفيش رسايل لسه، ابدأ الكلام! 😄</div>';
-      return;
-    }
+    if (!container) return;
+    if (!msgs.length) { container.innerHTML = '<div class="chat-loading">مفيش رسايل لسه، ابدأ الكلام! 😄</div>'; return; }
+    const scrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 60;
     container.innerHTML = msgs.map(msg => {
       const isMe = msg.uid === currentUser?.uid;
-      const time = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
-      return `
-        <div class="chat-bubble-wrap ${isMe ? 'me' : ''}">
-          <img class="chat-bubble-avatar" src="${msg.photo || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%2216%22/></svg>'">
-          <div>
-            <div class="chat-bubble">${escapeHtml(msg.text)}</div>
-            <div class="chat-bubble-meta">
-              ${!isMe ? `<span class="chat-bubble-name">${msg.name?.split(' ')[0] || '؟'}</span> •` : ''}
-              <span>${time}</span>
-            </div>
+      const time = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div class="chat-bubble-wrap ${isMe?'me':''}">
+        <img class="chat-bubble-avatar" src="${msg.photo||''}" onerror="this.style.background='#333';this.removeAttribute('src')">
+        <div>
+          <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+          <div class="chat-bubble-meta">
+            ${!isMe?`<span class="chat-bubble-name">${msg.name?.split(' ')[0]||'؟'}</span> •`:''}
+            <span>${time}</span>
           </div>
-        </div>`;
+        </div>
+      </div>`;
     }).join('');
-    container.scrollTop = container.scrollHeight;
+    if (scrolledToBottom) container.scrollTop = container.scrollHeight;
   }
 
-  function escapeHtml(text) {
-    return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+  function escapeHtml(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   window.sendChat = async () => {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     if (!text || !currentUser) return;
     input.value = '';
+    const container = document.getElementById('chatMessages');
+    if (container) container.scrollTop = container.scrollHeight;
     try {
-      await addDoc(collection(db, 'chat'), {
-        uid: currentUser.uid,
-        name: currentUser.displayName,
-        photo: currentUser.photoURL,
-        text,
-        createdAt: serverTimestamp()
-      });
-    } catch (e) {
-      showToast('مش قادر يبعت، حاول تاني!', 'error');
-    }
+      await addDoc(collection(db,'chat'), { uid:currentUser.uid, name:currentUser.displayName, photo:currentUser.photoURL, text, createdAt:serverTimestamp() });
+    } catch(e) { showToast('مش قادر يبعت، حاول تاني!', 'error'); }
   };
+
+  // ===== HELPERS =====
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  }
+  window.showLoading = show => document.getElementById('loginLoading').style.display = show ? 'block' : 'none';
+  window.showToast = (msg, type='info') => {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast', 3000);
+  };
+  function showLogin() {
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('appPage').style.display   = 'none';
+    showLoading(false);
+  }
+  function showApp() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appPage').style.display   = 'block';
+    showLoading(false);
+  }
+  function spawnParticles(el) {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const colors = ['#4fc3f7','#69f0ae','#ce93d8','#ffd54f'];
+    for (let i=0; i<10; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = `left:${rect.left+rect.width/2}px;top:${rect.top+rect.height/2}px;background:${colors[i%4]}`;
+      const angle = (i/10)*360, dist = 50+Math.random()*40;
+      p.style.setProperty('--dx', Math.cos(angle*Math.PI/180)*dist+'px');
+      p.style.setProperty('--dy', Math.sin(angle*Math.PI/180)*dist+'px');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 800);
+    }
+  }
 </script>
 
 <style>
 :root {
-  --bg: #060610;
-  --glass: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.1);
-  --accent: #4fc3f7;
-  --accent2: #ce93d8;
-  --gold: #ffd54f;
-  --green: #69f0ae;
-  --text: #e8eaf6;
-  --sub: #90a4ae;
-  --radius: 20px;
+  --bg:#050510;--glass:rgba(255,255,255,0.04);--glass-border:rgba(255,255,255,0.09);
+  --accent:#4fc3f7;--accent2:#ce93d8;--gold:#ffd54f;--green:#69f0ae;
+  --text:#e8eaf6;--sub:#78909c;--radius:20px;--nav-h:60px;--tab-h:52px;
 }
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;}
 
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior: smooth; }
+/* BG */
+.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:0.12;animation:orbFloat linear infinite;}
+.orb1{width:700px;height:700px;background:#4fc3f7;top:-250px;right:-250px;animation-duration:22s;}
+.orb2{width:600px;height:600px;background:#ce93d8;bottom:-200px;left:-200px;animation-duration:28s;animation-delay:-12s;}
+.orb3{width:500px;height:500px;background:#69f0ae;top:40%;left:40%;animation-duration:20s;animation-delay:-7s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(40px,-40px) scale(1.08);}66%{transform:translate(-30px,30px) scale(0.93);}}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(79,195,247,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,195,247,0.025) 1px,transparent 1px);background-size:60px 60px;}
 
-body {
-  font-family: 'Cairo', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+/* ANIMATIONS */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(0.94);}to{opacity:1;transform:scale(1);}}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes studyGlow{0%,100%{box-shadow:0 0 10px rgba(105,240,174,0.2)}50%{box-shadow:0 0 30px rgba(105,240,174,0.6)}}
+@keyframes statusPulse{0%,100%{box-shadow:0 0 0 0 rgba(105,240,174,0.7)}50%{box-shadow:0 0 0 6px rgba(105,240,174,0)}}
+@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0);}}
+@keyframes boardRowIn{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:translateX(0);}}
 
-/* ===== ANIMATED BG ===== */
-.bg-orbs {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  overflow: hidden;
-}
-.orb {
-  position: absolute; border-radius: 50%;
-  filter: blur(80px); opacity: 0.15;
-  animation: orbFloat linear infinite;
-}
-.orb1 { width:600px;height:600px; background:#4fc3f7; top:-200px;right:-200px; animation-duration:20s; }
-.orb2 { width:500px;height:500px; background:#ce93d8; bottom:-150px;left:-150px; animation-duration:25s; animation-delay:-10s; }
-.orb3 { width:400px;height:400px; background:#69f0ae; top:50%;left:50%; animation-duration:18s; animation-delay:-5s; }
+/* LOGIN */
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative;z-index:10;flex-direction:column;gap:2rem;padding:1.5rem;}
+.login-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(50px);border-radius:28px;padding:2.5rem 2rem;text-align:center;max-width:420px;width:100%;box-shadow:0 0 80px rgba(79,195,247,0.1),inset 0 1px 0 rgba(255,255,255,0.1);animation:fadeInScale 0.7s cubic-bezier(.16,1,.3,1) both;}
+.login-logo{font-size:4rem;margin-bottom:1rem;animation:float 3s ease-in-out infinite;display:block;}
+.login-title{font-size:clamp(1.15rem,3.5vw,1.6rem);font-weight:900;line-height:1.45;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.6rem;}
+.login-sub{color:var(--sub);font-size:0.88rem;margin-bottom:2rem;line-height:1.8;}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:0.7rem;width:100%;padding:0.9rem 1.5rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
+.google-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);background-size:200% 100%;animation:shimmer 2s infinite;}
+.google-btn:hover{background:rgba(255,255,255,0.13);transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,195,247,0.25);}
+.google-btn img{width:22px;}
+#loginLoading{display:none;margin-top:1rem;color:var(--sub);font-size:0.88rem;}
 
-@keyframes orbFloat {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33% { transform: translate(30px,-30px) scale(1.05); }
-  66% { transform: translate(-20px,20px) scale(0.95); }
-}
+/* APP */
+#appPage{display:none;position:relative;z-index:5;min-height:100vh;}
 
-.grid-bg {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(79,195,247,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(79,195,247,0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-}
+/* NAV */
+nav{position:sticky;top:0;z-index:100;height:var(--nav-h);background:rgba(5,5,16,0.88);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.07);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;}
+.nav-logo{font-size:clamp(0.65rem,2.2vw,0.95rem);font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-user{display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}
+.nav-avatar{width:32px;height:32px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;}
+#userName{font-size:0.8rem;color:var(--sub);display:none;}
+@media(min-width:500px){#userName{display:block;}}
+.sign-out-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.32rem 0.7rem;color:var(--sub);font-family:'Cairo',sans-serif;font-size:0.76rem;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.sign-out-btn:hover{background:rgba(255,80,80,0.15);color:#ff6b6b;border-color:rgba(255,80,80,0.3);}
 
-/* ===== LOGIN PAGE ===== */
-#loginPage {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; position: relative; z-index: 10;
-  flex-direction: column; gap: 2rem;
-  padding: 2rem;
-}
+/* TABS */
+.tab-bar{display:flex;gap:0.35rem;padding:0.65rem 0.75rem;overflow-x:auto;scrollbar-width:none;background:rgba(5,5,16,0.7);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.05);position:sticky;top:var(--nav-h);z-index:99;}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab-btn{padding:0.45rem 1rem;border-radius:30px;border:1px solid rgba(255,255,255,0.09);background:transparent;color:var(--sub);font-family:'Cairo',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.25s;white-space:nowrap;flex-shrink:0;}
+.tab-btn.active{background:linear-gradient(135deg,rgba(79,195,247,0.18),rgba(206,147,216,0.18));border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px rgba(79,195,247,0.15);}
+.tab-btn:active{transform:scale(0.95);}
 
-.login-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(40px);
-  border-radius: 28px;
-  padding: 3rem 2.5rem;
-  text-align: center;
-  max-width: 420px;
-  width: 100%;
-  box-shadow: 0 0 80px rgba(79,195,247,0.08), inset 0 1px 0 rgba(255,255,255,0.1);
-  animation: fadeInUp 0.8s ease both;
-}
+/* CONTENT */
+.main-content{padding:0.9rem;max-width:1100px;margin:0 auto;}
+.tab-section{display:none;}
+.tab-section.active{display:block;animation:fadeInUp 0.4s cubic-bezier(.16,1,.3,1) both;}
 
-@keyframes fadeInUp {
-  from { opacity:0; transform:translateY(30px); }
-  to { opacity:1; transform:translateY(0); }
-}
+/* GLASS CARD */
+.glass-card{background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(30px);border-radius:var(--radius);padding:1.1rem;box-shadow:0 4px 40px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.05);transition:box-shadow 0.3s;}
+.glass-card:hover{box-shadow:0 4px 40px rgba(79,195,247,0.07),inset 0 1px 0 rgba(255,255,255,0.06);}
 
-.login-logo { font-size: 4rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+/* SECTION TITLE */
+.section-title{font-size:1rem;font-weight:700;margin-bottom:0.9rem;color:var(--text);display:flex;align-items:center;gap:0.5rem;}
+.section-title .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;}
 
-.login-title {
-  font-size: 2rem; font-weight: 900;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-}
-.login-sub { color: var(--sub); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.8; }
+/* STATS MINI */
+.my-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.9rem;}
+.my-stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:0.75rem 0.4rem;text-align:center;transition:transform 0.2s;}
+.my-stat-card:hover{transform:translateY(-2px);}
+.my-stat-num{font-size:clamp(0.9rem,3.5vw,1.25rem);font-weight:900;color:var(--accent);}
+.my-stat-label{font-size:0.65rem;color:var(--sub);margin-top:2px;}
 
-.google-btn {
-  display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-  width: 100%; padding: 0.9rem 1.5rem;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 14px; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s;
-}
-.google-btn:hover {
-  background: rgba(255,255,255,0.14);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(79,195,247,0.2);
-}
-.google-btn img { width: 22px; }
+/* TIMER */
+.timer-section{display:flex;flex-direction:column;align-items:center;gap:1.1rem;}
+.timer-circle-wrap{position:relative;width:190px;height:190px;}
+@media(max-width:360px){.timer-circle-wrap{width:160px;height:160px;}}
+.timer-svg{transform:rotate(-90deg);}
+.timer-track{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:8;}
+#timerCircle{fill:none;stroke:url(#timerGrad);stroke-width:8;stroke-linecap:round;stroke-dasharray:565.5;stroke-dashoffset:565.5;transition:stroke-dashoffset 1s linear;filter:drop-shadow(0 0 6px rgba(79,195,247,0.5));}
+.timer-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.timer-digits{font-size:clamp(1.5rem,5.5vw,1.9rem);font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-1px;}
+#timerStatus{font-size:0.7rem;color:var(--sub);}
+#timerStatus.active{color:var(--green);animation:pulse 2s infinite;}
+.timer-btn{padding:0.65rem 1.8rem;border-radius:14px;background:linear-gradient(135deg,rgba(79,195,247,0.18),rgba(206,147,216,0.18));border:1px solid var(--accent);color:var(--accent);font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.3s;}
+.timer-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(79,195,247,0.3);}
+.timer-btn:active{transform:scale(0.96);}
+.timer-btn.studying{border-color:var(--green);color:var(--green);animation:studyGlow 2s infinite;}
 
-#loginLoading { display:none; margin-top:1rem; color:var(--sub); }
+/* PRAYERS */
+.prayers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;}
+.prayer-btn{padding:0.75rem 0.25rem;border-radius:13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--sub);font-family:'Cairo',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.3s;text-align:center;position:relative;overflow:hidden;}
+.prayer-btn.active{background:rgba(105,240,174,0.1);border-color:var(--green);color:var(--green);box-shadow:0 0 16px rgba(105,240,174,0.1);}
+.prayer-btn:hover{transform:translateY(-2px);}
+.prayer-btn:active{transform:scale(0.94);}
 
-/* ===== APP PAGE ===== */
-#appPage { display: none; position: relative; z-index: 5; }
+/* QURAN */
+.quran-input-wrap{display:flex;gap:0.5rem;}
+.quran-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:0.6rem 0.85rem;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.3s;}
+.quran-input:focus{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(206,147,216,0.12);}
+.save-btn{padding:0.6rem 1rem;border-radius:12px;background:linear-gradient(135deg,rgba(206,147,216,0.22),rgba(79,195,247,0.14));border:1px solid var(--accent2);color:var(--accent2);font-family:'Cairo',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.3s;white-space:nowrap;}
+.save-btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(206,147,216,0.3);}
 
-/* ===== NAVBAR ===== */
-nav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(6,6,16,0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding: 0.8rem 1.5rem;
-  display: flex; align-items: center; justify-content: space-between;
-}
+/* GRID */
+.input-grid{display:grid;grid-template-columns:1fr;gap:0.9rem;}
+@media(min-width:600px){.input-grid{grid-template-columns:1fr 1fr;}}
+.gap-md{display:flex;flex-direction:column;gap:0.9rem;}
 
-.nav-logo { font-size: 1.2rem; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+/* BOARDS */
+.boards-grid{display:grid;grid-template-columns:1fr;gap:0.9rem;}
+@media(min-width:680px){.boards-grid{grid-template-columns:1fr 1fr;}}
+.board-title{font-size:0.9rem;font-weight:700;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.4rem;}
+.board-row{display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.35rem;border-radius:11px;transition:background 0.2s;cursor:pointer;animation:boardRowIn 0.4s ease both;}
+.board-row:hover{background:rgba(255,255,255,0.04);}
+.board-row:active{transform:scale(0.98);}
+.board-row.me{background:rgba(79,195,247,0.05);border:1px solid rgba(79,195,247,0.15);}
+.board-rank{font-size:1.05rem;width:26px;text-align:center;flex-shrink:0;}
+.board-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.board-info{flex:1;min-width:0;}
+.board-name{font-size:0.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.board-progress-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:99px;margin-top:3px;overflow:hidden;}
+.board-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width 0.8s ease;}
+.board-value{font-size:0.74rem;color:var(--gold);font-weight:700;flex-shrink:0;white-space:nowrap;}
+.empty-board{text-align:center;color:var(--sub);padding:1.5rem;font-size:0.85rem;}
 
-.nav-user { display: flex; align-items: center; gap: 0.75rem; }
-.nav-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--accent); }
-#userName { font-size: 0.9rem; color: var(--sub); }
+/* FRIENDS */
+.friends-grid{display:flex;flex-wrap:wrap;gap:0.65rem;}
+.friend-status-card{display:flex;flex-direction:column;align-items:center;gap:0.32rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:15px;padding:0.85rem 0.9rem;min-width:85px;transition:all 0.3s;position:relative;}
+.friend-status-card.me{border-color:rgba(79,195,247,0.25);}
+.friend-status-card:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,0.2);}
+.friend-photo{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.1);}
+.friend-status-dot{width:11px;height:11px;border-radius:50%;position:absolute;bottom:33px;right:10px;border:2px solid var(--bg);}
+.friend-name-text{font-size:0.74rem;font-weight:700;text-align:center;}
+.friend-status-label{font-size:0.64rem;text-align:center;}
 
-.sign-out-btn {
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; padding: 0.4rem 0.9rem; color: var(--sub);
-  font-family: 'Cairo', sans-serif; font-size: 0.82rem; cursor: pointer;
-  transition: all 0.2s;
-}
-.sign-out-btn:hover { background: rgba(255,100,100,0.15); color: #ff6b6b; border-color: rgba(255,100,100,0.3); }
+/* STATS TAB */
+.stats-period-btns{display:flex;gap:0.5rem;margin-bottom:1rem;}
+.stats-period-btn{padding:0.42rem 1.1rem;border-radius:30px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--sub);font-family:'Cairo',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.2s;}
+.stats-period-btn.active{background:rgba(79,195,247,0.14);border-color:var(--accent);color:var(--accent);}
+.stats-summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:1rem;}
+@media(min-width:480px){.stats-summary-grid{grid-template-columns:repeat(4,1fr);}}
+.stats-summary-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:13px;padding:0.75rem 0.5rem;text-align:center;}
+.stats-summary-num{font-size:1.1rem;font-weight:900;color:var(--accent);}
+.stats-summary-label{font-size:0.65rem;color:var(--sub);margin-top:2px;}
+.chart-card{margin-bottom:0.9rem;}
+.chart-label{font-size:0.84rem;font-weight:700;margin-bottom:0.65rem;color:var(--sub);}
+.chart-wrap{height:170px;position:relative;}
+@media(min-width:600px){.chart-wrap{height:210px;}}
+#statsLoading{text-align:center;color:var(--sub);padding:2.5rem;font-size:0.88rem;}
+#chartsArea{display:none;}
 
-/* ===== TABS ===== */
-.tab-bar {
-  display: flex; gap: 0.5rem; padding: 1rem 1.5rem 0;
-  overflow-x: auto; scrollbar-width: none;
-}
-.tab-bar::-webkit-scrollbar { display: none; }
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.65);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:0.9rem;opacity:0;transition:opacity 0.3s;}
+.modal.open{opacity:1;}
+.modal-box{background:#0b0b1d;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:1.2rem;max-width:530px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(79,195,247,0.1);transform:translateY(18px);transition:transform 0.35s cubic-bezier(.16,1,.3,1);}
+.modal.open .modal-box{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;flex-shrink:0;}
+.modal-header h3{font-size:0.95rem;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--sub);font-size:1.3rem;cursor:pointer;padding:0.2rem;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-body{overflow-y:auto;flex:1;scrollbar-width:thin;}
 
-.tab-btn {
-  padding: 0.55rem 1.3rem; border-radius: 30px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: transparent; color: var(--sub);
-  font-family: 'Cairo', sans-serif; font-size: 0.88rem;
-  cursor: pointer; transition: all 0.25s; white-space: nowrap;
-}
-.tab-btn.active {
-  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.2));
-  border-color: var(--accent); color: var(--accent);
-}
+/* LOG */
+.log-day-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:0.85rem;margin-bottom:0.55rem;}
+.log-day-card.today{border-color:rgba(79,195,247,0.25);}
+.log-day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.55rem;gap:0.5rem;}
+.log-date{font-size:0.76rem;font-weight:700;color:var(--accent);flex:1;min-width:0;}
+.log-stats-row{display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.45rem;font-size:0.76rem;color:var(--sub);}
+.log-prayers-row{display:flex;flex-wrap:wrap;gap:0.3rem;}
+.log-prayer-badge{padding:0.13rem 0.45rem;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-size:0.64rem;color:var(--sub);}
+.log-prayer-badge.done{background:rgba(105,240,174,0.1);border-color:rgba(105,240,174,0.3);color:var(--green);}
+.edit-log-btn{background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:8px;padding:0.18rem 0.55rem;color:var(--accent);font-family:'Cairo',sans-serif;font-size:0.7rem;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0;}
+.edit-log-btn:hover{background:rgba(79,195,247,0.2);}
+.log-loading,.log-empty{text-align:center;color:var(--sub);padding:2rem;font-size:0.88rem;}
 
-/* ===== MAIN LAYOUT ===== */
-.main-content { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
-.tab-section { display: none; }
-.tab-section.active { display: block; animation: fadeInUp 0.4s ease both; }
+/* EDIT */
+.edit-checks{display:grid;grid-template-columns:1fr 1fr;gap:0.45rem;margin-bottom:0.85rem;}
+.edit-check-item{display:flex;align-items:center;gap:0.45rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.5rem 0.65rem;cursor:pointer;font-size:0.82rem;transition:background 0.2s;}
+.edit-check-item:hover{background:rgba(255,255,255,0.07);}
+.edit-check-item input{width:14px;height:14px;cursor:pointer;accent-color:var(--green);}
+.edit-field{margin-bottom:0.7rem;}
+.edit-label{font-size:0.75rem;color:var(--sub);margin-bottom:0.32rem;display:block;}
+.edit-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:0.55rem 0.8rem;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.3s;}
+.edit-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,195,247,0.1);}
+.save-edit-btn{width:100%;padding:0.75rem;border-radius:12px;background:linear-gradient(135deg,rgba(79,195,247,0.2),rgba(206,147,216,0.2));border:1px solid var(--accent);color:var(--accent);font-family:'Cairo',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all 0.3s;}
+.save-edit-btn:hover{box-shadow:0 4px 20px rgba(79,195,247,0.3);transform:translateY(-1px);}
 
-/* ===== GLASS CARD ===== */
-.glass-card {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(30px);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  box-shadow: 0 4px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
-  transition: box-shadow 0.3s;
-}
-.glass-card:hover { box-shadow: 0 4px 40px rgba(79,195,247,0.08), inset 0 1px 0 rgba(255,255,255,0.05); }
+/* CHAT */
+.chat-container{display:flex;flex-direction:column;height:calc(100dvh - var(--nav-h) - var(--tab-h) - 1.8rem);min-height:380px;}
+.chat-messages{flex:1;overflow-y:auto;padding:0.4rem 0;display:flex;flex-direction:column;gap:0.6rem;scrollbar-width:thin;}
+.chat-loading{text-align:center;color:var(--sub);padding:2rem;font-size:0.85rem;}
+.chat-bubble-wrap{display:flex;align-items:flex-end;gap:0.45rem;animation:fadeInUp 0.3s ease both;}
+.chat-bubble-wrap.me{flex-direction:row-reverse;}
+.chat-bubble-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);}
+.chat-bubble{max-width:74%;padding:0.55rem 0.85rem;border-radius:17px;font-size:0.85rem;line-height:1.5;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);word-break:break-word;}
+.chat-bubble-wrap.me .chat-bubble{background:linear-gradient(135deg,rgba(79,195,247,0.17),rgba(206,147,216,0.11));border-color:rgba(79,195,247,0.22);}
+.chat-bubble-meta{font-size:0.64rem;color:var(--sub);margin-top:3px;display:flex;gap:0.32rem;align-items:center;}
+.chat-bubble-name{font-weight:700;color:var(--accent);}
+.chat-input-row{display:flex;gap:0.45rem;margin-top:0.7rem;padding-top:0.7rem;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.chat-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:13px;padding:0.6rem 0.85rem;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.3s;}
+.chat-input:focus{border-color:var(--accent2);}
+.chat-send-btn{padding:0.6rem 0.95rem;border-radius:13px;background:linear-gradient(135deg,rgba(206,147,216,0.22),rgba(79,195,247,0.15));border:1px solid var(--accent2);color:var(--accent2);font-family:'Cairo',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.3s;white-space:nowrap;}
+.chat-send-btn:hover{transform:translateY(-2px);box-shadow:0 4px 18px rgba(206,147,216,0.3);}
 
-/* ===== SECTION TITLE ===== */
-.section-title {
-  font-size: 1.2rem; font-weight: 700; margin-bottom: 1.2rem;
-  color: var(--text); display: flex; align-items: center; gap: 0.6rem;
-}
-.section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(12,12,28,0.97);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);border-radius:12px;padding:0.65rem 1.2rem;font-size:0.85rem;font-weight:600;z-index:9999;transition:transform 0.35s cubic-bezier(.16,1,.3,1);white-space:nowrap;box-shadow:0 4px 30px rgba(0,0,0,0.4);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:rgba(105,240,174,0.4);color:var(--green);}
+.toast.error{border-color:rgba(255,100,100,0.4);color:#ff6b6b;}
 
-/* ===== MY STATS MINI ===== */
-.my-stats-row {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-.my-stat-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px; padding: 0.9rem; text-align: center;
-}
-.my-stat-num { font-size: 1.4rem; font-weight: 900; color: var(--accent); }
-.my-stat-label { font-size: 0.7rem; color: var(--sub); margin-top: 2px; }
+/* PARTICLES */
+.particle{position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:9999;animation:particleFly 0.8s ease forwards;}
 
-/* ===== TIMER ===== */
-.timer-section { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
-
-.timer-circle-wrap { position: relative; width: 220px; height: 220px; }
-.timer-svg { transform: rotate(-90deg); }
-.timer-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
-#timerCircle {
-  fill: none; stroke: url(#timerGrad); stroke-width: 8;
-  stroke-linecap: round;
-  stroke-dasharray: 565.5; stroke-dashoffset: 565.5;
-  transition: stroke-dashoffset 1s linear;
-}
-
-.timer-inner {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 4px;
-}
-.timer-digits { font-size: 2.2rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -2px; }
-#timerStatus { font-size: 0.75rem; color: var(--sub); }
-#timerStatus.active { color: var(--green); animation: pulse 2s infinite; }
-
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-.timer-btn {
-  padding: 0.75rem 2.5rem; border-radius: 14px;
-  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.2));
-  border: 1px solid var(--accent);
-  color: var(--accent); font-family: 'Cairo', sans-serif;
-  font-size: 1rem; font-weight: 700; cursor: pointer;
-  transition: all 0.3s;
-}
-.timer-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(79,195,247,0.3); }
-.timer-btn.studying {
-  background: linear-gradient(135deg, rgba(105,240,174,0.2), rgba(79,195,247,0.2));
-  border-color: var(--green); color: var(--green);
-  animation: studyGlow 2s infinite;
-}
-@keyframes studyGlow { 0%,100%{box-shadow:0 0 10px rgba(105,240,174,0.2)} 50%{box-shadow:0 0 25px rgba(105,240,174,0.5)} }
-
-/* ===== PRAYERS ===== */
-.prayers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-.prayer-btn {
-  padding: 1rem 0.5rem; border-radius: 14px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  color: var(--sub); font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; transition: all 0.3s; text-align: center;
-}
-.prayer-btn.active {
-  background: linear-gradient(135deg, rgba(105,240,174,0.15), rgba(79,195,247,0.15));
-  border-color: var(--green); color: var(--green);
-  box-shadow: 0 0 20px rgba(105,240,174,0.15);
-}
-.prayer-btn:hover { transform: translateY(-2px); }
-
-/* ===== QURAN ===== */
-.quran-input-wrap { display: flex; gap: 0.75rem; align-items: center; }
-.quran-input {
-  flex: 1; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
-  padding: 0.7rem 1rem; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 1rem; outline: none;
-  transition: border-color 0.3s;
-}
-.quran-input:focus { border-color: var(--accent2); }
-.save-btn {
-  padding: 0.7rem 1.4rem; border-radius: 12px;
-  background: linear-gradient(135deg, rgba(206,147,216,0.3), rgba(79,195,247,0.2));
-  border: 1px solid var(--accent2); color: var(--accent2);
-  font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s;
-}
-.save-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(206,147,216,0.3); }
-
-/* ===== LEADERBOARD BOARDS ===== */
-.boards-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-@media(min-width:768px) { .boards-grid { grid-template-columns: 1fr 1fr; } }
-
-.board-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-
-.board-row {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.7rem 0.5rem; border-radius: 12px;
-  transition: background 0.2s; cursor: pointer;
-}
-.board-row:hover { background: rgba(255,255,255,0.04); }
-.board-row.me { background: rgba(79,195,247,0.05); border: 1px solid rgba(79,195,247,0.15); border-radius: 12px; }
-
-.board-rank { font-size: 1.2rem; width: 30px; text-align: center; flex-shrink: 0; }
-.board-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.board-info { flex: 1; }
-.board-name { font-size: 0.88rem; font-weight: 600; }
-.board-progress-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 99px; margin-top: 4px; overflow: hidden; }
-.board-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width 0.6s ease; }
-.board-value { font-size: 0.82rem; color: var(--gold); font-weight: 700; flex-shrink: 0; white-space: nowrap; }
-.empty-board { text-align: center; color: var(--sub); padding: 1.5rem; font-size: 0.9rem; }
-
-/* ===== FRIENDS STATUS ===== */
-.friends-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
-.friend-status-card {
-  display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px; padding: 1rem 1.2rem; min-width: 100px;
-  transition: all 0.3s; position: relative;
-}
-.friend-status-card.me { border-color: rgba(79,195,247,0.25); }
-.friend-status-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-
-.friend-photo { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.1); }
-.friend-status-dot {
-  width: 12px; height: 12px; border-radius: 50%;
-  position: absolute; bottom: 38px; right: 16px;
-  border: 2px solid var(--bg);
-}
-.friend-name-text { font-size: 0.82rem; font-weight: 700; text-align: center; }
-.friend-status-label { font-size: 0.73rem; text-align: center; }
-
-@keyframes statusPulse {
-  0%,100%{box-shadow:0 0 0 0 rgba(105,240,174,0.6)}
-  50%{box-shadow:0 0 0 5px rgba(105,240,174,0)}
-}
-
-/* ===== MODAL ===== */
-.modal {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
-  align-items: center; justify-content: center; padding: 1rem;
-}
-.modal-box {
-  background: #0d0d1f;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 24px; padding: 1.5rem;
-  max-width: 560px; width: 100%;
-  max-height: 80vh; display: flex; flex-direction: column;
-  box-shadow: 0 0 60px rgba(79,195,247,0.1);
-  animation: fadeInUp 0.3s ease both;
-}
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.modal-header h3 { font-size: 1.1rem; font-weight: 700; }
-.modal-close { background:none;border:none;color:var(--sub);font-size:1.4rem;cursor:pointer; }
-.modal-body { overflow-y: auto; flex: 1; scrollbar-width: thin; }
-
-/* ===== LOG DAY CARD ===== */
-.log-day-card {
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px; padding: 1rem; margin-bottom: 0.75rem;
-}
-.log-day-card.today { border-color: rgba(79,195,247,0.3); }
-.log-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.7rem; }
-.log-date { font-size: 0.85rem; font-weight: 700; color: var(--accent); }
-.log-stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-.log-stat { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--sub); }
-.log-stat-icon { font-size: 1rem; }
-.log-prayers-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.log-prayer-badge {
-  padding: 0.2rem 0.6rem; border-radius: 20px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.72rem; color: var(--sub);
-}
-.log-prayer-badge.done { background: rgba(105,240,174,0.1); border-color: rgba(105,240,174,0.3); color: var(--green); }
-
-.edit-log-btn {
-  background: rgba(79,195,247,0.1); border: 1px solid rgba(79,195,247,0.2);
-  border-radius: 8px; padding: 0.25rem 0.7rem; color: var(--accent);
-  font-family: 'Cairo', sans-serif; font-size: 0.78rem; cursor: pointer;
-  transition: all 0.2s;
-}
-.edit-log-btn:hover { background: rgba(79,195,247,0.2); }
-
-.log-loading, .log-empty { text-align: center; color: var(--sub); padding: 2rem; }
-
-/* ===== EDIT MODAL ===== */
-.edit-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem; }
-.edit-check-item {
-  display: flex; align-items: center; gap: 0.5rem;
-  background: rgba(255,255,255,0.04); border-radius: 10px; padding: 0.6rem 0.8rem;
-  cursor: pointer; font-size: 0.9rem;
-}
-.edit-check-item input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); }
-.edit-field { margin-bottom: 0.8rem; }
-.edit-label { font-size: 0.82rem; color: var(--sub); margin-bottom: 0.4rem; display: block; }
-.edit-input {
-  width: 100%; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
-  padding: 0.6rem 0.9rem; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none;
-}
-.edit-input:focus { border-color: var(--accent); }
-.save-edit-btn {
-  width: 100%; padding: 0.8rem; border-radius: 12px;
-  background: linear-gradient(135deg, rgba(79,195,247,0.25), rgba(206,147,216,0.25));
-  border: 1px solid var(--accent); color: var(--accent);
-  font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s;
-}
-.save-edit-btn:hover { box-shadow: 0 4px 20px rgba(79,195,247,0.3); }
-
-/* ===== TOAST ===== */
-.toast {
-  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
-  background: rgba(20,20,40,0.95); border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(20px); border-radius: 12px;
-  padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 600;
-  z-index: 999; transition: transform 0.3s ease; white-space: nowrap;
-}
-.toast.show { transform: translateX(-50%) translateY(0); }
-.toast.success { border-color: rgba(105,240,174,0.4); color: var(--green); }
-.toast.error { border-color: rgba(255,100,100,0.4); color: #ff6b6b; }
-
-/* ===== PARTICLES ===== */
-.particle {
-  position: fixed; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--green); pointer-events: none; z-index: 9999;
-  animation: particleFly 0.7s ease forwards;
-}
-@keyframes particleFly {
-  0% { opacity: 1; transform: translate(0,0) scale(1); }
-  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
-}
-
-/* ===== GRID LAYOUT ===== */
-.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-@media(max-width:640px) { .input-grid { grid-template-columns: 1fr; } }
-
-.gap-md { display: flex; flex-direction: column; gap: 1.5rem; }
-
-/* ===== CHAT ===== */
-.chat-container { display: flex; flex-direction: column; height: 70vh; }
-.chat-messages {
-  flex: 1; overflow-y: auto; padding: 0.5rem 0;
-  display: flex; flex-direction: column; gap: 0.75rem;
-  scrollbar-width: thin;
-}
-.chat-loading { text-align: center; color: var(--sub); padding: 2rem; }
-
-.chat-bubble-wrap {
-  display: flex; align-items: flex-end; gap: 0.6rem;
-  animation: fadeInUp 0.3s ease both;
-}
-.chat-bubble-wrap.me { flex-direction: row-reverse; }
-
-.chat-bubble-avatar {
-  width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
-  flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);
-}
-
-.chat-bubble {
-  max-width: 70%; padding: 0.65rem 1rem;
-  border-radius: 18px; font-size: 0.9rem; line-height: 1.5;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  word-break: break-word;
-}
-.chat-bubble-wrap.me .chat-bubble {
-  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.15));
-  border-color: rgba(79,195,247,0.25);
-}
-
-.chat-bubble-meta {
-  font-size: 0.7rem; color: var(--sub); margin-top: 3px;
-  display: flex; gap: 0.4rem; align-items: center;
-}
-.chat-bubble-name { font-weight: 700; color: var(--accent); }
-
-.chat-input-row {
-  display: flex; gap: 0.6rem; margin-top: 1rem;
-  padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07);
-}
-.chat-input {
-  flex: 1; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px; padding: 0.7rem 1rem;
-  color: var(--text); font-family: 'Cairo', sans-serif; font-size: 0.95rem;
-  outline: none; transition: border-color 0.3s;
-}
-.chat-input:focus { border-color: var(--accent2); }
-.chat-send-btn {
-  padding: 0.7rem 1.2rem; border-radius: 14px;
-  background: linear-gradient(135deg, rgba(206,147,216,0.3), rgba(79,195,247,0.2));
-  border: 1px solid var(--accent2); color: var(--accent2);
-  font-family: 'Cairo', sans-serif; font-size: 0.88rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s; white-space: nowrap;
-}
-.chat-send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(206,147,216,0.3); }
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<!-- BG Effects -->
-<div class="bg-orbs">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
-</div>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
 <div class="grid-bg"></div>
 
-<!-- ==================== LOGIN PAGE ==================== -->
+<!-- LOGIN -->
 <div id="loginPage">
   <div class="login-card">
-    <div class="login-logo">📚</div>
+    <span class="login-logo">📚</span>
     <div class="login-title">دايما على بعض نسند واهي مواقفنا بتثبت</div>
     <div class="login-sub">تابع مذاكرتك وصلواتك وقرآنك وتنافس مع صحابك 🔥</div>
     <button class="google-btn" onclick="googleSignIn()">
@@ -1053,10 +790,8 @@ nav {
   </div>
 </div>
 
-<!-- ==================== APP PAGE ==================== -->
+<!-- APP -->
 <div id="appPage">
-
-  <!-- Navbar -->
   <nav>
     <div class="nav-logo">🤝 دايما على بعض نسند واهي مواقفنا بتثبت</div>
     <div class="nav-user">
@@ -1066,79 +801,57 @@ nav {
     </div>
   </nav>
 
-  <!-- Tab Bar -->
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('home', this)">🏠 الرئيسية</button>
-    <button class="tab-btn" onclick="showTab('leaderboard', this)">🏆 الترتيب</button>
-    <button class="tab-btn" onclick="showTab('friends', this)">👥 الصحاب</button>
-    <button class="tab-btn" onclick="showTab('chat', this)">💬 الشات</button>
+    <button class="tab-btn active" onclick="showTab('home',this)">🏠 الرئيسية</button>
+    <button class="tab-btn" onclick="showTab('leaderboard',this)">🏆 الترتيب</button>
+    <button class="tab-btn" onclick="showTab('stats',this)">📊 الإحصائيات</button>
+    <button class="tab-btn" onclick="showTab('friends',this)">👥 الصحاب</button>
+    <button class="tab-btn" onclick="showTab('chat',this)">💬 الشات</button>
   </div>
 
-  <!-- ===== MAIN CONTENT ===== -->
   <div class="main-content">
 
-    <!-- HOME TAB -->
+    <!-- HOME -->
     <div id="tab-home" class="tab-section active">
       <div class="my-stats-row">
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myStudyHours">0h</div>
-          <div class="my-stat-label">📚 اتذاكر</div>
-        </div>
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myPrayersCount">0/6</div>
-          <div class="my-stat-label">🕌 صلوات</div>
-        </div>
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myQuranPages">0</div>
-          <div class="my-stat-label">📖 صفحات</div>
-        </div>
+        <div class="my-stat-card"><div class="my-stat-num" id="myStudyHours">0h 0m</div><div class="my-stat-label">📚 اتذاكر</div></div>
+        <div class="my-stat-card"><div class="my-stat-num" id="myPrayersCount">0/6</div><div class="my-stat-label">🕌 صلوات</div></div>
+        <div class="my-stat-card"><div class="my-stat-num" id="myQuranPages">0</div><div class="my-stat-label">📖 صفحات</div></div>
       </div>
-
       <div class="input-grid">
-
-        <!-- Timer Card -->
         <div class="glass-card">
           <div class="section-title"><div class="dot"></div> عداد المذاكرة</div>
           <div class="timer-section">
             <div class="timer-circle-wrap">
-              <svg class="timer-svg" width="220" height="220" viewBox="0 0 220 220">
+              <svg class="timer-svg" width="190" height="190" viewBox="0 0 190 190">
                 <defs>
                   <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#4fc3f7"/>
-                    <stop offset="100%" stop-color="#ce93d8"/>
+                    <stop offset="0%" stop-color="#4fc3f7"/><stop offset="100%" stop-color="#ce93d8"/>
                   </linearGradient>
                 </defs>
-                <circle class="timer-track" cx="110" cy="110" r="90"/>
-                <circle id="timerCircle" cx="110" cy="110" r="90"/>
+                <circle class="timer-track" cx="95" cy="95" r="82"/>
+                <circle id="timerCircle" cx="95" cy="95" r="82" style="stroke-dasharray:515.2;stroke-dashoffset:515.2"/>
               </svg>
               <div class="timer-inner">
-                <div class="timer-digits">
-                  <span id="timerHours">00</span>:<span id="timerMins">00</span>:<span id="timerSecs">00</span>
-                </div>
+                <div class="timer-digits"><span id="timerHours">00</span>:<span id="timerMins">00</span>:<span id="timerSecs">00</span></div>
                 <div id="timerStatus">واقف</div>
               </div>
             </div>
             <button class="timer-btn" id="timerBtn" onclick="toggleStudy()">▶ يلا نذاكر</button>
           </div>
         </div>
-
-        <!-- Prayers + Quran -->
         <div class="gap-md">
-
-          <!-- Prayers -->
           <div class="glass-card">
             <div class="section-title"><div class="dot" style="background:var(--green)"></div> صلوات النهارده</div>
             <div class="prayers-grid">
-              <button class="prayer-btn" data-prayer="الفجر" onclick="togglePrayer('الفجر')">🌅 الفجر</button>
-              <button class="prayer-btn" data-prayer="الظهر" onclick="togglePrayer('الظهر')">☀️ الظهر</button>
-              <button class="prayer-btn" data-prayer="العصر" onclick="togglePrayer('العصر')">🌤 العصر</button>
-              <button class="prayer-btn" data-prayer="المغرب" onclick="togglePrayer('المغرب')">🌆 المغرب</button>
-              <button class="prayer-btn" data-prayer="العشاء" onclick="togglePrayer('العشاء')">🌙 العشاء</button>
+              <button class="prayer-btn" data-prayer="الفجر"    onclick="togglePrayer('الفجر')">🌅 الفجر</button>
+              <button class="prayer-btn" data-prayer="الظهر"    onclick="togglePrayer('الظهر')">☀️ الظهر</button>
+              <button class="prayer-btn" data-prayer="العصر"    onclick="togglePrayer('العصر')">🌤 العصر</button>
+              <button class="prayer-btn" data-prayer="المغرب"   onclick="togglePrayer('المغرب')">🌆 المغرب</button>
+              <button class="prayer-btn" data-prayer="العشاء"   onclick="togglePrayer('العشاء')">🌙 العشاء</button>
               <button class="prayer-btn" data-prayer="التراويح" onclick="togglePrayer('التراويح')">🕌 التراويح</button>
             </div>
           </div>
-
-          <!-- Quran -->
           <div class="glass-card">
             <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> قرآن النهارده</div>
             <div class="quran-input-wrap">
@@ -1146,43 +859,49 @@ nav {
               <button class="save-btn" onclick="saveQuran()">💾 احفظ</button>
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
 
-    <!-- LEADERBOARD TAB -->
+    <!-- LEADERBOARD -->
     <div id="tab-leaderboard" class="tab-section">
-      <div class="glass-card" style="margin-bottom:1.2rem">
-        <div style="display:flex;align-items:center;gap:0.5rem;color:var(--sub);font-size:0.85rem">
-          🗓 دي إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> بس — مش فاتت 😤
-        </div>
+      <div class="glass-card" style="margin-bottom:0.9rem">
+        <div style="color:var(--sub);font-size:0.8rem">🗓 دي إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> بس — مش فاتت 😤</div>
       </div>
       <div class="boards-grid">
-
-        <!-- Study Board -->
-        <div class="glass-card">
-          <div class="board-title">📚 ترتيب المذاكرة</div>
-          <div id="studyBoard"></div>
-        </div>
-
-        <!-- Prayers Board -->
-        <div class="glass-card">
-          <div class="board-title">🕌 ترتيب الصلوات</div>
-          <div id="prayersBoard"></div>
-        </div>
-
-        <!-- Quran Board -->
-        <div class="glass-card" style="grid-column: 1 / -1">
+        <div class="glass-card"><div class="board-title">📚 ترتيب المذاكرة</div><div id="studyBoard"></div></div>
+        <div class="glass-card"><div class="board-title">🕌 ترتيب الصلوات</div><div id="prayersBoard"></div></div>
+        <div class="glass-card" style="grid-column:1/-1">
           <div class="board-title">📖 ترتيب القرآن</div>
-          <div id="quranBoard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.3rem"></div>
+          <div id="quranBoard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.3rem"></div>
         </div>
-
       </div>
     </div>
 
-    <!-- FRIENDS TAB -->
+    <!-- STATS -->
+    <div id="tab-stats" class="tab-section">
+      <div class="glass-card">
+        <div class="section-title"><div class="dot" style="background:var(--gold)"></div> إحصائياتك</div>
+        <div class="stats-period-btns">
+          <button class="stats-period-btn active" data-period="week"  onclick="loadStats('week')">📅 آخر أسبوع</button>
+          <button class="stats-period-btn"         data-period="month" onclick="loadStats('month')">🗓 آخر شهر</button>
+        </div>
+        <div id="statsLoading">⏳ جاري تحميل البيانات...</div>
+        <div id="chartsArea">
+          <div class="stats-summary-grid">
+            <div class="stats-summary-card"><div class="stats-summary-num" id="statsTotalStudy">-</div><div class="stats-summary-label">📚 إجمالي المذاكرة</div></div>
+            <div class="stats-summary-card"><div class="stats-summary-num" id="statsAvgStudy">-</div><div class="stats-summary-label">⏱ معدل يومي</div></div>
+            <div class="stats-summary-card"><div class="stats-summary-num" id="statsTotalPrayers">-</div><div class="stats-summary-label">🕌 إجمالي الصلوات</div></div>
+            <div class="stats-summary-card"><div class="stats-summary-num" id="statsTotalQuran">-</div><div class="stats-summary-label">📖 إجمالي القرآن</div></div>
+          </div>
+          <div class="glass-card chart-card"><div class="chart-label">📚 ساعات المذاكرة يوم بيوم</div><div class="chart-wrap"><canvas id="studyChart"></canvas></div></div>
+          <div class="glass-card chart-card"><div class="chart-label">🕌 عدد الصلوات يوم بيوم</div><div class="chart-wrap"><canvas id="prayersChart"></canvas></div></div>
+          <div class="glass-card chart-card"><div class="chart-label">📖 صفحات القرآن يوم بيوم</div><div class="chart-wrap"><canvas id="quranChart"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRIENDS -->
     <div id="tab-friends" class="tab-section">
       <div class="glass-card">
         <div class="section-title"><div class="dot"></div> الصحاب دلوقتي بيعملوا إيه؟</div>
@@ -1190,13 +909,11 @@ nav {
       </div>
     </div>
 
-    <!-- CHAT TAB -->
+    <!-- CHAT -->
     <div id="tab-chat" class="tab-section">
       <div class="glass-card chat-container">
         <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> شات الصحاب 💬</div>
-        <div class="chat-messages" id="chatMessages">
-          <div class="chat-loading">استنّى بنجيب الرسايل...</div>
-        </div>
+        <div class="chat-messages" id="chatMessages"><div class="chat-loading">استنّى بنجيب الرسايل...</div></div>
         <div class="chat-input-row">
           <input type="text" id="chatInput" class="chat-input" placeholder="اكتب حاجة للصحاب..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()">
           <button class="chat-send-btn" onclick="sendChat()">إرسال ✈️</button>
@@ -1207,48 +924,35 @@ nav {
   </div>
 </div>
 
-<!-- ===== LOG MODAL ===== -->
+<!-- LOG MODAL -->
 <div class="modal" id="logModal" onclick="if(event.target===this)closeLogModal()">
   <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="logModalTitle">السجل</h3>
-      <button class="modal-close" onclick="closeLogModal()">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="logModalTitle">السجل</h3><button class="modal-close" onclick="closeLogModal()">✕</button></div>
     <div class="modal-body" id="logContent"></div>
   </div>
 </div>
 
-<!-- ===== EDIT MODAL ===== -->
+<!-- EDIT MODAL -->
 <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
   <div class="modal-box">
-    <div class="modal-header">
-      <h3>✏️ عدّل بيانات النهارده</h3>
-      <button class="modal-close" onclick="closeEditModal()">✕</button>
-    </div>
+    <div class="modal-header"><h3 id="editModalTitle">✏️ تعديل</h3><button class="modal-close" onclick="closeEditModal()">✕</button></div>
     <div class="modal-body">
-      <div class="section-title" style="font-size:0.9rem;margin-bottom:0.7rem"><div class="dot" style="background:var(--green)"></div> الصلوات</div>
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:0.7rem"><div class="dot" style="background:var(--green)"></div> الصلوات</div>
       <div class="edit-checks">
-        <label class="edit-check-item"><input type="checkbox" id="edit_الفجر"> 🌅 الفجر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_الظهر"> ☀️ الظهر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_العصر"> 🌤 العصر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_المغرب"> 🌆 المغرب</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_العشاء"> 🌙 العشاء</label>
+        <label class="edit-check-item"><input type="checkbox" id="edit_الفجر">    🌅 الفجر</label>
+        <label class="edit-check-item"><input type="checkbox" id="edit_الظهر">    ☀️ الظهر</label>
+        <label class="edit-check-item"><input type="checkbox" id="edit_العصر">    🌤 العصر</label>
+        <label class="edit-check-item"><input type="checkbox" id="edit_المغرب">   🌆 المغرب</label>
+        <label class="edit-check-item"><input type="checkbox" id="edit_العشاء">   🌙 العشاء</label>
         <label class="edit-check-item"><input type="checkbox" id="edit_التراويح"> 🕌 التراويح</label>
       </div>
-      <div class="edit-field">
-        <label class="edit-label">📖 كام صفحة قرآن اتقرأت؟</label>
-        <input type="number" id="editQuran" class="edit-input" min="0" max="604">
-      </div>
-      <div class="edit-field">
-        <label class="edit-label">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label>
-        <input type="number" id="editStudy" class="edit-input" min="0" max="24" step="0.1">
-      </div>
+      <div class="edit-field"><label class="edit-label">📖 كام صفحة قرآن اتقرأت؟</label><input type="number" id="editQuran" class="edit-input" min="0" max="604"></div>
+      <div class="edit-field"><label class="edit-label">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label><input type="number" id="editStudy" class="edit-input" min="0" max="24" step="0.1"></div>
       <button class="save-edit-btn" onclick="saveEditLog()">✅ احفظ التعديلات</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1257,18 +961,22 @@ function showTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-
   if (name === 'leaderboard') {
-    const d = new Date();
     document.getElementById('todayLabel').textContent =
-      d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+      new Date().toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'});
   }
+  if (name === 'stats' && typeof loadStats === 'function') loadStats('week');
   if (name === 'chat') {
-    // الشات بيبدأ أوتوماتيك من أول تسجيل دخول
     const msgs = document.getElementById('chatMessages');
-    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    if (msgs) setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
   }
 }
+
+// Fix timer circle dasharray for r=82
+document.addEventListener('DOMContentLoaded', () => {
+  const c = document.getElementById('timerCircle');
+  if (c) { const circ = 2 * Math.PI * 82; c.style.strokeDasharray = circ; c.style.strokeDashoffset = circ; }
+});
 </script>
 
 </body>
