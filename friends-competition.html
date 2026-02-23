@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منافسة الأصدقاء 🏆</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD700;
+    --silver: #C0C0C0;
+    --bronze: #CD7F32;
+    --bg: #0a0a1a;
+    --card: #12122a;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --text: #eee;
+    --glow: 0 0 20px rgba(108,99,255,0.5);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(2px 2px at 85% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.2) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    text-align: center;
+    padding: 3rem 1rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  header h1 {
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+  }
+
+  header p {
+    color: #888;
+    margin-top: 0.4rem;
+    font-size: 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem 4rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- Add Player Section ---- */
+  .add-section {
+    background: var(--card);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--glow);
+  }
+
+  .add-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--accent);
+  }
+
+  .add-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .add-form input {
+    flex: 1;
+    min-width: 150px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .add-form input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    padding: 0.65rem 1.4rem;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,99,255,0.4); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-sm {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    border-radius: 8px;
+  }
+
+  .btn-danger {
+    background: linear-gradient(135deg, #ff4d4d, #ff8080);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #00c851, #00a843);
+  }
+
+  /* ---- Category Tabs ---- */
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 0.5rem 1.2rem;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: #888;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .tab.active, .tab:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ---- Leaderboard ---- */
+  .leaderboard { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .player-card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.25s, box-shadow 0.25s;
+    animation: slideIn 0.4s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .player-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(108,99,255,0.05), transparent);
+    pointer-events: none;
+  }
+
+  .player-card:hover { transform: translateX(-4px); box-shadow: 0 4px 24px rgba(108,99,255,0.2); }
+
+  .player-card.rank-1 { border-color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.2); }
+  .player-card.rank-2 { border-color: var(--silver); }
+  .player-card.rank-3 { border-color: var(--bronze); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .rank-badge {
+    font-size: 1.6rem;
+    width: 42px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .player-info { flex: 1; }
+  .player-name { font-weight: 700; font-size: 1.05rem; }
+  .player-category { font-size: 0.78rem; color: #888; margin-top: 2px; }
+
+  .score-section { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+
+  .score-display {
+    font-size: 1.4rem;
+    font-weight: 900;
+    min-width: 50px;
+    text-align: center;
+    color: var(--gold);
+  }
+
+  .score-btns { display: flex; flex-direction: column; gap: 4px; }
+
+  .score-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 700;
+    transition: transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-btn:hover { transform: scale(1.15); }
+  .score-btn.plus { background: linear-gradient(135deg, #00c851, #00a843); color: #fff; }
+  .score-btn.minus { background: linear-gradient(135deg, #ff6b6b, #ff4d4d); color: #fff; }
+
+  .delete-btn {
+    background: transparent;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.3rem;
+    border-radius: 6px;
+    transition: color 0.2s;
+  }
+
+  .delete-btn:hover { color: #ff4d4d; }
+
+  /* ---- Stats Bar ---- */
+  .stats-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    flex: 1;
+    min-width: 120px;
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-card .stat-num {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--accent);
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.78rem;
+    color: #777;
+    margin-top: 2px;
+  }
+
+  /* ---- Empty State ---- */
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #555;
+  }
+
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+  /* ---- Winner Banner ---- */
+  .winner-banner {
+    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1));
+    border: 1px solid rgba(255,215,0,0.4);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+    50% { box-shadow: 0 0 25px rgba(255,215,0,0.4); }
+  }
+
+  .winner-text { font-weight: 700; }
+  .winner-text span { color: var(--gold); }
+
+  /* Firework pop */
+  @keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .score-display.changed {
+    animation: pop 0.3s ease;
+  }
+
+  .points-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .points-input-group input[type=number] {
+    width: 55px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 0.3rem 0.5rem;
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    text-align: center;
+    outline: none;
+  }
+
+  .progress-bar-wrap {
+    margin-top: 0.3rem;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 4px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.6s ease;
+  }
+
+  @media (max-width: 500px) {
+    .player-card { flex-wrap: wrap; }
+    .stats-bar { gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏆 منافسة الأصدقاء</h1>
+  <p>سجّل النقاط وتابع ترتيب الأصدقاء في الوقت الحقيقي</p>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><div class="stat-num" id="statPlayers">0</div><div class="stat-label">لاعبين</div></div>
+    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">إجمالي النقاط</div></div>
+    <div class="stat-card"><div class="stat-num" id="statLeader">-</div><div class="stat-label">المتصدر</div></div>
+  </div>
+
+  <!-- Add Player -->
+  <div class="add-section">
+    <h2>➕ إضافة لاعب</h2>
+    <div class="add-form">
+      <input type="text" id="nameInput" placeholder="اسم اللاعب" maxlength="20" />
+      <input type="text" id="categoryInput" placeholder="الفئة (اختياري)" maxlength="20" />
+      <button class="btn" onclick="addPlayer()">إضافة</button>
+    </div>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Winner Banner -->
+  <div class="winner-banner" id="winnerBanner" style="display:none">
+    <span style="font-size:1.5rem">👑</span>
+    <div class="winner-text">المتصدر الحالي: <span id="winnerName">-</span> بـ <span id="winnerScore">0</span> نقطة</div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard" id="leaderboard">
+    <div class="empty-state"><div class="icon">🎮</div><div>أضف لاعبين للبدء!</div></div>
+  </div>
+
+</div>
+
+<script>
+// ===================== DATA =====================
+let players = JSON.parse(localStorage.getItem('fcompPlayers') || '[]');
+let currentCategory = 'الكل';
+const AVATARS = ['😎','🤩','🔥','⚡','💎','🎯','🚀','🦁','🐉','🌟','🎸','🏅'];
+const COLORS = ['#6c63ff','#ff6584','#00c851','#ffc107','#17a2b8','#e83e8c','#fd7e14','#6f42c1'];
+
+function save() { localStorage.setItem('fcompPlayers', JSON.stringify(players)); }
+
+// ===================== ADD =====================
+function addPlayer() {
+  const name = document.getElementById('nameInput').value.trim();
+  const cat  = document.getElementById('categoryInput').value.trim() || 'عام';
+  if (!name) return shake('nameInput');
+  const idx = players.length;
+  players.push({
+    id: Date.now(),
+    name,
+    category: cat,
+    score: 0,
+    emoji: AVATARS[idx % AVATARS.length],
+    color: COLORS[idx % COLORS.length],
+    step: 1
+  });
+  save();
+  document.getElementById('nameInput').value = '';
+  document.getElementById('categoryInput').value = '';
+  render();
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = '#ff4d4d';
+  el.style.animation = 'none';
+  el.style.transform = 'translateX(-6px)';
+  setTimeout(() => el.style.transform = 'translateX(6px)', 100);
+  setTimeout(() => { el.style.transform = ''; el.style.borderColor = ''; }, 300);
+}
+
+// ===================== SCORE =====================
+function changeScore(id, delta) {
+  const p = players.find(p => p.id === id);
+  if (!p) return;
+  p.score = Math.max(0, p.score + delta);
+  save();
+  render();
+  // animate
+  const el = document.getElementById('score-' + id);
+  if (el) { el.classList.remove('changed'); void el.offsetWidth; el.classList.add('changed'); }
+}
+
+function deletePlayer(id) {
+  if (!confirm('حذف هذا اللاعب؟')) return;
+  players = players.filter(p => p.id !== id);
+  save();
+  render();
+}
+
+// ===================== TABS =====================
+function getCategories() {
+  const cats = ['الكل', ...new Set(players.map(p => p.category))];
+  return cats;
+}
+
+function setTab(cat) {
+  currentCategory = cat;
+  render();
+}
+
+// ===================== RENDER =====================
+function render() {
+  renderTabs();
+  renderLeaderboard();
+  renderStats();
+}
+
+function renderTabs() {
+  const cats = getCategories();
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = cats.map(c => `
+    <button class="tab ${c === currentCategory ? 'active' : ''}" onclick="setTab('${c}')">${c}</button>
+  `).join('');
+}
+
+function renderStats() {
+  const total = players.reduce((s,p) => s + p.score, 0);
+  const leader = players.length ? [...players].sort((a,b) => b.score - a.score)[0] : null;
+  document.getElementById('statPlayers').textContent = players.length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statLeader').textContent = leader ? leader.emoji + leader.name : '-';
+
+  const banner = document.getElementById('winnerBanner');
+  if (leader && players.length > 1) {
+    banner.style.display = 'flex';
+    document.getElementById('winnerName').textContent = leader.emoji + ' ' + leader.name;
+    document.getElementById('winnerScore').textContent = leader.score;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function renderLeaderboard() {
+  const lb = document.getElementById('leaderboard');
+  let filtered = currentCategory === 'الكل' ? [...players] : players.filter(p => p.category === currentCategory);
+  filtered.sort((a, b) => b.score - a.score);
+
+  if (!filtered.length) {
+    lb.innerHTML = '<div class="empty-state"><div class="icon">🎮</div><div>لا يوجد لاعبون هنا</div></div>';
+    return;
+  }
+
+  const maxScore = Math.max(...filtered.map(p => p.score), 1);
+  const rankEmojis = ['🥇','🥈','🥉'];
+
+  lb.innerHTML = filtered.map((p, i) => {
+    const rankClass = i < 3 ? `rank-${i+1}` : '';
+    const badge = rankEmojis[i] || `#${i+1}`;
+    const pct = Math.round((p.score / maxScore) * 100);
+    return `
+    <div class="player-card ${rankClass}" id="card-${p.id}">
+      <div class="rank-badge">${badge}</div>
+      <div class="avatar" style="background:${p.color}22; color:${p.color}">${p.emoji}</div>
+      <div class="player-info">
+        <div class="player-name">${p.name}</div>
+        <div class="player-category">🏷️ ${p.category}</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="score-section">
+        <div class="score-btns">
+          <button class="score-btn plus" onclick="changeScore(${p.id}, getStep(${p.id}))">+</button>
+          <button class="score-btn minus" onclick="changeScore(${p.id}, -getStep(${p.id}))">−</button>
+        </div>
+        <div id="score-${p.id}" class="score-display">${p.score}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <input type="number" min="1" max="100" value="${p.step}" onchange="setStep(${p.id}, this.value)" 
+            style="width:48px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:3px;color:#eee;font-family:Cairo,sans-serif;text-align:center;outline:none" title="الخطوة">
+          <span style="font-size:0.65rem;color:#666">خطوة</span>
+        </div>
+        <button class="delete-btn" onclick="deletePlayer(${p.id})" title="حذف">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getStep(id) {
+  const p = players.find(p => p.id === id);
+  return p ? (p.step || 1) : 1;
+}
+
+function setStep(id, val) {
+  const p = players.find(p => p.id === id);
+  if (p) { p.step = Math.max(1, parseInt(val) || 1); save(); }
+}
+
+// Enter key on inputs
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+document.getElementById('categoryInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+
+// Initial render
+render();
+</script>
+</body>
+</html>
