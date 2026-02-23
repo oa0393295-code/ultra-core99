@@ -3,1048 +3,1327 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دايما على بعض نسند واهي مواقفنا بتثبت 📚</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>دايما على بعض 📚</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot, serverTimestamp, query, orderBy, addDoc, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs,
+  updateDoc, onSnapshot, serverTimestamp, query, orderBy, addDoc, limit }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
-    authDomain: "ultra-core.firebaseapp.com",
-    projectId: "ultra-core",
-    storageBucket: "ultra-core.firebasestorage.app",
-    messagingSenderId: "351766462712",
-    appId: "1:351766462712:web:e683d8aa0d213b6e59fb0d",
-    measurementId: "G-8RVTD75KCP"
-  };
+/* ══════════════════════════════════════════════════
+   FIREBASE CONFIG
+══════════════════════════════════════════════════ */
+const app = initializeApp({
+  apiKey: "AIzaSyASLT_wouo9BTjd-dH18x8CLbqBZSMbz04",
+  authDomain: "ultra-core.firebaseapp.com",
+  projectId:  "ultra-core",
+  storageBucket: "ultra-core.firebasestorage.app",
+  messagingSenderId: "351766462712",
+  appId: "1:351766462712:web:e683d8aa0d213b6e59fb0d"
+});
+const auth     = getAuth(app);
+const db       = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let currentUser      = null;
+let studyTimer       = null;
+let studyStartMs     = null;   // Date.now() when session started (adjusted for existing seconds)
+let studySeconds     = 0;
+let isStudying       = false;
+let todayData        = {};
+let allUsersUnsub    = null;
+let chatUnsub        = null;
+let editingDate      = null;
+let heartbeatTimer   = null;
+let offlineTimer     = null;   // timer to set offline when tab hidden + not studying
 
-  let currentUser = null;
-  let studyTimer = null;
-  let studyStartTime = null;
-  let studySeconds = 0;
-  let isStudying = false;
-  let todayData = {};
-  let allUsersUnsub = null;
-  let chatUnsub = null;
-  let editingDate = null;
+const TODAY = () => new Date().toISOString().split('T')[0];
 
-  const TODAY = () => new Date().toISOString().split('T')[0];
-
-  // ==================== AUTH ====================
-  window.googleSignIn = async () => {
-    try {
-      showLoading(true);
-      const result = await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error(e);
-      showLoading(false);
-      showToast('فشل تسجيل الدخول، حاول تاني يسطا!', 'error');
-    }
-  };
-
-  window.googleSignOut = async () => {
-    if (isStudying) await stopStudy();
-    await updateUserStatus('offline');
-    await signOut(auth);
-  };
-
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-      await initUser(user);
-      showApp();
-      loadTodayData();
-      startRealtimeLeaderboard();
-      startChat();
-      await updateUserStatus(isStudying ? 'studying' : 'online');
-
-      setInterval(() => {
-        if (document.visibilityState !== 'hidden') {
-          updateUserStatus(isStudying ? 'studying' : 'online');
-        }
-      }, 20000);
-
-    } else {
-      currentUser = null;
-      showLogin();
-      if (allUsersUnsub) allUsersUnsub();
-    }
-  });
-
-  document.addEventListener('visibilitychange', () => {
-    if (!currentUser) return;
-    if (document.visibilityState === 'hidden') {
-      updateUserStatus('offline');
-    } else {
-      updateUserStatus(isStudying ? 'studying' : 'online');
-    }
-  });
-
-  window.addEventListener('pagehide', () => { updateUserStatus('offline'); });
-  window.addEventListener('beforeunload', () => { updateUserStatus('offline'); });
-
-  async function initUser(user) {
-    const ref = doc(db, 'users', user.uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, {
-        uid: user.uid, name: user.displayName, photo: user.photoURL,
-        status: 'online', lastSeen: serverTimestamp(), createdAt: serverTimestamp()
-      });
-    } else {
-      await updateDoc(ref, { name: user.displayName, photo: user.photoURL });
-    }
-    document.getElementById('userAvatar').src = user.photoURL || '';
-    document.getElementById('userName').textContent = user.displayName;
+/* ══════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════ */
+window.googleSignIn = async () => {
+  try {
+    setLoadingVisible(true);
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    setLoadingVisible(false);
+    toast('فشل تسجيل الدخول، حاول تاني!', 'error');
   }
+};
 
-  async function updateUserStatus(status) {
-    if (!currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), { status, lastSeen: serverTimestamp() });
-    } catch (e) {}
+window.googleSignOut = async () => {
+  if (isStudying) await stopStudy();
+  await pushStatus('offline');
+  await signOut(auth);
+};
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    await initUser(user);
+    showApp();
+    await loadTodayData();
+    startRealtimeBoards();
+    startChat();
+    await pushStatus('online');
+    startHeartbeat();
+  } else {
+    currentUser = null;
+    stopHeartbeat();
+    showLogin();
+    if (allUsersUnsub) { allUsersUnsub(); allUsersUnsub = null; }
+    if (chatUnsub)     { chatUnsub();     chatUnsub     = null; }
   }
+});
 
-  // ==================== TODAY DATA ====================
-  async function loadTodayData() {
-    if (!currentUser) return;
-    const ref = doc(db, 'logs', currentUser.uid, 'days', TODAY());
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      todayData = snap.data();
-    } else {
-      todayData = { prayers: [], quranPages: 0, studySeconds: 0, date: TODAY() };
-    }
-    renderTodayUI();
-    studySeconds = todayData.studySeconds || 0;
-    updateTimerDisplay();
-    updateMyStats();
-  }
-
-  async function saveTodayData() {
-    if (!currentUser) return;
-    const ref = doc(db, 'logs', currentUser.uid, 'days', TODAY());
-    await setDoc(ref, { ...todayData, uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL, updatedAt: serverTimestamp() });
+/* ══════════════════════════════════════════════════
+   STATUS SYSTEM — حل جذري لمشكلة الحالة
+  
+  المشكلة الأصلية:
+  ١- لما المتصفح يتقفل / التاب يتخبي، الأحداث مش بتتنفذ بشكل موثوق
+  ٢- لو العداد شغال والتاب اتخبى، الموقع كان بيكتب "مش موجود" غلط
+  
+  الحل:
+  - كل 12 ثانية نبعت heartbeat للفايربيز (lastHB)
+  - العرض بيحسب: لو lastHB أكتر من 35 ثانية قديم → offline فعلياً
+  - لو التاب اتخبى + مفيش عداد → نبدأ countdown 8 ثواني قبل offline
+  - لو التاب اتخبى + العداد شغال → نكمل heartbeat عادي (Safari بيسمح بكده)
+══════════════════════════════════════════════════ */
+async function pushStatus(status) {
+  if (!currentUser) return;
+  try {
     await updateDoc(doc(db, 'users', currentUser.uid), {
-      todayStudySeconds: todayData.studySeconds || 0,
-      todayPrayers: todayData.prayers || [],
-      todayQuranPages: todayData.quranPages || 0,
-      todayDate: TODAY()
+      status, lastHB: serverTimestamp(), lastSeen: serverTimestamp()
     });
-  }
+  } catch(e) {}
+}
 
-  function renderTodayUI() {
-    const prayers = todayData.prayers || [];
-    document.querySelectorAll('.prayer-btn').forEach(btn => {
-      const p = btn.dataset.prayer;
-      btn.classList.toggle('active', prayers.includes(p));
-    });
-    document.getElementById('quranInput').value = todayData.quranPages || 0;
-  }
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatTimer = setInterval(async () => {
+    if (!currentUser) return;
+    if (isStudying) {
+      // العداد شغال → studying دايماً حتى لو التاب مخفي
+      await pushStatus('studying');
+    } else if (!document.hidden) {
+      // التاب ظاهر ومفيش عداد
+      await pushStatus('online');
+    }
+    // لو التاب مخفي ومفيش عداد → لا نبعت حاجة (الـ offlineTimer هيشتغل)
+  }, 12000);
+}
 
-  // ==================== PRAYERS ====================
-  window.togglePrayer = async (prayer) => {
-    let prayers = todayData.prayers || [];
-    if (prayers.includes(prayer)) {
-      prayers = prayers.filter(p => p !== prayer);
+function stopHeartbeat() {
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+  clearTimeout(offlineTimer); offlineTimer = null;
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (!currentUser) return;
+  clearTimeout(offlineTimer); offlineTimer = null;
+
+  if (document.hidden) {
+    if (isStudying) {
+      // لو العداد شغال → الوضع يفضل studying
+      await pushStatus('studying');
     } else {
-      prayers.push(prayer);
-      triggerPrayerEffect();
+      // مفيش عداد → نتأخر 8 ثواني قبل ما نكتب offline (عشان لو بس غير تاب لثانية)
+      offlineTimer = setTimeout(() => pushStatus('offline'), 8000);
     }
-    todayData.prayers = prayers;
-    await saveTodayData();
-    renderTodayUI();
-    updateMyStats();
-  };
-
-  function triggerPrayerEffect() {
-    const btn = event.currentTarget;
-    btn.style.transform = 'scale(1.3)';
-    setTimeout(() => btn.style.transform = '', 300);
-    spawnParticles(btn);
+  } else {
+    // رجعنا للتاب
+    await pushStatus(isStudying ? 'studying' : 'online');
   }
+});
 
-  // ==================== QURAN ====================
-  window.saveQuran = async () => {
-    const val = parseInt(document.getElementById('quranInput').value) || 0;
-    todayData.quranPages = Math.max(0, val);
-    await saveTodayData();
-    showToast(`✅ تمام! حفظنا إنك اتقرأت ${val} صفحة`, 'success');
-    updateMyStats();
-  };
+// أحداث الإغلاق — نستخدم keepalive fetch لو متاح
+window.addEventListener('pagehide', () => {
+  if (!currentUser || isStudying) return;
+  // استخدام sendBeacon للموثوقية
+  const url = `https://firestore.googleapis.com/v1/projects/ultra-core/databases/(default)/documents/users/${currentUser.uid}`;
+  try { navigator.sendBeacon && navigator.sendBeacon('/beacon', JSON.stringify({ offline: true })); } catch(e) {}
+  pushStatus('offline');
+});
 
-  // ==================== STUDY TIMER ====================
-  window.toggleStudy = async () => {
-    if (!isStudying) { await startStudy(); } else { await stopStudy(); }
-  };
+window.addEventListener('beforeunload', () => {
+  if (!currentUser || isStudying) return;
+  pushStatus('offline');
+});
 
-  async function startStudy() {
-    isStudying = true;
-    studyStartTime = Date.now() - (studySeconds * 1000);
-    await updateUserStatus('studying');
-    document.getElementById('timerBtn').textContent = '⏸ استنّى شوية';
-    document.getElementById('timerBtn').classList.add('studying');
-    document.getElementById('timerStatus').textContent = 'شغّال بيذاكر...';
-    document.getElementById('timerStatus').classList.add('active');
+/* حساب الحالة الفعلية من lastHB */
+function effectiveStatus(u) {
+  const hb = u.lastHB?.toDate?.()?.getTime?.() ?? 0;
+  const age = (Date.now() - hb) / 1000;
+  if (age > 35) return 'offline';
+  return u.status || 'offline';
+}
 
-    studyTimer = setInterval(async () => {
-      studySeconds = Math.floor((Date.now() - studyStartTime) / 1000);
-      updateTimerDisplay();
-      if (studySeconds % 30 === 0) {
-        todayData.studySeconds = studySeconds;
-        await saveTodayData();
-      }
-    }, 1000);
-  }
-
-  async function stopStudy() {
-    isStudying = false;
-    clearInterval(studyTimer);
-    todayData.studySeconds = studySeconds;
-    await saveTodayData();
-    await updateUserStatus('online');
-    document.getElementById('timerBtn').textContent = '▶ يلا نذاكر';
-    document.getElementById('timerBtn').classList.remove('studying');
-    document.getElementById('timerStatus').textContent = 'واقف';
-    document.getElementById('timerStatus').classList.remove('active');
-    updateMyStats();
-    showToast('✅ تم حفظ وقت المذاكرة يسطا!', 'success');
-  }
-
-  function updateTimerDisplay() {
-    const h = Math.floor(studySeconds / 3600);
-    const m = Math.floor((studySeconds % 3600) / 60);
-    const s = studySeconds % 60;
-    document.getElementById('timerHours').textContent = String(h).padStart(2, '0');
-    document.getElementById('timerMins').textContent = String(m).padStart(2, '0');
-    document.getElementById('timerSecs').textContent = String(s).padStart(2, '0');
-
-    const pct = Math.min(studySeconds / (8 * 3600), 1);
-    const circle = document.getElementById('timerCircle');
-    const circumference = 2 * Math.PI * 90;
-    circle.style.strokeDashoffset = circumference * (1 - pct);
-  }
-
-  function updateMyStats() {
-    const hours = (studySeconds / 3600).toFixed(1);
-    document.getElementById('myStudyHours').textContent = hours + 'h';
-    document.getElementById('myPrayersCount').textContent = (todayData.prayers || []).length + '/6';
-    document.getElementById('myQuranPages').textContent = (todayData.quranPages || 0);
-  }
-
-  // ==================== LEADERBOARD ====================
-  function startRealtimeLeaderboard() {
-    const usersRef = collection(db, 'users');
-    allUsersUnsub = onSnapshot(usersRef, (snapshot) => {
-      const users = [];
-      snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
-      renderLeaderboards(users);
+/* ══════════════════════════════════════════════════
+   USER INIT
+══════════════════════════════════════════════════ */
+async function initUser(user) {
+  const ref  = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      uid: user.uid, name: user.displayName, photo: user.photoURL,
+      status: 'online', lastHB: serverTimestamp(), lastSeen: serverTimestamp(),
+      createdAt: serverTimestamp()
     });
+  } else {
+    await updateDoc(ref, { name: user.displayName, photo: user.photoURL });
   }
+  qs('#userAvatar').src = user.photoURL || '';
+  qs('#userName').textContent  = user.displayName;
+}
 
-  function renderLeaderboards(users) {
-    const today = TODAY();
-    const withToday = users.map(u => ({
-      ...u,
-      studySecs: u.todayDate === today ? (u.todayStudySeconds || 0) : 0,
-      prayers: u.todayDate === today ? (u.todayPrayers || []) : [],
-      quranPages: u.todayDate === today ? (u.todayQuranPages || 0) : 0,
-    }));
+/* ══════════════════════════════════════════════════
+   TODAY DATA
+══════════════════════════════════════════════════ */
+async function loadTodayData() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, 'logs', currentUser.uid, 'days', TODAY()));
+    todayData  = snap.exists() ? snap.data()
+                               : { prayers:[], quranPages:0, studySeconds:0, date:TODAY() };
+    syncTodayUI();
+    studySeconds = todayData.studySeconds || 0;
+    renderTimer();
+    renderMiniStats();
+  } catch(e) { console.warn('loadTodayData', e); }
+}
 
-    const byStudy = [...withToday].sort((a, b) => b.studySecs - a.studySecs);
-    renderBoard('studyBoard', byStudy, u => {
-      const h = Math.floor(u.studySecs / 3600);
-      const m = Math.floor((u.studySecs % 3600) / 60);
-      return `${h}h ${m}m`;
-    }, u => u.studySecs);
-
-    const byPrayers = [...withToday].sort((a, b) => b.prayers.length - a.prayers.length);
-    renderBoard('prayersBoard', byPrayers, u => `${u.prayers.length} / 6 صلوات`, u => u.prayers.length / 6);
-
-    const byQuran = [...withToday].sort((a, b) => b.quranPages - a.quranPages);
-    renderBoard('quranBoard', byQuran, u => `${u.quranPages} صفحة`, u => u.quranPages);
-
-    renderFriendsStatus(withToday);
-  }
-
-  function renderBoard(containerId, users, valueFn, progressFn) {
-    const container = document.getElementById(containerId);
-    const medals = ['🥇', '🥈', '🥉'];
-    const maxVal = Math.max(...users.map(progressFn), 1);
-
-    container.innerHTML = users.slice(0, 10).map((u, i) => {
-      const isMe = u.id === currentUser?.uid;
-      const pct = Math.round((progressFn(u) / maxVal) * 100);
-      return `
-        <div class="board-row ${isMe ? 'me' : ''}" onclick="openUserLog('${u.id}','${(u.name||'').replace(/'/g,"\\'")}')">
-          <div class="board-rank">${medals[i] || '#' + (i+1)}</div>
-          <img class="board-avatar" src="${u.photo || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22white%22 font-size=%2218%22>${(u.name||'?')[0]}</text></svg>'">
-          <div class="board-info">
-            <div class="board-name">${u.name || 'مجهول'} ${isMe ? '(أنا 😎)' : ''}</div>
-            <div class="board-progress-bar"><div class="board-progress-fill" style="width:${pct}%"></div></div>
-          </div>
-          <div class="board-value">${valueFn(u)}</div>
-        </div>`;
-    }).join('') || '<div class="empty-board">مفيش بيانات النهارده لسه 😅</div>';
-  }
-
-  function renderFriendsStatus(users) {
-    const container = document.getElementById('friendsStatus');
-    const now = Date.now();
-    const getEffectiveStatus = (u) => {
-      const lastSeen = u.lastSeen?.toDate ? u.lastSeen.toDate().getTime() : 0;
-      const secondsAgo = (now - lastSeen) / 1000;
-      if (secondsAgo > 60) return 'offline';
-      return u.status || 'offline';
-    };
-    const statusMap = {
-      studying: { icon: '📚', label: 'بيذاكر دلوقتي', color: '#00e676' },
-      online:   { icon: '🟢', label: 'متصل', color: '#4fc3f7' },
-      offline:  { icon: '⭕', label: 'مش موجود', color: '#666' }
-    };
-    container.innerHTML = users.map(u => {
-      const effectiveStatus = getEffectiveStatus(u);
-      const st = statusMap[effectiveStatus] || statusMap.offline;
-      const isMe = u.id === currentUser?.uid;
-      return `
-        <div class="friend-status-card ${isMe ? 'me' : ''}">
-          <img src="${u.photo || ''}" class="friend-photo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22 rx=%2220%22/></svg>'">
-          <div class="friend-status-dot" style="background:${st.color}; ${effectiveStatus === 'studying' ? 'animation: statusPulse 1.5s infinite;' : ''}"></div>
-          <div class="friend-name-text">${u.name?.split(' ')[0] || '؟'} ${isMe ? '(أنا)' : ''}</div>
-          <div class="friend-status-label" style="color:${st.color}">${st.icon} ${st.label}</div>
-        </div>`;
-    }).join('');
-  }
-
-  // ==================== USER LOG ====================
-  window.openUserLog = async (uid, name) => {
-    document.getElementById('logModal').style.display = 'flex';
-    document.getElementById('logModalTitle').textContent = `📋 سجل ${name}`;
-    document.getElementById('logContent').innerHTML = '<div class="log-loading">استنّى بنجيب البيانات...</div>';
-
-    try {
-      const logsRef = collection(db, 'logs', uid, 'days');
-      const q = query(logsRef, orderBy('date', 'desc'));
-      const snap = await getDocs(q);
-
-      const days = [];
-      snap.forEach(d => days.push(d.data()));
-
-      if (!days.length) {
-        document.getElementById('logContent').innerHTML = '<div class="log-empty">مفيش سجلات لسه 📭</div>';
-        return;
-      }
-
-      const isMe = uid === currentUser?.uid;
-
-      document.getElementById('logContent').innerHTML = days.map(day => {
-        const h = Math.floor((day.studySeconds || 0) / 3600);
-        const m = Math.floor(((day.studySeconds || 0) % 3600) / 60);
-        const prayers = day.prayers || [];
-        const isToday = day.date === TODAY();
-
-        return `
-          <div class="log-day-card ${isToday ? 'today' : ''}">
-            <div class="log-day-header">
-              <span class="log-date">${formatDate(day.date)} ${isToday ? '🔵 النهارده' : ''}</span>
-              ${isMe ? `<button class="edit-log-btn" onclick="openEditLog('${day.date}')">✏️ تعديل</button>` : ''}
-            </div>
-            <div class="log-stats-row">
-              <div class="log-stat"><span class="log-stat-icon">📚</span><span>${h}h ${m}m مذاكرة</span></div>
-              <div class="log-stat"><span class="log-stat-icon">🕌</span><span>${prayers.length}/6 صلوات</span></div>
-              <div class="log-stat"><span class="log-stat-icon">📖</span><span>${day.quranPages || 0} صفحة</span></div>
-            </div>
-            <div class="log-prayers-row">${['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].map(p => `<span class="log-prayer-badge ${prayers.includes(p) ? 'done' : ''}">${p}</span>`).join('')}</div>
-          </div>`;
-      }).join('');
-    } catch (e) {
-      document.getElementById('logContent').innerHTML = '<div class="log-empty">فيه مشكلة في التحميل، حاول تاني 😕</div>';
-    }
-  };
-
-  window.closeLogModal = () => { document.getElementById('logModal').style.display = 'none'; };
-
-  // ==================== EDIT LOG - ALL DAYS ====================
-  window.openEditLog = async (date) => {
-    editingDate = date;
-    const isToday = date === TODAY();
-    document.getElementById('editModal').style.display = 'flex';
-    document.getElementById('editModalTitle').textContent = `✏️ تعديل ${formatDate(date)}`;
-
-    let dayData;
-    if (isToday) {
-      dayData = todayData;
-    } else {
-      const ref = doc(db, 'logs', currentUser.uid, 'days', date);
-      const snap = await getDoc(ref);
-      dayData = snap.exists() ? snap.data() : { prayers: [], quranPages: 0, studySeconds: 0, date };
-    }
-
-    const prayers = dayData.prayers || [];
-    ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].forEach(p => {
-      const el = document.getElementById('edit_' + p);
-      if (el) el.checked = prayers.includes(p);
-    });
-    document.getElementById('editQuran').value = dayData.quranPages || 0;
-    document.getElementById('editStudy').value = Math.floor((dayData.studySeconds || 0) / 3600 * 100) / 100;
-  };
-
-  window.saveEditLog = async () => {
-    const prayers = ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].filter(p => {
-      const el = document.getElementById('edit_' + p);
-      return el && el.checked;
-    });
-    const pages = parseInt(document.getElementById('editQuran').value) || 0;
-    const hours = parseFloat(document.getElementById('editStudy').value) || 0;
-    const newSecs = Math.round(hours * 3600);
-    const isToday = editingDate === TODAY();
-
-    // احفظ في logs دايما
-    await setDoc(doc(db, 'logs', currentUser.uid, 'days', editingDate), {
-      prayers, quranPages: pages, studySeconds: newSecs, date: editingDate,
-      uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL,
+async function saveToday() {
+  if (!currentUser) return;
+  try {
+    await setDoc(doc(db, 'logs', currentUser.uid, 'days', TODAY()), {
+      ...todayData, uid: currentUser.uid,
+      name: currentUser.displayName, photo: currentUser.photoURL,
       updatedAt: serverTimestamp()
     });
-
-    // لو النهارده، حدّث الـ state والـ users doc
-    if (isToday) {
-      todayData = { ...todayData, prayers, quranPages: pages, studySeconds: newSecs };
-      studySeconds = newSecs;
-      if (isStudying) studyStartTime = Date.now() - (studySeconds * 1000);
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        todayStudySeconds: newSecs, todayPrayers: prayers, todayQuranPages: pages, todayDate: TODAY()
-      });
-      renderTodayUI();
-      updateTimerDisplay();
-      updateMyStats();
-    }
-
-    document.getElementById('editModal').style.display = 'none';
-    closeLogModal();
-    showToast('✅ تمام يسطا! السجل اتعدّل', 'success');
-  };
-
-  window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; };
-
-  // ==================== CHAT ====================
-  function startChat() {
-    if (chatUnsub) return;
-    const chatRef = collection(db, 'chat');
-    const q = query(chatRef, orderBy('createdAt', 'asc'), limit(100));
-    chatUnsub = onSnapshot(q, (snapshot) => {
-      const msgs = [];
-      snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-      renderChat(msgs);
-    }, (err) => {
-      console.error('Chat error:', err);
-      const container = document.getElementById('chatMessages');
-      if (container) container.innerHTML = '<div class="chat-loading">فيه مشكلة في الشات، حاول تاني 😕</div>';
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      todayStudySeconds: todayData.studySeconds || 0,
+      todayPrayers:      todayData.prayers      || [],
+      todayQuranPages:   todayData.quranPages    || 0,
+      todayDate: TODAY()
     });
-  }
+  } catch(e) { console.warn('saveToday', e); }
+}
 
-  function renderChat(msgs) {
-    const container = document.getElementById('chatMessages');
-    if (!container) return;
-    if (!msgs.length) {
-      container.innerHTML = '<div class="chat-loading">مفيش رسايل لسه، ابدأ الكلام! 😄</div>';
-      return;
+function syncTodayUI() {
+  const p = todayData.prayers || [];
+  qsa('.prayer-btn').forEach(b => b.classList.toggle('on', p.includes(b.dataset.p)));
+  qs('#quranInput').value = todayData.quranPages || 0;
+}
+
+/* ══════════════════════════════════════════════════
+   PRAYERS
+══════════════════════════════════════════════════ */
+window.togglePrayer = async (prayer) => {
+  let p = [...(todayData.prayers || [])];
+  if (p.includes(prayer)) { p = p.filter(x => x !== prayer); }
+  else { p.push(prayer); burst(event.currentTarget); }
+  todayData.prayers = p;
+  await saveToday();
+  syncTodayUI();
+  renderMiniStats();
+};
+
+/* ══════════════════════════════════════════════════
+   QURAN
+══════════════════════════════════════════════════ */
+window.saveQuran = async () => {
+  const v = Math.max(0, parseInt(qs('#quranInput').value) || 0);
+  todayData.quranPages = v;
+  await saveToday();
+  toast(`✅ اتقرأت ${v} صفحة!`, 'ok');
+  renderMiniStats();
+};
+
+/* ══════════════════════════════════════════════════
+   TIMER
+   التوقيت بيشتغل في الخلفية عادي لأن:
+   - setInterval بيكمل حتى لو التاب مخفي (ببطأ أحياناً)
+   - بنستخدم Date.now() مش counter → دايماً دقيق حتى لو اتأخر
+══════════════════════════════════════════════════ */
+window.toggleStudy = async () => { isStudying ? await stopStudy() : await startStudy(); };
+
+async function startStudy() {
+  isStudying   = true;
+  studyStartMs = Date.now() - studySeconds * 1000;
+  await pushStatus('studying');
+  qs('#timerBtn').innerHTML = '<span class="btn-icon">⏸</span><span>استنّى شوية</span>';
+  qs('#timerBtn').classList.add('active');
+  qs('#timerLabel').textContent = 'جاري المذاكرة';
+  qs('#timerLabel').classList.add('on');
+  studyTimer = setInterval(async () => {
+    studySeconds = Math.floor((Date.now() - studyStartMs) / 1000);
+    renderTimer();
+    if (studySeconds % 30 === 0) {
+      todayData.studySeconds = studySeconds;
+      await saveToday();
     }
-    container.innerHTML = msgs.map(msg => {
-      const isMe = msg.uid === currentUser?.uid;
-      const time = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
-      return `
-        <div class="chat-bubble-wrap ${isMe ? 'me' : ''}">
-          <img class="chat-bubble-avatar" src="${msg.photo || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%2216%22/></svg>'">
-          <div>
-            <div class="chat-bubble">${escapeHtml(msg.text)}</div>
-            <div class="chat-bubble-meta">
-              ${!isMe ? `<span class="chat-bubble-name">${msg.name?.split(' ')[0] || '؟'}</span> •` : ''}
-              <span>${time}</span>
-            </div>
-          </div>
-        </div>`;
+  }, 1000);
+}
+
+async function stopStudy() {
+  isStudying = false;
+  clearInterval(studyTimer); studyTimer = null;
+  todayData.studySeconds = studySeconds;
+  await saveToday();
+  await pushStatus('online');
+  qs('#timerBtn').innerHTML = '<span class="btn-icon">▶</span><span>يلا نذاكر</span>';
+  qs('#timerBtn').classList.remove('active');
+  qs('#timerLabel').textContent = 'واقف';
+  qs('#timerLabel').classList.remove('on');
+  renderMiniStats();
+  toast('✅ اتحفظ وقت المذاكرة!', 'ok');
+}
+
+function renderTimer() {
+  const h = Math.floor(studySeconds / 3600);
+  const m = Math.floor((studySeconds % 3600) / 60);
+  const s = studySeconds % 60;
+  qs('#tH').textContent = pad(h);
+  qs('#tM').textContent = pad(m);
+  qs('#tS').textContent = pad(s);
+  // SVG ring
+  const pct  = Math.min(studySeconds / (8 * 3600), 1);
+  const circ = 2 * Math.PI * 88;
+  qs('#ringFill').style.strokeDashoffset = circ * (1 - pct);
+}
+
+function renderMiniStats() {
+  const h = Math.floor(studySeconds / 3600);
+  const m = Math.floor((studySeconds % 3600) / 60);
+  qs('#mStudy').textContent   = `${h}h ${m}m`;
+  qs('#mPrayers').textContent = `${(todayData.prayers||[]).length}/6`;
+  qs('#mQuran').textContent   = todayData.quranPages || 0;
+}
+
+/* ══════════════════════════════════════════════════
+   LEADERBOARD
+══════════════════════════════════════════════════ */
+function startRealtimeBoards() {
+  allUsersUnsub = onSnapshot(collection(db, 'users'), snap => {
+    const users = [];
+    snap.forEach(d => users.push({ id: d.id, ...d.data() }));
+    renderBoards(users);
+    renderFriends(users);
+  }, e => console.warn('boards snapshot', e));
+}
+
+function renderBoards(users) {
+  const t   = TODAY();
+  const all = users.map(u => ({
+    ...u,
+    studySecs:  u.todayDate === t ? (u.todayStudySeconds || 0) : 0,
+    prayers:    u.todayDate === t ? (u.todayPrayers      || []) : [],
+    quranPages: u.todayDate === t ? (u.todayQuranPages   || 0) : 0,
+  }));
+  paintBoard('boardStudy', [...all].sort((a,b) => b.studySecs - a.studySecs),
+    u => { const h=Math.floor(u.studySecs/3600),m=Math.floor((u.studySecs%3600)/60); return `${h}h${m}m`; },
+    u => u.studySecs);
+  paintBoard('boardPrayers', [...all].sort((a,b) => b.prayers.length - a.prayers.length),
+    u => `${u.prayers.length}/6`, u => u.prayers.length / 6);
+  paintBoard('boardQuran', [...all].sort((a,b) => b.quranPages - a.quranPages),
+    u => `${u.quranPages}ص`, u => u.quranPages);
+}
+
+function paintBoard(id, users, valFn, pctFn) {
+  const max = Math.max(...users.map(pctFn), 1);
+  const M   = ['🥇','🥈','🥉'];
+  qs('#'+id).innerHTML = users.slice(0,10).map((u,i) => {
+    const me  = u.id === currentUser?.uid;
+    const pct = Math.round(pctFn(u) / max * 100);
+    return `<div class="brow ${me?'me':''}" style="--d:${i*50}ms"
+        onclick="openLog('${u.id}','${esc(u.name||'')}')">
+      <div class="brank">${M[i]||'#'+(i+1)}</div>
+      <img class="bavatar" src="${u.photo||''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 36 36%22><rect fill=%22%23162032%22 width=%2236%22 height=%2236%22 rx=%2218%22/><text x=%2250%25%22 y=%2257%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2338bdf8%22 font-size=%2215%22>${(u.name||'?')[0]}</text></svg>'" alt="">
+      <div class="binfo">
+        <div class="bname">${u.name||'مجهول'}${me?' <em>أنا</em>':''}</div>
+        <div class="bbar"><div class="bfill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="bval">${valFn(u)}</div>
+    </div>`;
+  }).join('') || '<p class="empty">مفيش بيانات لسه 😴</p>';
+}
+
+/* ══════════════════════════════════════════════════
+   FRIENDS
+══════════════════════════════════════════════════ */
+function renderFriends(users) {
+  const cfg = {
+    studying: { txt:'بيذاكر دلوقتي', c:'#4ade80', pulse:true  },
+    online:   { txt:'متصل',           c:'#38bdf8', pulse:false },
+    offline:  { txt:'مش موجود',       c:'#475569', pulse:false },
+  };
+  qs('#friendsGrid').innerHTML = users.map(u => {
+    const st = cfg[effectiveStatus(u)] || cfg.offline;
+    const me = u.id === currentUser?.uid;
+    return `<div class="fcard ${me?'me':''}">
+      <div class="favatarwrap">
+        <img class="favatar" src="${u.photo||''}" onerror="this.removeAttribute('src')" alt="">
+        <div class="fdot ${st.pulse?'pulse':''}" style="background:${st.c}"></div>
+      </div>
+      <div class="fname">${(u.name||'؟').split(' ')[0]}${me?' <em>أنا</em>':''}</div>
+      <div class="fstatus" style="color:${st.c}">${st.txt}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   LOG MODAL
+══════════════════════════════════════════════════ */
+window.openLog = async (uid, name) => {
+  openModal('logModal');
+  qs('#logTitle').textContent = `سجل ${name}`;
+  qs('#logBody').innerHTML    = '<div class="spinner"></div>';
+  try {
+    const snap = await getDocs(query(collection(db,'logs',uid,'days'), orderBy('date','desc')));
+    const days = [];
+    snap.forEach(d => days.push(d.data()));
+    if (!days.length) { qs('#logBody').innerHTML = '<p class="empty">مفيش سجلات لسه 📭</p>'; return; }
+    const me = uid === currentUser?.uid;
+    qs('#logBody').innerHTML = days.map(d => {
+      const h = Math.floor((d.studySeconds||0)/3600), m = Math.floor(((d.studySeconds||0)%3600)/60);
+      const pr = d.prayers || [];
+      const isT = d.date === TODAY();
+      return `<div class="lcard ${isT?'today':''}">
+        <div class="lhead">
+          <span class="ldate">${fmtDate(d.date)}${isT?' <span class="badge">النهارده</span>':''}</span>
+          ${me?`<button class="editbtn" onclick="openEdit('${d.date}')">✏️ تعديل</button>`:''}
+        </div>
+        <div class="lnums">
+          <div class="lnum"><b>${h}h${m}m</b><small>📚</small></div>
+          <div class="lnum"><b>${pr.length}/6</b><small>🕌</small></div>
+          <div class="lnum"><b>${d.quranPages||0}</b><small>📖 ص</small></div>
+        </div>
+        <div class="lchips">${['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].map(p=>`<span class="${pr.includes(p)?'chip on':'chip'}">${p}</span>`).join('')}</div>
+      </div>`;
     }).join('');
-    container.scrollTop = container.scrollHeight;
-  }
+  } catch(e) { qs('#logBody').innerHTML = '<p class="empty">خطأ في التحميل 😕</p>'; }
+};
+window.closeLogModal = () => closeModal('logModal');
 
-  function escapeHtml(text) {
-    return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  window.sendChat = async () => {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text || !currentUser) return;
-    input.value = '';
+/* ══════════════════════════════════════════════════
+   EDIT MODAL — كل الأيام
+══════════════════════════════════════════════════ */
+window.openEdit = async (date) => {
+  editingDate = date;
+  openModal('editModal');
+  qs('#editTitle').textContent = `تعديل — ${fmtDate(date)}`;
+  let d = date === TODAY() ? todayData : null;
+  if (!d) {
     try {
-      await addDoc(collection(db, 'chat'), {
-        uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL,
-        text, createdAt: serverTimestamp()
+      const s = await getDoc(doc(db,'logs',currentUser.uid,'days',date));
+      d = s.exists() ? s.data() : { prayers:[], quranPages:0, studySeconds:0 };
+    } catch(e) { d = { prayers:[], quranPages:0, studySeconds:0 }; }
+  }
+  const pr = d.prayers || [];
+  ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].forEach(p => {
+    const el = qs('#ep_'+p); if (el) el.checked = pr.includes(p);
+  });
+  qs('#eQuran').value = d.quranPages || 0;
+  qs('#eStudy').value = Math.round((d.studySeconds||0) / 36) / 100;
+};
+
+window.saveEdit = async () => {
+  const prayers = ['الفجر','الظهر','العصر','المغرب','العشاء','التراويح'].filter(p => qs('#ep_'+p)?.checked);
+  const pages   = parseInt(qs('#eQuran').value) || 0;
+  const secs    = Math.round((parseFloat(qs('#eStudy').value)||0) * 3600);
+  const isT     = editingDate === TODAY();
+  try {
+    await setDoc(doc(db,'logs',currentUser.uid,'days',editingDate), {
+      prayers, quranPages:pages, studySeconds:secs, date:editingDate,
+      uid:currentUser.uid, name:currentUser.displayName, photo:currentUser.photoURL,
+      updatedAt: serverTimestamp()
+    });
+    if (isT) {
+      todayData = { ...todayData, prayers, quranPages:pages, studySeconds:secs };
+      studySeconds = secs;
+      if (isStudying) studyStartMs = Date.now() - secs*1000;
+      await updateDoc(doc(db,'users',currentUser.uid), {
+        todayStudySeconds:secs, todayPrayers:prayers, todayQuranPages:pages, todayDate:TODAY()
       });
-    } catch (e) {
-      showToast('مش قادر يبعت، حاول تاني!', 'error');
+      syncTodayUI(); renderTimer(); renderMiniStats();
     }
-  };
+    closeModal('editModal');
+    closeModal('logModal');
+    toast('✅ اتعدّل السجل بنجاح!', 'ok');
+  } catch(e) { toast('مشكلة في الحفظ، حاول تاني!', 'error'); }
+};
+window.closeEditModal = () => closeModal('editModal');
 
-  // ==================== HELPERS ====================
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  }
+/* ══════════════════════════════════════════════════
+   CHAT — محسوس ومجمّع
+══════════════════════════════════════════════════ */
+function startChat() {
+  if (chatUnsub) return;
+  const q = query(collection(db,'chat'), orderBy('createdAt','asc'), limit(150));
+  chatUnsub = onSnapshot(q, snap => {
+    const msgs = [];
+    snap.forEach(d => msgs.push({ id:d.id, ...d.data() }));
+    renderChat(msgs);
+  }, e => console.warn('chat', e));
+}
 
-  window.showLoading = (show) => {
-    document.getElementById('loginLoading').style.display = show ? 'block' : 'none';
-  };
+function renderChat(msgs) {
+  const box = qs('#chatMsgs');
+  if (!box) return;
+  const atBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 100;
+  if (!msgs.length) { box.innerHTML = '<p class="empty">ابدأ الكلام مع صحابك! 💬</p>'; return; }
 
-  window.showToast = (msg, type = 'info') => {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show ' + type;
-    setTimeout(() => t.className = 'toast', 3000);
-  };
-
-  function showLogin() {
-    document.getElementById('loginPage').style.display = 'flex';
-    document.getElementById('appPage').style.display = 'none';
-    showLoading(false);
-  }
-
-  function showApp() {
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('appPage').style.display = 'block';
-    showLoading(false);
-  }
-
-  function spawnParticles(el) {
-    const rect = el.getBoundingClientRect();
-    for (let i = 0; i < 8; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = (rect.left + rect.width/2) + 'px';
-      p.style.top = (rect.top + rect.height/2) + 'px';
-      const angle = (i / 8) * 360;
-      const dist = 40 + Math.random() * 30;
-      const dx = Math.cos(angle * Math.PI/180) * dist;
-      const dy = Math.sin(angle * Math.PI/180) * dist;
-      p.style.setProperty('--dx', dx + 'px');
-      p.style.setProperty('--dy', dy + 'px');
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 700);
+  // نجمع الرسائل: نفس المرسل + أقل من دقيقتين بين الرسائل
+  const groups = [];
+  msgs.forEach(msg => {
+    const prev = groups[groups.length-1];
+    const tms  = msg.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    const ptms = prev?.msgs[prev.msgs.length-1]?.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    if (prev && prev.uid === msg.uid && tms - ptms < 120000) {
+      prev.msgs.push(msg);
+    } else {
+      groups.push({ uid: msg.uid, name: msg.name, photo: msg.photo, msgs: [msg] });
     }
+  });
+
+  box.innerHTML = groups.map(g => {
+    const me   = g.uid === currentUser?.uid;
+    const last = g.msgs[g.msgs.length-1];
+    const time = last?.createdAt?.toDate?.()
+      ? last.createdAt.toDate().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="cgroup ${me?'me':'other'}">
+      ${!me ? `<img class="cavatar" src="${g.photo||''}" onerror="this.removeAttribute('src')" alt="">` : ''}
+      <div class="cbubbles">
+        ${!me ? `<div class="csender">${(g.name||'؟').split(' ')[0]}</div>` : ''}
+        ${g.msgs.map(m=>`<div class="cbubble">${htmlEsc(m.text)}</div>`).join('')}
+        <div class="ctime">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+window.sendChat = async () => {
+  const inp  = qs('#chatInput');
+  const text = inp.value.trim();
+  if (!text || !currentUser) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  try {
+    await addDoc(collection(db,'chat'), {
+      uid: currentUser.uid, name: currentUser.displayName,
+      photo: currentUser.photoURL, text, createdAt: serverTimestamp()
+    });
+    const box = qs('#chatMsgs');
+    if (box) setTimeout(() => box.scrollTop = box.scrollHeight, 80);
+  } catch(e) { toast('مش قادر يبعت!', 'error'); }
+};
+
+/* ══════════════════════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════════════════════ */
+function openModal(id) {
+  const m = qs('#'+id); m.style.display='flex';
+  requestAnimationFrame(() => m.classList.add('open'));
+}
+function closeModal(id) {
+  const m = qs('#'+id); m.classList.remove('open');
+  setTimeout(() => m.style.display='none', 320);
+}
+
+/* ══════════════════════════════════════════════════
+   SHOW / HIDE
+══════════════════════════════════════════════════ */
+function showLogin() {
+  qs('#loginPage').style.display = 'flex';
+  qs('#appPage').style.display   = 'none';
+  setLoadingVisible(false);
+}
+function showApp() {
+  qs('#loginPage').style.display = 'none';
+  qs('#appPage').style.display   = 'block';
+  setLoadingVisible(false);
+}
+function setLoadingVisible(v) {
+  qs('#loginLoad').style.display = v ? 'flex' : 'none';
+}
+
+/* ══════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════ */
+const qs  = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
+const pad = n => String(n).padStart(2,'0');
+const esc = s => (s||'').replace(/'/g,"\\'");
+const htmlEsc = t => (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtDate = s => s ? new Date(s).toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '';
+
+window.toast = function(msg, type='') {
+  const t = qs('#toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  clearTimeout(t._t); t._t = setTimeout(() => t.className='toast', 3200);
+};
+
+function burst(el) {
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const colors = ['#38bdf8','#4ade80','#c084fc','#fb923c','#f472b6'];
+  for (let i=0;i<14;i++) {
+    const p = document.createElement('span');
+    p.className = 'burst-dot';
+    const angle = (i/14)*360, dist = 40+Math.random()*50;
+    p.style.cssText = `left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;background:${colors[i%5]};--dx:${Math.cos(angle*Math.PI/180)*dist}px;--dy:${Math.sin(angle*Math.PI/180)*dist}px`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
   }
+}
 </script>
 
 <style>
+/* ══════════════════════════════════════════════════
+   DESIGN SYSTEM — Premium Obsidian Glass
+   Aesthetic: high-end fintech / Apple-level precision
+   Fonts: Cairo (Arabic) + JetBrains Mono (numbers)
+══════════════════════════════════════════════════ */
 :root {
-  --bg: #060610;
-  --glass: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.1);
-  --accent: #4fc3f7;
-  --accent2: #ce93d8;
-  --gold: #ffd54f;
-  --green: #69f0ae;
-  --text: #e8eaf6;
-  --sub: #90a4ae;
-  --radius: 20px;
+  /* palette */
+  --ink:    #080c14;
+  --ink1:   #0d1421;
+  --ink2:   #111c2e;
+  --ink3:   #162036;
+
+  --glass:  rgba(255,255,255,0.035);
+  --glassh: rgba(255,255,255,0.06);
+  --rim:    rgba(255,255,255,0.07);
+  --rim2:   rgba(255,255,255,0.04);
+
+  --sky:    #38bdf8;
+  --sky2:   #0ea5e9;
+  --mint:   #4ade80;
+  --orchid: #c084fc;
+  --amber:  #fbbf24;
+  --rose:   #f472b6;
+
+  --fg:     #e8f0fe;
+  --fg2:    #8fa8c8;
+  --fg3:    #506070;
+
+  --r1: 10px; --r2: 16px; --r3: 22px; --r4: 30px;
+  --nav: 60px; --tabs: 52px;
+
+  /* glow shortcuts */
+  --gsky:    0 0 20px rgba(56,189,248,0.35);
+  --gmint:   0 0 20px rgba(74,222,128,0.35);
+  --gorchid: 0 0 20px rgba(192,132,252,0.35);
 }
 
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior: smooth; }
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; scroll-behavior:smooth; }
 
 body {
   font-family: 'Cairo', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
+  background: var(--ink);
+  color: var(--fg);
+  min-height: 100dvh;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ===== ANIMATED BG ===== */
-.bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+/* ── CINEMATIC BACKGROUND ─────────────────────── */
+.backdrop {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+}
+
+/* mesh gradient orbs */
 .orb {
   position: absolute; border-radius: 50%;
-  filter: blur(80px); opacity: 0.15;
-  animation: orbFloat linear infinite;
+  filter: blur(140px); will-change: transform;
 }
-.orb1 { width:600px;height:600px; background:#4fc3f7; top:-200px;right:-200px; animation-duration:20s; }
-.orb2 { width:500px;height:500px; background:#ce93d8; bottom:-150px;left:-150px; animation-duration:25s; animation-delay:-10s; }
-.orb3 { width:400px;height:400px; background:#69f0ae; top:50%;left:50%; animation-duration:18s; animation-delay:-5s; }
-
-@keyframes orbFloat {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33% { transform: translate(30px,-30px) scale(1.05); }
-  66% { transform: translate(-20px,20px) scale(0.95); }
+.orb-a {
+  width: min(90vw, 900px); height: min(90vw, 900px);
+  background: radial-gradient(circle, rgba(14,42,90,0.9) 0%, transparent 70%);
+  top: -30%; right: -20%;
+  animation: driftA 28s ease-in-out infinite;
 }
+.orb-b {
+  width: min(80vw, 750px); height: min(80vw, 750px);
+  background: radial-gradient(circle, rgba(45,10,80,0.7) 0%, transparent 70%);
+  bottom: -25%; left: -20%;
+  animation: driftB 34s ease-in-out infinite;
+}
+.orb-c {
+  width: min(55vw, 550px); height: min(55vw, 550px);
+  background: radial-gradient(circle, rgba(10,38,50,0.6) 0%, transparent 70%);
+  top: 35%; left: 30%;
+  animation: driftC 22s ease-in-out infinite;
+}
+@keyframes driftA { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-4%,3%) scale(1.07)} 70%{transform:translate(3%,-2%) scale(0.95)} }
+@keyframes driftB { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(5%,-4%) scale(1.08)} }
+@keyframes driftC { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-3%,5%)} }
 
-.grid-bg {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+/* grid overlay */
+.grid-over {
+  position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(79,195,247,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(79,195,247,0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+    linear-gradient(rgba(56,189,248,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.022) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
-/* ===== LOGIN PAGE ===== */
+/* scanlines */
+.scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg,
+    transparent, transparent 2px,
+    rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px);
+}
+
+/* ── KEYFRAMES ────────────────────────────────── */
+@keyframes fadeUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes scaleIn  { from{opacity:0;transform:scale(.93)} to{opacity:1;transform:none} }
+@keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+@keyframes shimmer  { to{background-position: -200% center} }
+@keyframes burst    { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)} }
+@keyframes spin     { to{transform:rotate(360deg)} }
+@keyframes pulseDot { 0%,100%{box-shadow:0 0 0 0 currentColor;opacity:1} 50%{box-shadow:0 0 0 5px transparent;opacity:.7} }
+@keyframes rowIn    { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+@keyframes glowSky  { 0%,100%{box-shadow:var(--gsky)} 50%{box-shadow:0 0 40px rgba(56,189,248,.6)} }
+@keyframes glowMint { 0%,100%{box-shadow:var(--gmint)} 50%{box-shadow:0 0 40px rgba(74,222,128,.6)} }
+@keyframes gradFlow { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+@keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* ── LOGIN ────────────────────────────────────── */
 #loginPage {
   display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; position: relative; z-index: 10;
-  flex-direction: column; gap: 2rem; padding: 2rem;
+  min-height: 100dvh; position: relative; z-index: 10; padding: 1.5rem;
 }
 
-.login-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(40px);
-  border-radius: 28px; padding: 3rem 2.5rem; text-align: center;
-  max-width: 420px; width: 100%;
-  box-shadow: 0 0 80px rgba(79,195,247,0.08), inset 0 1px 0 rgba(255,255,255,0.1);
-  animation: fadeInUp 0.8s ease both;
+.login-shell {
+  width: 100%; max-width: 430px;
+  background: rgba(8,12,20,0.82);
+  border: 1px solid rgba(56,189,248,0.18);
+  border-radius: var(--r4);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  backdrop-filter: blur(48px);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 40px 100px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+  animation: scaleIn .7s cubic-bezier(.16,1,.3,1) both;
+  position: relative; overflow: hidden;
+}
+.login-shell::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg,transparent,rgba(56,189,248,.6),rgba(192,132,252,.5),transparent);
+}
+.login-shell::after {
+  content:''; position:absolute; inset:0; border-radius:var(--r4);
+  background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(56,189,248,.05) 0%, transparent 100%);
+  pointer-events:none;
 }
 
-@keyframes fadeInUp {
-  from { opacity:0; transform:translateY(30px); }
-  to { opacity:1; transform:translateY(0); }
+.login-mark {
+  width: 76px; height: 76px; border-radius: 50%;
+  margin: 0 auto 1.6rem;
+  background: conic-gradient(from 180deg, rgba(56,189,248,.2), rgba(192,132,252,.2), rgba(56,189,248,.2));
+  border: 1.5px solid rgba(56,189,248,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 0 8px rgba(56,189,248,.04);
+  animation: float 3.5s ease-in-out infinite;
 }
-
-.login-logo { font-size: 4rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 
 .login-title {
-  font-size: 1.6rem; font-weight: 900;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  font-size: clamp(.95rem, 3.2vw, 1.35rem);
+  font-weight: 900; line-height: 1.5;
+  background: linear-gradient(135deg, var(--sky), var(--orchid), var(--sky));
+  background-size: 200% 200%;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
+  animation: gradFlow 5s ease infinite;
+  margin-bottom: .5rem;
 }
-.login-sub { color: var(--sub); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.8; }
+.login-sub { color: var(--fg3); font-size: .85rem; margin-bottom: 2.2rem; line-height: 1.9; }
 
-.google-btn {
-  display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-  width: 100%; padding: 0.9rem 1.5rem;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 14px; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s;
+.gbtn {
+  display: flex; align-items: center; justify-content: center; gap: .7rem;
+  width: 100%; padding: .9rem 1.5rem;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: var(--r2); color: var(--fg);
+  font-family: 'Cairo',sans-serif; font-size: .95rem; font-weight: 700;
+  cursor: pointer; transition: all .3s; position: relative; overflow: hidden;
 }
-.google-btn:hover { background: rgba(255,255,255,0.14); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,195,247,0.2); }
-.google-btn img { width: 22px; }
-#loginLoading { display:none; margin-top:1rem; color:var(--sub); }
+.gBtn-shine {
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.07) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s linear infinite;
+}
+.gBtn-shine { background-size: 200% 100%; animation: shimmer 2.5s linear infinite; }
+.gBtn { /* alias */ }
+.gBtn:hover, .gBtn:focus { border-color: rgba(56,189,248,.4); box-shadow: var(--gsky); transform: translateY(-2px); }
+.gBtn:active { transform: scale(.97); }
+.gBtn img { width: 20px; }
 
-/* ===== APP PAGE ===== */
+#loginLoad {
+  display: none; margin-top: 1.3rem; gap: .4rem;
+  align-items: center; justify-content: center;
+}
+.ldot { width:7px; height:7px; border-radius:50%; background:var(--sky); animation:dotBlink 1.1s ease infinite; }
+.ldot:nth-child(2){animation-delay:.2s} .ldot:nth-child(3){animation-delay:.4s}
+
+/* ── APP ──────────────────────────────────────── */
 #appPage { display: none; position: relative; z-index: 5; }
 
-/* ===== NAVBAR ===== */
+/* ── NAV ──────────────────────────────────────── */
 nav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(6,6,16,0.8); backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding: 0.8rem 1.5rem;
-  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100; height: var(--nav);
+  background: rgba(6,9,16,0.88); backdrop-filter: blur(28px);
+  border-bottom: 1px solid var(--rim2);
+  display: flex; align-items: center; padding: 0 1.1rem; gap: .75rem;
 }
-.nav-logo { font-size: 1.2rem; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.nav-user { display: flex; align-items: center; gap: 0.75rem; }
-.nav-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--accent); }
-#userName { font-size: 0.9rem; color: var(--sub); }
-.sign-out-btn {
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; padding: 0.4rem 0.9rem; color: var(--sub);
-  font-family: 'Cairo', sans-serif; font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
-}
-.sign-out-btn:hover { background: rgba(255,100,100,0.15); color: #ff6b6b; border-color: rgba(255,100,100,0.3); }
-
-/* ===== TABS ===== */
-.tab-bar { display: flex; gap: 0.5rem; padding: 1rem 1.5rem 0; overflow-x: auto; scrollbar-width: none; }
-.tab-bar::-webkit-scrollbar { display: none; }
-.tab-btn {
-  padding: 0.55rem 1.3rem; border-radius: 30px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: transparent; color: var(--sub);
-  font-family: 'Cairo', sans-serif; font-size: 0.88rem;
-  cursor: pointer; transition: all 0.25s; white-space: nowrap;
-}
-.tab-btn.active {
-  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.2));
-  border-color: var(--accent); color: var(--accent);
+nav::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg,transparent,rgba(56,189,248,.25),transparent);
 }
 
-/* ===== MAIN LAYOUT ===== */
-.main-content { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
-.tab-section { display: none; }
-.tab-section.active { display: block; animation: fadeInUp 0.4s ease both; }
-
-/* ===== GLASS CARD ===== */
-.glass-card {
-  background: var(--glass); border: 1px solid var(--glass-border);
-  backdrop-filter: blur(30px); border-radius: var(--radius); padding: 1.5rem;
-  box-shadow: 0 4px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
-  transition: box-shadow 0.3s;
+.nav-logo {
+  flex: 1; min-width: 0;
+  font-size: clamp(.58rem,1.9vw,.88rem); font-weight: 900;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(90deg, var(--sky), var(--orchid));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-.glass-card:hover { box-shadow: 0 4px 40px rgba(79,195,247,0.08), inset 0 1px 0 rgba(255,255,255,0.05); }
-
-/* ===== SECTION TITLE ===== */
-.section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.2rem; color: var(--text); display: flex; align-items: center; gap: 0.6rem; }
-.section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-
-/* ===== MY STATS MINI ===== */
-.my-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-.my-stat-card {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px; padding: 1rem 0.5rem; text-align: center; transition: transform 0.2s;
+.nav-right { display: flex; align-items: center; gap: .55rem; flex-shrink: 0; }
+.nav-avatar {
+  width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+  border: 2px solid rgba(56,189,248,.35);
+  box-shadow: 0 0 10px rgba(56,189,248,.15);
 }
-.my-stat-card:hover { transform: translateY(-2px); }
-.my-stat-num { font-size: 1.4rem; font-weight: 900; color: var(--accent); }
-.my-stat-label { font-size: 0.72rem; color: var(--sub); margin-top: 2px; }
+#userName { font-size: .78rem; color: var(--fg2); max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media(max-width:460px) { #userName { display: none; } }
 
-/* ===== TIMER ===== */
-.timer-section { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
-.timer-circle-wrap { position: relative; width: 220px; height: 220px; }
-.timer-svg { transform: rotate(-90deg); }
-.timer-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
-#timerCircle {
-  fill: none; stroke: url(#timerGrad); stroke-width: 8; stroke-linecap: round;
-  stroke-dasharray: 565.5; stroke-dashoffset: 565.5;
+.btn-out {
+  padding: .3rem .75rem; border-radius: 8px;
+  background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.18);
+  color: #f87171; font-family:'Cairo',sans-serif; font-size:.72rem; font-weight:700;
+  cursor: pointer; transition: all .2s; white-space:nowrap;
+}
+.btn-out:hover { background: rgba(248,113,113,.16); }
+
+/* ── TABS ──────────────────────────────────────── */
+.tabs {
+  display: flex; gap: .3rem; padding: .55rem .9rem; height: var(--tabs);
+  background: rgba(5,8,14,.8); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--rim2);
+  position: sticky; top: var(--nav); z-index: 99;
+  overflow-x: auto; scrollbar-width: none; align-items: center;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  display: flex; align-items: center; gap: .3rem;
+  padding: .38rem .85rem; border-radius: var(--r1);
+  background: transparent; border: 1px solid transparent;
+  color: var(--fg3); font-family:'Cairo',sans-serif;
+  font-size: .76rem; font-weight: 700;
+  cursor: pointer; transition: all .22s; white-space: nowrap; flex-shrink: 0;
+}
+.tab:hover  { color: var(--fg2); background: var(--glass); }
+.tab.active {
+  background: rgba(56,189,248,.1);
+  border-color: rgba(56,189,248,.22);
+  color: var(--sky);
+}
+.ti { font-size: .88rem; }
+
+/* ── CONTENT ───────────────────────────────────── */
+.wrap { padding: .9rem; max-width: 1080px; margin: 0 auto; }
+.section { display:none; }
+.section.on { display:block; animation: fadeUp .38s cubic-bezier(.16,1,.3,1) both; }
+
+/* ── GLASS PANEL ───────────────────────────────── */
+.panel {
+  background: var(--glass);
+  border: 1px solid var(--rim);
+  border-radius: var(--r3);
+  padding: 1.2rem;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 2px 24px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);
+  position: relative; overflow: hidden;
+  transition: border-color .3s;
+}
+.panel::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg,transparent,rgba(56,189,248,.15),transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.panel:hover::before { opacity: 1; }
+
+.ptitle {
+  font-size: .68rem; font-weight: 700; color: var(--fg3);
+  letter-spacing: .1em; text-transform: uppercase;
+  display: flex; align-items: center; gap: .45rem; margin-bottom: .95rem;
+}
+.ptitle-dot { width:5px; height:5px; border-radius:50%; background:var(--sky); box-shadow: var(--gsky); flex-shrink:0; }
+
+/* ── MINI STATS ────────────────────────────────── */
+.mini-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:.55rem; margin-bottom:.9rem; }
+.mstat {
+  background: rgba(56,189,248,.05);
+  border: 1px solid rgba(56,189,248,.1);
+  border-radius: var(--r2); padding: .75rem .4rem;
+  text-align: center; cursor:default; transition: all .25s;
+}
+.mstat:hover { background: rgba(56,189,248,.09); transform: translateY(-2px); }
+.mstat-val { font-size: clamp(.8rem,3vw,1.15rem); font-weight:900; color:var(--sky); font-family:'JetBrains Mono',monospace; }
+.mstat-lbl { font-size: .6rem; color: var(--fg3); margin-top: 2px; }
+
+/* ── HOME GRID ──────────────────────────────────── */
+.home-grid { display:grid; grid-template-columns:1fr; gap:.9rem; }
+@media(min-width:640px){ .home-grid{ grid-template-columns:1fr 1fr; } }
+.col-stack { display:flex; flex-direction:column; gap:.9rem; }
+
+/* ── TIMER ──────────────────────────────────────── */
+.timer-wrap { display:flex; flex-direction:column; align-items:center; gap:1.1rem; }
+
+.ring-wrap {
+  position:relative;
+  width: clamp(170px,55vw,210px);
+  height: clamp(170px,55vw,210px);
+}
+.timer-svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring-bg   { fill:none; stroke:rgba(255,255,255,.045); stroke-width:7; }
+#ringFill  {
+  fill:none; stroke:url(#rGrad); stroke-width:7; stroke-linecap:round;
+  stroke-dasharray: 552.9;   /* 2π × 88 */
+  stroke-dashoffset: 552.9;
   transition: stroke-dashoffset 1s linear;
-  filter: drop-shadow(0 0 6px rgba(79,195,247,0.4));
+  filter: drop-shadow(0 0 8px rgba(56,189,248,.55));
 }
-.timer-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-.timer-digits { font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
-#timerStatus { font-size: 0.75rem; color: var(--sub); }
-#timerStatus.active { color: var(--green); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.ring-center {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+}
+.ring-time {
+  font-family:'JetBrains Mono',monospace;
+  font-size: clamp(1.3rem,5.5vw,1.75rem);
+  font-weight: 700; color: var(--fg); letter-spacing: -.5px;
+}
+.ring-sep { color: var(--fg3); }
+#timerLabel {
+  font-size:.63rem; color:var(--fg3); letter-spacing:.08em; text-transform:uppercase;
+}
+#timerLabel.on { color:var(--mint); }
 
-.timer-btn {
-  padding: 0.75rem 2rem; border-radius: 14px;
-  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.2));
-  border: 1px solid var(--accent); color: var(--accent);
-  font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s;
+/* study button */
+.study-btn {
+  display: inline-flex; align-items: center; gap: .55rem;
+  padding: .72rem 2rem; border-radius: var(--r2);
+  background: linear-gradient(135deg,rgba(56,189,248,.14),rgba(192,132,252,.09));
+  border: 1px solid rgba(56,189,248,.28);
+  color: var(--sky); font-family:'Cairo',sans-serif; font-size:.92rem; font-weight:700;
+  cursor:pointer; transition:all .3s;
+  animation: glowSky 3s ease-in-out infinite;
 }
-.timer-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(79,195,247,0.3); }
-.timer-btn.studying {
-  border-color: var(--green); color: var(--green);
-  animation: studyGlow 2s infinite;
+.study-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(56,189,248,.3); }
+.study-btn:active { transform:scale(.96); animation:none; }
+.study-btn.active {
+  border-color:rgba(74,222,128,.3); color:var(--mint);
+  background:linear-gradient(135deg,rgba(74,222,128,.14),rgba(56,189,248,.07));
+  animation: glowMint 2.5s ease-in-out infinite;
 }
-@keyframes studyGlow { 0%,100%{box-shadow:0 0 10px rgba(105,240,174,0.2)} 50%{box-shadow:0 0 30px rgba(105,240,174,0.6)} }
+.btn-icon { font-size:.95rem; line-height:1; }
 
-/* ===== PRAYERS ===== */
-.prayers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+/* ── PRAYERS ──────────────────────────────────── */
+.prayer-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.45rem; }
 .prayer-btn {
-  padding: 0.8rem 0.3rem; border-radius: 14px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  color: var(--sub); font-family: 'Cairo', sans-serif; font-size: 0.82rem; font-weight: 600;
-  cursor: pointer; transition: all 0.3s; text-align: center;
+  padding:.7rem .2rem; border-radius:var(--r2);
+  background:rgba(255,255,255,.03); border:1px solid var(--rim2);
+  color:var(--fg3); font-family:'Cairo',sans-serif; font-size:.76rem; font-weight:600;
+  cursor:pointer; transition:all .28s; text-align:center; position:relative; overflow:hidden;
 }
-.prayer-btn.active { background: rgba(105,240,174,0.12); border-color: var(--green); color: var(--green); box-shadow: 0 0 16px rgba(105,240,174,0.12); }
-.prayer-btn:hover { transform: translateY(-2px); }
+.prayer-btn::after {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at center,rgba(74,222,128,.18),transparent 70%);
+  opacity:0; transition:opacity .28s;
+}
+.prayer-btn.on { background:rgba(74,222,128,.1); border-color:rgba(74,222,128,.28); color:var(--mint); }
+.prayer-btn.on::after { opacity:1; }
+.prayer-btn:hover  { transform:translateY(-2px); }
+.prayer-btn:active { transform:scale(.93); }
 
-/* ===== QURAN ===== */
-.quran-input-wrap { display: flex; gap: 0.6rem; }
-.quran-input {
-  flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px; padding: 0.65rem 0.9rem; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.3s;
+/* ── QURAN ────────────────────────────────────── */
+.quran-row { display:flex; gap:.5rem; }
+.quran-inp {
+  flex:1; background:rgba(255,255,255,.04); border:1px solid var(--rim);
+  border-radius:var(--r1); padding:.62rem .85rem; color:var(--fg);
+  font-family:'Cairo',sans-serif; font-size:.88rem; outline:none; transition:all .28s;
 }
-.quran-input:focus { border-color: var(--accent2); }
+.quran-inp:focus { border-color:rgba(192,132,252,.38); box-shadow:0 0 0 3px rgba(192,132,252,.07); }
 .save-btn {
-  padding: 0.65rem 1.1rem; border-radius: 12px;
-  background: linear-gradient(135deg, rgba(206,147,216,0.25), rgba(79,195,247,0.15));
-  border: 1px solid var(--accent2); color: var(--accent2);
-  font-family: 'Cairo', sans-serif; font-size: 0.85rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s; white-space: nowrap;
+  padding:.62rem 1rem; border-radius:var(--r1); white-space:nowrap;
+  background:rgba(192,132,252,.13); border:1px solid rgba(192,132,252,.28);
+  color:var(--orchid); font-family:'Cairo',sans-serif; font-size:.8rem; font-weight:700;
+  cursor:pointer; transition:all .28s;
 }
-.save-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(206,147,216,0.3); }
+.save-btn:hover { box-shadow:var(--gorchid); transform:translateY(-1px); }
 
-/* ===== LEADERBOARD BOARDS ===== */
-.boards-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-@media(min-width:768px) { .boards-grid { grid-template-columns: 1fr 1fr; } }
-.board-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-.board-row {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.7rem 0.5rem; border-radius: 12px;
-  transition: background 0.2s; cursor: pointer;
-}
-.board-row:hover { background: rgba(255,255,255,0.04); }
-.board-row.me { background: rgba(79,195,247,0.05); border: 1px solid rgba(79,195,247,0.15); border-radius: 12px; }
-.board-rank { font-size: 1.2rem; width: 30px; text-align: center; flex-shrink: 0; }
-.board-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.board-info { flex: 1; }
-.board-name { font-size: 0.88rem; font-weight: 600; }
-.board-progress-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 99px; margin-top: 4px; overflow: hidden; }
-.board-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width 0.6s ease; }
-.board-value { font-size: 0.82rem; color: var(--gold); font-weight: 700; flex-shrink: 0; white-space: nowrap; }
-.empty-board { text-align: center; color: var(--sub); padding: 1.5rem; font-size: 0.9rem; }
+/* ── BOARDS ───────────────────────────────────── */
+.boards-grid { display:grid; grid-template-columns:1fr; gap:.9rem; }
+@media(min-width:680px){ .boards-grid{ grid-template-columns:1fr 1fr; } }
 
-/* ===== FRIENDS STATUS ===== */
-.friends-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
-.friend-status-card {
-  display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px; padding: 1rem 1.2rem; min-width: 100px;
-  transition: all 0.3s; position: relative;
-}
-.friend-status-card.me { border-color: rgba(79,195,247,0.25); }
-.friend-status-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-.friend-photo { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.1); }
-.friend-status-dot {
-  width: 12px; height: 12px; border-radius: 50%;
-  position: absolute; bottom: 38px; right: 16px; border: 2px solid var(--bg);
-}
-.friend-name-text { font-size: 0.82rem; font-weight: 700; text-align: center; }
-.friend-status-label { font-size: 0.73rem; text-align: center; }
-@keyframes statusPulse { 0%,100%{box-shadow:0 0 0 0 rgba(105,240,174,0.6)} 50%{box-shadow:0 0 0 5px rgba(105,240,174,0)} }
+.board-hd { font-size:.8rem; font-weight:700; color:var(--fg2); margin-bottom:.7rem; }
 
-/* ===== MODAL ===== */
+.brow {
+  display:flex; align-items:center; gap:.6rem;
+  padding:.55rem .4rem; border-radius:var(--r1);
+  cursor:pointer; transition:all .2s;
+  animation: rowIn .4s ease both; animation-delay:var(--d);
+}
+.brow:hover { background:rgba(56,189,248,.05); transform:translateX(-3px); }
+.brow.me    { background:rgba(56,189,248,.06); border:1px solid rgba(56,189,248,.14); }
+.brank  { width:26px; text-align:center; font-size:1rem; flex-shrink:0; }
+.bavatar{ width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--rim); }
+.binfo  { flex:1; min-width:0; }
+.bname  { font-size:.78rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bname em { font-style:normal; font-size:.58rem; background:rgba(56,189,248,.15); border:1px solid rgba(56,189,248,.25); border-radius:4px; padding:.04rem .3rem; color:var(--sky); margin-right:3px; vertical-align:middle; }
+.bbar  { height:2px; background:rgba(255,255,255,.05); border-radius:99px; margin-top:4px; overflow:hidden; }
+.bfill { height:100%; background:linear-gradient(90deg,var(--sky),var(--orchid)); border-radius:99px; transition:width .7s ease; }
+.bval  { font-size:.72rem; color:var(--amber); font-weight:700; white-space:nowrap; font-family:'JetBrains Mono',monospace; }
+
+.empty { text-align:center; color:var(--fg3); padding:1.5rem; font-size:.85rem; }
+.date-notice { background:rgba(56,189,248,.05); border:1px solid rgba(56,189,248,.1); border-radius:var(--r2); padding:.6rem 1rem; margin-bottom:.9rem; font-size:.76rem; color:var(--fg2); }
+
+/* ── FRIENDS ──────────────────────────────────── */
+.friends-flex { display:flex; flex-wrap:wrap; gap:.65rem; }
+.fcard {
+  display:flex; flex-direction:column; align-items:center; gap:.35rem;
+  background:rgba(255,255,255,.025); border:1px solid var(--rim2);
+  border-radius:var(--r3); padding:.9rem .85rem; min-width:86px;
+  transition:all .25s; cursor:default;
+}
+.fcard.me { border-color:rgba(56,189,248,.18); }
+.fcard:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+.favatarwrap { position:relative; }
+.favatar { width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid var(--rim); background:var(--ink2); }
+.fdot {
+  width:11px; height:11px; border-radius:50%;
+  position:absolute; bottom:0; right:0; border:2.5px solid var(--ink);
+}
+.fdot.pulse { animation:pulseDot 2s ease-in-out infinite; }
+.fname { font-size:.73rem; font-weight:700; text-align:center; }
+.fname em { font-style:normal; font-size:.58rem; background:rgba(56,189,248,.12); border-radius:3px; padding:.02rem .28rem; color:var(--sky); }
+.fstatus { font-size:.63rem; text-align:center; }
+
+/* ── MODAL ────────────────────────────────────── */
 .modal {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
-  align-items: center; justify-content: center; padding: 1rem;
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.68); backdrop-filter:blur(18px);
+  align-items:center; justify-content:center; padding:1rem;
+  opacity:0; transition:opacity .32s;
 }
-.modal-box {
-  background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 24px; padding: 1.5rem;
-  max-width: 560px; width: 100%; max-height: 80vh;
+.modal.open { opacity:1; }
+.mbox {
+  background: #07101c;
+  border: 1px solid rgba(56,189,248,.15);
+  border-radius: var(--r4); padding: 1.35rem;
+  max-width: 530px; width: 100%; max-height: 88dvh;
   display: flex; flex-direction: column;
-  box-shadow: 0 0 60px rgba(79,195,247,0.1);
-  animation: fadeInUp 0.3s ease both;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 40px 80px rgba(0,0,0,.7);
+  transform: translateY(22px); transition: transform .35s cubic-bezier(.16,1,.3,1);
+  position: relative; overflow: hidden;
 }
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.modal-header h3 { font-size: 1.1rem; font-weight: 700; }
-.modal-close { background:none; border:none; color:var(--sub); font-size:1.4rem; cursor:pointer; }
-.modal-body { overflow-y: auto; flex: 1; scrollbar-width: thin; }
+.mbox::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg,transparent,rgba(56,189,248,.45),rgba(192,132,252,.4),transparent);
+}
+.modal.open .mbox { transform: none; }
+.mhead {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom: 1rem; flex-shrink:0;
+}
+.mhead h3 { font-size:.95rem; font-weight:700; }
+.mclose {
+  width:28px; height:28px; border-radius:8px;
+  background:rgba(255,255,255,.05); border:1px solid var(--rim2);
+  color:var(--fg2); font-size:.95rem; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center;
+}
+.mclose:hover { background:rgba(248,113,113,.14); color:#f87171; border-color:rgba(248,113,113,.28); }
+.mbody { overflow-y:auto; flex:1; scrollbar-width:thin; scrollbar-color:rgba(56,189,248,.18) transparent; }
 
-/* ===== LOG DAY CARD ===== */
-.log-day-card {
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px; padding: 1rem; margin-bottom: 0.75rem;
+/* ── LOG CARDS ────────────────────────────────── */
+.lcard {
+  background:rgba(255,255,255,.025); border:1px solid var(--rim2);
+  border-radius:var(--r2); padding:.85rem; margin-bottom:.55rem; transition:border-color .2s;
 }
-.log-day-card.today { border-color: rgba(79,195,247,0.3); }
-.log-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.7rem; }
-.log-date { font-size: 0.85rem; font-weight: 700; color: var(--accent); }
-.log-stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-.log-stat { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--sub); }
-.log-stat-icon { font-size: 1rem; }
-.log-prayers-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.log-prayer-badge {
-  padding: 0.2rem 0.6rem; border-radius: 20px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.72rem; color: var(--sub);
-}
-.log-prayer-badge.done { background: rgba(105,240,174,0.1); border-color: rgba(105,240,174,0.3); color: var(--green); }
-.edit-log-btn {
-  background: rgba(79,195,247,0.1); border: 1px solid rgba(79,195,247,0.2);
-  border-radius: 8px; padding: 0.25rem 0.7rem; color: var(--accent);
-  font-family: 'Cairo', sans-serif; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
-}
-.edit-log-btn:hover { background: rgba(79,195,247,0.2); }
-.log-loading, .log-empty { text-align: center; color: var(--sub); padding: 2rem; }
+.lcard.today { border-color:rgba(56,189,248,.2); }
+.lhead { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.55rem; }
+.ldate { font-size:.73rem; font-weight:700; color:var(--sky); flex:1; }
+.badge { display:inline-block; font-size:.56rem; background:rgba(56,189,248,.14); border:1px solid rgba(56,189,248,.28); border-radius:4px; padding:.03rem .32rem; color:var(--sky); margin-right:3px; vertical-align:middle; }
+.editbtn { background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.2); border-radius:7px; padding:.18rem .55rem; color:var(--sky); font-family:'Cairo',sans-serif; font-size:.68rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.editbtn:hover { background:rgba(56,189,248,.18); }
+.lnums { display:flex; gap:.9rem; margin-bottom:.5rem; }
+.lnum { display:flex; flex-direction:column; gap:1px; }
+.lnum b { font-size:.78rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
+.lnum small { font-size:.62rem; color:var(--fg3); }
+.lchips { display:flex; flex-wrap:wrap; gap:.28rem; }
+.chip { padding:.12rem .45rem; border-radius:99px; font-size:.62rem; background:rgba(255,255,255,.04); border:1px solid var(--rim2); color:var(--fg3); }
+.chip.on { background:rgba(74,222,128,.1); border-color:rgba(74,222,128,.28); color:var(--mint); }
 
-/* ===== EDIT MODAL ===== */
-.edit-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem; }
-.edit-check-item {
-  display: flex; align-items: center; gap: 0.5rem;
-  background: rgba(255,255,255,0.04); border-radius: 10px; padding: 0.6rem 0.8rem;
-  cursor: pointer; font-size: 0.9rem;
+.spinner {
+  width:32px; height:32px; border:3px solid rgba(56,189,248,.12);
+  border-top-color:var(--sky); border-radius:50%;
+  animation:spin .75s linear infinite; margin:2.5rem auto;
 }
-.edit-check-item input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); }
-.edit-field { margin-bottom: 0.8rem; }
-.edit-label { font-size: 0.82rem; color: var(--sub); margin-bottom: 0.4rem; display: block; }
-.edit-input {
-  width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px; padding: 0.6rem 0.9rem; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none;
-}
-.edit-input:focus { border-color: var(--accent); }
-.save-edit-btn {
-  width: 100%; padding: 0.8rem; border-radius: 12px;
-  background: linear-gradient(135deg, rgba(79,195,247,0.25), rgba(206,147,216,0.25));
-  border: 1px solid var(--accent); color: var(--accent);
-  font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s;
-}
-.save-edit-btn:hover { box-shadow: 0 4px 20px rgba(79,195,247,0.3); }
 
-/* ===== CHAT ===== */
-.chat-container { display: flex; flex-direction: column; height: 70vh; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 0.5rem 0; display: flex; flex-direction: column; gap: 0.75rem; scrollbar-width: thin; }
-.chat-loading { text-align: center; color: var(--sub); padding: 2rem; }
-.chat-bubble-wrap { display: flex; align-items: flex-end; gap: 0.6rem; animation: fadeInUp 0.3s ease both; }
-.chat-bubble-wrap.me { flex-direction: row-reverse; }
-.chat-bubble-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
-.chat-bubble {
-  max-width: 70%; padding: 0.65rem 1rem; border-radius: 18px; font-size: 0.9rem; line-height: 1.5;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); word-break: break-word;
+/* ── EDIT FORM ──────────────────────────────────── */
+.esl { font-size:.64rem; color:var(--fg3); letter-spacing:.09em; text-transform:uppercase; margin-bottom:.45rem; display:block; }
+.echecks { display:grid; grid-template-columns:1fr 1fr; gap:.38rem; margin-bottom:.85rem; }
+.echeck {
+  display:flex; align-items:center; gap:.4rem;
+  background:rgba(255,255,255,.03); border:1px solid var(--rim2);
+  border-radius:var(--r1); padding:.5rem .65rem;
+  cursor:pointer; font-size:.8rem; transition:all .2s;
 }
-.chat-bubble-wrap.me .chat-bubble {
-  background: linear-gradient(135deg, rgba(79,195,247,0.2), rgba(206,147,216,0.15));
-  border-color: rgba(79,195,247,0.25);
+.echeck:hover { background:rgba(74,222,128,.06); border-color:rgba(74,222,128,.18); }
+.echeck input { accent-color:var(--mint); width:13px; height:13px; cursor:pointer; }
+.efield { margin-bottom:.7rem; }
+.elabel { font-size:.69rem; color:var(--fg3); margin-bottom:.32rem; display:block; }
+.einput {
+  width:100%; background:rgba(255,255,255,.04); border:1px solid var(--rim);
+  border-radius:var(--r1); padding:.58rem .82rem; color:var(--fg);
+  font-family:'Cairo',sans-serif; font-size:.88rem; outline:none; transition:all .28s;
 }
-.chat-bubble-meta { font-size: 0.7rem; color: var(--sub); margin-top: 3px; display: flex; gap: 0.4rem; align-items: center; }
-.chat-bubble-name { font-weight: 700; color: var(--accent); }
-.chat-input-row { display: flex; gap: 0.6rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); }
-.chat-input {
-  flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px; padding: 0.7rem 1rem; color: var(--text);
-  font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.3s;
+.einput:focus { border-color:rgba(56,189,248,.38); box-shadow:0 0 0 3px rgba(56,189,248,.06); }
+.esave {
+  width:100%; padding:.75rem; border-radius:var(--r2);
+  background:linear-gradient(135deg,rgba(56,189,248,.18),rgba(192,132,252,.12));
+  border:1px solid rgba(56,189,248,.28); color:var(--sky);
+  font-family:'Cairo',sans-serif; font-size:.92rem; font-weight:700;
+  cursor:pointer; transition:all .28s;
 }
-.chat-input:focus { border-color: var(--accent2); }
-.chat-send-btn {
-  padding: 0.7rem 1.2rem; border-radius: 14px;
-  background: linear-gradient(135deg, rgba(206,147,216,0.3), rgba(79,195,247,0.2));
-  border: 1px solid var(--accent2); color: var(--accent2);
-  font-family: 'Cairo', sans-serif; font-size: 0.88rem; font-weight: 700;
-  cursor: pointer; transition: all 0.3s; white-space: nowrap;
-}
-.chat-send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(206,147,216,0.3); }
+.esave:hover { box-shadow:0 4px 20px rgba(56,189,248,.28); transform:translateY(-1px); }
 
-/* ===== TOAST ===== */
+/* ── CHAT ───────────────────────────────────────── */
+.chat-shell {
+  display:flex; flex-direction:column;
+  height: calc(100dvh - var(--nav) - var(--tabs) - 1.8rem);
+  min-height: 380px;
+}
+.chat-msgs {
+  flex:1; overflow-y:auto; padding:.4rem 0;
+  display:flex; flex-direction:column; gap:.25rem;
+  scrollbar-width:thin; scrollbar-color:rgba(56,189,248,.15) transparent;
+}
+.chat-msgs .empty { padding:3rem; }
+
+/* groups */
+.cgroup { display:flex; gap:.5rem; padding:.2rem 0; }
+.cgroup.me { flex-direction:row-reverse; }
+.cavatar { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; align-self:flex-end; border:1px solid var(--rim); background:var(--ink2); }
+.cbubbles { display:flex; flex-direction:column; gap:.18rem; max-width:74%; }
+.cgroup.me .cbubbles { align-items:flex-end; }
+.csender { font-size:.63rem; color:var(--sky); font-weight:700; padding:0 .38rem; margin-bottom:.06rem; }
+.cbubble {
+  padding:.55rem .88rem; border-radius:18px; font-size:.86rem;
+  line-height:1.55; word-break:break-word; width:fit-content; max-width:100%;
+  background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.07);
+}
+/* corner rounding per group */
+.cgroup.other .cbubbles .cbubble { border-bottom-right-radius:18px; border-bottom-left-radius:5px; border-top-left-radius:5px; }
+.cgroup.other .cbubbles .cbubble:first-of-type { border-top-left-radius:18px; }
+.cgroup.other .cbubbles .cbubble:last-of-type  { border-bottom-left-radius:18px; }
+.cgroup.me    .cbubbles .cbubble {
+  border-bottom-left-radius:18px; border-bottom-right-radius:5px; border-top-right-radius:5px;
+  background:linear-gradient(135deg,rgba(56,189,248,.15),rgba(192,132,252,.09));
+  border-color:rgba(56,189,248,.18);
+}
+.cgroup.me .cbubbles .cbubble:first-of-type { border-top-right-radius:18px; }
+.cgroup.me .cbubbles .cbubble:last-of-type  { border-bottom-right-radius:18px; }
+.ctime { font-size:.59rem; color:var(--fg3); padding:.08rem .38rem; }
+
+/* input */
+.chat-inp-row {
+  display:flex; gap:.5rem; margin-top:.7rem; padding-top:.7rem;
+  border-top:1px solid var(--rim2); flex-shrink:0; align-items:flex-end;
+}
+.chat-inp {
+  flex:1; background:rgba(255,255,255,.04); border:1px solid var(--rim);
+  border-radius:var(--r2); padding:.6rem .9rem; color:var(--fg);
+  font-family:'Cairo',sans-serif; font-size:.88rem; outline:none;
+  transition:all .28s; resize:none; max-height:110px; min-height:42px; line-height:1.5;
+}
+.chat-inp:focus { border-color:rgba(192,132,252,.32); box-shadow:0 0 0 3px rgba(192,132,252,.06); }
+.send-btn {
+  width:42px; height:42px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,rgba(192,132,252,.22),rgba(56,189,248,.16));
+  border:1px solid rgba(192,132,252,.28); color:var(--orchid);
+  font-size:1rem; cursor:pointer; transition:all .25s;
+  display:flex; align-items:center; justify-content:center;
+}
+.send-btn:hover  { transform:scale(1.1); box-shadow:var(--gorchid); }
+.send-btn:active { transform:scale(.95); }
+
+/* ── TOAST ───────────────────────────────────────── */
 .toast {
-  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
-  background: rgba(20,20,40,0.95); border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(20px); border-radius: 12px;
-  padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 600;
-  z-index: 999; transition: transform 0.3s ease; white-space: nowrap;
+  position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(90px);
+  background:rgba(6,10,18,.97); border:1px solid var(--rim);
+  backdrop-filter:blur(24px); border-radius:var(--r2);
+  padding:.65rem 1.35rem; font-size:.83rem; font-weight:700;
+  z-index:9999; transition:transform .35s cubic-bezier(.16,1,.3,1);
+  white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,.5); pointer-events:none;
 }
-.toast.show { transform: translateX(-50%) translateY(0); }
-.toast.success { border-color: rgba(105,240,174,0.4); color: var(--green); }
-.toast.error { border-color: rgba(255,100,100,0.4); color: #ff6b6b; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.ok    { border-color:rgba(74,222,128,.35); color:var(--mint); }
+.toast.error { border-color:rgba(248,113,113,.35); color:#f87171; }
 
-/* ===== PARTICLES ===== */
-.particle {
-  position: fixed; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--green); pointer-events: none; z-index: 9999;
-  animation: particleFly 0.7s ease forwards;
-}
-@keyframes particleFly {
-  0% { opacity: 1; transform: translate(0,0) scale(1); }
-  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+/* ── BURST PARTICLE ─────────────────────────────── */
+.burst-dot {
+  position:fixed; width:7px; height:7px; border-radius:50%;
+  pointer-events:none; z-index:9999;
+  animation:burst .85s cubic-bezier(.16,1,.3,1) forwards;
 }
 
-/* ===== GRID LAYOUT ===== */
-.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-@media(max-width:640px) { .input-grid { grid-template-columns: 1fr; } }
-.gap-md { display: flex; flex-direction: column; gap: 1.5rem; }
+/* ── SCROLLBAR ───────────────────────────────────── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(56,189,248,.18); border-radius:2px; }
 
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+/* ── MOBILE OVERRIDES ─────────────────────────────── */
+@media(max-width:480px) {
+  .wrap    { padding:.7rem; }
+  .panel   { padding:.95rem; border-radius:var(--r2); }
+  .mbox    { padding:1.1rem; border-radius:var(--r3); }
+  .prayer-btn { font-size:.7rem; padding:.62rem .15rem; }
+  .study-btn  { padding:.65rem 1.5rem; font-size:.85rem; }
+  .boards-grid { gap:.7rem; }
+  .friends-flex { gap:.5rem; }
+  .fcard { min-width:78px; padding:.78rem .7rem; }
+  .mini-stats { gap:.4rem; }
+  .mstat-val { font-size:.78rem; }
+  .chat-shell { height:calc(100dvh - var(--nav) - var(--tabs) - 1.4rem); }
+}
+@media(max-width:360px) {
+  .prayer-grid { gap:.3rem; }
+  .prayer-btn  { font-size:.65rem; }
+  .ring-wrap   { width:155px; height:155px; }
+}
 </style>
 </head>
 <body>
 
-<div class="bg-orbs">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
+<!-- BACKDROP -->
+<div class="backdrop">
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+  <div class="grid-over"></div>
+  <div class="scanlines"></div>
 </div>
-<div class="grid-bg"></div>
 
-<!-- ==================== LOGIN PAGE ==================== -->
+<!-- ════════════ LOGIN ════════════ -->
 <div id="loginPage">
-  <div class="login-card">
-    <div class="login-logo">📚</div>
+  <div class="login-shell">
+    <div class="login-mark">🤝</div>
     <div class="login-title">دايما على بعض نسند واهي مواقفنا بتثبت</div>
     <div class="login-sub">تابع مذاكرتك وصلواتك وقرآنك وتنافس مع صحابك 🔥</div>
-    <button class="google-btn" onclick="googleSignIn()">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    <button class="gBtn gBtn gBtn" onclick="googleSignIn()" style="position:relative;overflow:hidden;">
+      <div class="gBtn-shine"></div>
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
       ادخل بحساب جوجل بتاعك
     </button>
-    <div id="loginLoading">⏳ استنّى بنسجّل دخولك...</div>
+    <div id="loginLoad">
+      <div class="ldot"></div><div class="ldot"></div><div class="ldot"></div>
+    </div>
   </div>
 </div>
 
-<!-- ==================== APP PAGE ==================== -->
+<!-- ════════════ APP ════════════ -->
 <div id="appPage">
 
   <nav>
     <div class="nav-logo">🤝 دايما على بعض نسند واهي مواقفنا بتثبت</div>
-    <div class="nav-user">
+    <div class="nav-right">
       <img id="userAvatar" class="nav-avatar" src="" alt="">
       <span id="userName"></span>
-      <button class="sign-out-btn" onclick="googleSignOut()">خروج</button>
+      <button class="btn-out" onclick="googleSignOut()">خروج</button>
     </div>
   </nav>
 
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('home', this)">🏠 الرئيسية</button>
-    <button class="tab-btn" onclick="showTab('leaderboard', this)">🏆 الترتيب</button>
-    <button class="tab-btn" onclick="showTab('friends', this)">👥 الصحاب</button>
-    <button class="tab-btn" onclick="showTab('chat', this)">💬 الشات</button>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('home',this)"><span class="ti">🏠</span> الرئيسية</button>
+    <button class="tab"        onclick="switchTab('board',this)"><span class="ti">🏆</span> الترتيب</button>
+    <button class="tab"        onclick="switchTab('friends',this)"><span class="ti">👥</span> الصحاب</button>
+    <button class="tab"        onclick="switchTab('chat',this)"><span class="ti">💬</span> الشات</button>
   </div>
 
-  <div class="main-content">
+  <div class="wrap">
 
-    <!-- HOME TAB -->
-    <div id="tab-home" class="tab-section active">
-      <div class="my-stats-row">
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myStudyHours">0h</div>
-          <div class="my-stat-label">📚 اتذاكر</div>
-        </div>
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myPrayersCount">0/6</div>
-          <div class="my-stat-label">🕌 صلوات</div>
-        </div>
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myQuranPages">0</div>
-          <div class="my-stat-label">📖 صفحات</div>
-        </div>
+    <!-- HOME -->
+    <div id="sec-home" class="section on">
+      <div class="mini-stats">
+        <div class="mstat"><div class="mstat-val" id="mStudy">0h 0m</div><div class="mstat-lbl">📚 اتذاكر</div></div>
+        <div class="mstat"><div class="mstat-val" id="mPrayers">0/6</div><div class="mstat-lbl">🕌 صلوات</div></div>
+        <div class="mstat"><div class="mstat-val" id="mQuran">0</div><div class="mstat-lbl">📖 صفحات</div></div>
       </div>
 
-      <div class="input-grid">
-        <!-- Timer Card -->
-        <div class="glass-card">
-          <div class="section-title"><div class="dot"></div> عداد المذاكرة</div>
-          <div class="timer-section">
-            <div class="timer-circle-wrap">
-              <svg class="timer-svg" width="220" height="220" viewBox="0 0 220 220">
+      <div class="home-grid">
+        <!-- Timer -->
+        <div class="panel">
+          <div class="ptitle"><div class="ptitle-dot"></div>عداد المذاكرة</div>
+          <div class="timer-wrap">
+            <div class="ring-wrap">
+              <svg class="timer-svg" viewBox="0 0 200 200">
                 <defs>
-                  <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#4fc3f7"/>
-                    <stop offset="100%" stop-color="#ce93d8"/>
+                  <linearGradient id="rGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%"   stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#c084fc"/>
                   </linearGradient>
                 </defs>
-                <circle class="timer-track" cx="110" cy="110" r="90"/>
-                <circle id="timerCircle" cx="110" cy="110" r="90"/>
+                <circle class="ring-bg" cx="100" cy="100" r="88"/>
+                <circle id="ringFill"   cx="100" cy="100" r="88"/>
               </svg>
-              <div class="timer-inner">
-                <div class="timer-digits">
-                  <span id="timerHours">00</span>:<span id="timerMins">00</span>:<span id="timerSecs">00</span>
+              <div class="ring-center">
+                <div class="ring-time">
+                  <span id="tH">00</span><span class="ring-sep">:</span><span id="tM">00</span><span class="ring-sep">:</span><span id="tS">00</span>
                 </div>
-                <div id="timerStatus">واقف</div>
+                <div id="timerLabel">واقف</div>
               </div>
             </div>
-            <button class="timer-btn" id="timerBtn" onclick="toggleStudy()">▶ يلا نذاكر</button>
+            <button class="study-btn" id="timerBtn" onclick="toggleStudy()">
+              <span class="btn-icon">▶</span><span>يلا نذاكر</span>
+            </button>
           </div>
         </div>
 
         <!-- Prayers + Quran -->
-        <div class="gap-md">
-          <div class="glass-card">
-            <div class="section-title"><div class="dot" style="background:var(--green)"></div> صلوات النهارده</div>
-            <div class="prayers-grid">
-              <button class="prayer-btn" data-prayer="الفجر"    onclick="togglePrayer('الفجر')">🌅 الفجر</button>
-              <button class="prayer-btn" data-prayer="الظهر"    onclick="togglePrayer('الظهر')">☀️ الظهر</button>
-              <button class="prayer-btn" data-prayer="العصر"    onclick="togglePrayer('العصر')">🌤 العصر</button>
-              <button class="prayer-btn" data-prayer="المغرب"   onclick="togglePrayer('المغرب')">🌆 المغرب</button>
-              <button class="prayer-btn" data-prayer="العشاء"   onclick="togglePrayer('العشاء')">🌙 العشاء</button>
-              <button class="prayer-btn" data-prayer="التراويح" onclick="togglePrayer('التراويح')">🕌 التراويح</button>
+        <div class="col-stack">
+          <div class="panel">
+            <div class="ptitle"><div class="ptitle-dot" style="background:var(--mint);box-shadow:var(--gmint)"></div>صلوات النهارده</div>
+            <div class="prayer-grid">
+              <button class="prayer-btn" data-p="الفجر"    onclick="togglePrayer('الفجر')">🌅 الفجر</button>
+              <button class="prayer-btn" data-p="الظهر"    onclick="togglePrayer('الظهر')">☀️ الظهر</button>
+              <button class="prayer-btn" data-p="العصر"    onclick="togglePrayer('العصر')">🌤 العصر</button>
+              <button class="prayer-btn" data-p="المغرب"   onclick="togglePrayer('المغرب')">🌆 المغرب</button>
+              <button class="prayer-btn" data-p="العشاء"   onclick="togglePrayer('العشاء')">🌙 العشاء</button>
+              <button class="prayer-btn" data-p="التراويح" onclick="togglePrayer('التراويح')">🕌 التراويح</button>
             </div>
           </div>
-          <div class="glass-card">
-            <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> قرآن النهارده</div>
-            <div class="quran-input-wrap">
-              <input type="number" id="quranInput" class="quran-input" placeholder="كام صفحة اتقرأت؟" min="0" max="604">
+          <div class="panel">
+            <div class="ptitle"><div class="ptitle-dot" style="background:var(--orchid);box-shadow:var(--gorchid)"></div>قرآن النهارده</div>
+            <div class="quran-row">
+              <input type="number" id="quranInput" class="quran-inp" placeholder="كام صفحة اتقرأت؟" min="0" max="604">
               <button class="save-btn" onclick="saveQuran()">💾 احفظ</button>
             </div>
           </div>
@@ -1052,116 +1331,102 @@ nav {
       </div>
     </div>
 
-    <!-- LEADERBOARD TAB -->
-    <div id="tab-leaderboard" class="tab-section">
-      <div class="glass-card" style="margin-bottom:1.2rem">
-        <div style="display:flex;align-items:center;gap:0.5rem;color:var(--sub);font-size:0.85rem">
-          🗓 دي إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> بس — مش فاتت 😤
-        </div>
-      </div>
+    <!-- LEADERBOARD -->
+    <div id="sec-board" class="section">
+      <div class="date-notice">📅 الترتيب ليوم <strong id="todayLbl" style="color:var(--sky)"></strong> — بيانات النهارده بس 💪</div>
       <div class="boards-grid">
-        <div class="glass-card">
-          <div class="board-title">📚 ترتيب المذاكرة</div>
-          <div id="studyBoard"></div>
-        </div>
-        <div class="glass-card">
-          <div class="board-title">🕌 ترتيب الصلوات</div>
-          <div id="prayersBoard"></div>
-        </div>
-        <div class="glass-card" style="grid-column: 1 / -1">
-          <div class="board-title">📖 ترتيب القرآن</div>
-          <div id="quranBoard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.3rem"></div>
+        <div class="panel"><div class="board-hd">📚 المذاكرة</div><div id="boardStudy"></div></div>
+        <div class="panel"><div class="board-hd">🕌 الصلوات</div><div id="boardPrayers"></div></div>
+        <div class="panel" style="grid-column:1/-1">
+          <div class="board-hd">📖 القرآن</div>
+          <div id="boardQuran" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.25rem"></div>
         </div>
       </div>
     </div>
 
-    <!-- FRIENDS TAB -->
-    <div id="tab-friends" class="tab-section">
-      <div class="glass-card">
-        <div class="section-title"><div class="dot"></div> الصحاب دلوقتي بيعملوا إيه؟</div>
-        <div class="friends-grid" id="friendsStatus"></div>
+    <!-- FRIENDS -->
+    <div id="sec-friends" class="section">
+      <div class="panel">
+        <div class="ptitle"><div class="ptitle-dot"></div>الصحاب دلوقتي</div>
+        <div class="friends-flex" id="friendsGrid"></div>
       </div>
     </div>
 
-    <!-- CHAT TAB -->
-    <div id="tab-chat" class="tab-section">
-      <div class="glass-card chat-container">
-        <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> شات الصحاب 💬</div>
-        <div class="chat-messages" id="chatMessages">
-          <div class="chat-loading">استنّى بنجيب الرسايل...</div>
-        </div>
-        <div class="chat-input-row">
-          <input type="text" id="chatInput" class="chat-input" placeholder="اكتب حاجة للصحاب..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()">
-          <button class="chat-send-btn" onclick="sendChat()">إرسال ✈️</button>
+    <!-- CHAT -->
+    <div id="sec-chat" class="section">
+      <div class="panel chat-shell">
+        <div class="ptitle"><div class="ptitle-dot" style="background:var(--orchid);box-shadow:var(--gorchid)"></div>شات الصحاب</div>
+        <div class="chat-msgs" id="chatMsgs"><p class="empty">استنّى بنجيب الرسايل...</p></div>
+        <div class="chat-inp-row">
+          <textarea id="chatInput" class="chat-inp" placeholder="اكتب حاجة..." rows="1" maxlength="500"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px'"></textarea>
+          <button class="send-btn" onclick="sendChat()">✈️</button>
         </div>
       </div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /wrap -->
+</div><!-- /appPage -->
 
-<!-- ===== LOG MODAL ===== -->
+<!-- ════════ LOG MODAL ════════ -->
 <div class="modal" id="logModal" onclick="if(event.target===this)closeLogModal()">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="logModalTitle">السجل</h3>
-      <button class="modal-close" onclick="closeLogModal()">✕</button>
+  <div class="mbox">
+    <div class="mhead">
+      <h3 id="logTitle">السجل</h3>
+      <button class="mclose" onclick="closeLogModal()">✕</button>
     </div>
-    <div class="modal-body" id="logContent"></div>
+    <div class="mbody" id="logBody"></div>
   </div>
 </div>
 
-<!-- ===== EDIT MODAL ===== -->
+<!-- ════════ EDIT MODAL ════════ -->
 <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="editModalTitle">✏️ تعديل</h3>
-      <button class="modal-close" onclick="closeEditModal()">✕</button>
+  <div class="mbox">
+    <div class="mhead">
+      <h3 id="editTitle">✏️ تعديل</h3>
+      <button class="mclose" onclick="closeEditModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="section-title" style="font-size:0.9rem;margin-bottom:0.7rem"><div class="dot" style="background:var(--green)"></div> الصلوات</div>
-      <div class="edit-checks">
-        <label class="edit-check-item"><input type="checkbox" id="edit_الفجر">    🌅 الفجر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_الظهر">    ☀️ الظهر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_العصر">    🌤 العصر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_المغرب">   🌆 المغرب</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_العشاء">   🌙 العشاء</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_التراويح"> 🕌 التراويح</label>
+    <div class="mbody">
+      <span class="esl">الصلوات</span>
+      <div class="echecks">
+        <label class="echeck"><input type="checkbox" id="ep_الفجر">    🌅 الفجر</label>
+        <label class="echeck"><input type="checkbox" id="ep_الظهر">    ☀️ الظهر</label>
+        <label class="echeck"><input type="checkbox" id="ep_العصر">    🌤 العصر</label>
+        <label class="echeck"><input type="checkbox" id="ep_المغرب">   🌆 المغرب</label>
+        <label class="echeck"><input type="checkbox" id="ep_العشاء">   🌙 العشاء</label>
+        <label class="echeck"><input type="checkbox" id="ep_التراويح"> 🕌 التراويح</label>
       </div>
-      <div class="edit-field">
-        <label class="edit-label">📖 كام صفحة قرآن اتقرأت؟</label>
-        <input type="number" id="editQuran" class="edit-input" min="0" max="604">
+      <div class="efield">
+        <label class="elabel">📖 كام صفحة قرآن اتقرأت؟</label>
+        <input type="number" id="eQuran" class="einput" min="0" max="604">
       </div>
-      <div class="edit-field">
-        <label class="edit-label">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label>
-        <input type="number" id="editStudy" class="edit-input" min="0" max="24" step="0.1">
+      <div class="efield">
+        <label class="elabel">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label>
+        <input type="number" id="eStudy" class="einput" min="0" max="24" step="0.1">
       </div>
-      <button class="save-edit-btn" onclick="saveEditLog()">✅ احفظ التعديلات</button>
+      <button class="esave" onclick="saveEdit()">✅ احفظ التعديلات</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-function showTab(name, btn) {
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+function switchTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('on');
   btn.classList.add('active');
-
-  if (name === 'leaderboard') {
-    const d = new Date();
-    document.getElementById('todayLabel').textContent =
-      d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (name === 'board') {
+    document.getElementById('todayLbl').textContent =
+      new Date().toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'});
   }
   if (name === 'chat') {
-    const msgs = document.getElementById('chatMessages');
-    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    const b = document.getElementById('chatMsgs');
+    if (b) setTimeout(() => b.scrollTop = b.scrollHeight, 80);
   }
 }
 </script>
-
 </body>
 </html>
