@@ -363,8 +363,10 @@ function renderFriendsStatus(users) {
     offline:  { icon:'⭕', label:'مش موجود',       color:'#555',    pulse:false },
   };
   document.getElementById('friendsStatus').innerHTML = users.map(u => {
-    const st   = statusMap[effectiveStatus(u)] || statusMap.offline;
     const isMe = u.id === currentUser?.uid;
+    // حالتي أنا تتحسب محلياً من المتغيرات مش من Firebase
+    const myStatus = isMe ? (isStudying ? 'studying' : 'online') : effectiveStatus(u);
+    const st = statusMap[myStatus] || statusMap.offline;
     return `
       <div class="friend-status-card ${isMe?'me':''}">
         <img src="${u.photo||''}" class="friend-photo"
