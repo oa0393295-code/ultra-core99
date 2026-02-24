@@ -144,7 +144,7 @@ function effectiveStatus(u) {
   const hb  = u.lastHB?.toDate?.()?.getTime?.() ?? 0;
   const age = (Date.now() - hb) / 1000;
   // لو أكتر من 40 ثانية من آخر heartbeat → offline فعلياً
-  if (age > 40) return 'offline';
+  if (age > 60) return 'offline';
   return u.status || 'offline';
 }
 
