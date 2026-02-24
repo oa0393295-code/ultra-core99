@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>دايما على بعض نسند واهي مواقفنا بتثبت 📚</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     
@@ -217,8 +218,8 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('S.W. Registered'))
-            .catch(err => console.log('S.W. Failed', err));
+            .then(reg => console.log('Service Worker Registered'))
+            .catch(err => console.log('Service Worker Failed', err));
         });
       }
     </script>
@@ -226,5 +227,5 @@
     <script src="bg.js"></script>
     <script type="module" src="app.js"></script>
 </body>
-                                      </html>
-                                      
+                        </html>
+                        
