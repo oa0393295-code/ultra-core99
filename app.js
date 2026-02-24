@@ -34,7 +34,7 @@ let allUsersUnsub   = null;
 let chatUnsub       = null;
 let editingDate     = null;
 let heartbeatTimer  = null;
-let hiddenTimer     = null;   // timer لـ offline لما التاب يتخفى
+
 
 const TODAY = () => new Date().toISOString().split('T')[0];
 
@@ -118,25 +118,15 @@ function startHeartbeat() {
 
 function stopHeartbeat() {
   if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
-  clearTimeout(hiddenTimer); hiddenTimer = null;
 }
 
 document.addEventListener('visibilitychange', async () => {
   if (!currentUser) return;
-  clearTimeout(hiddenTimer); hiddenTimer = null;
-
-  if (document.hidden) {
-    if (isStudying) {
-      // العداد شغال → الوضع يفضل studying
-      await pushStatus('studying');
-    } else {
-      // انتظر 8 ثواني قبل offline (عشان لو بس نقّل تاب لثانية مش هيحسبه offline)
-      hiddenTimer = setTimeout(() => pushStatus('offline'), 8000);
-    }
-  } else {
-    // رجع التاب
+  if (!document.hidden) {
+    // رجع التاب → نحدث فوراً
     await pushStatus(isStudying ? 'studying' : 'online');
   }
+  // لو التاب اتخبى → مش بنعمل حاجة، الـ heartbeat هيكمل يشتغل
 });
 
 // لما الصفحة تتقفل
