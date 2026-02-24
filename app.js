@@ -131,11 +131,11 @@ document.addEventListener('visibilitychange', async () => {
 
 // لما الصفحة تتقفل
 window.addEventListener('pagehide', () => {
-  if (!currentUser || isStudying) return;
+  if (!currentUser) return;
   pushStatus('offline');
 });
 window.addEventListener('beforeunload', () => {
-  if (!currentUser || isStudying) return;
+  if (!currentUser) return;
   pushStatus('offline');
 });
 
