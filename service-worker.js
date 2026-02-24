@@ -1,21 +1,24 @@
-const cacheName = 'ultra-core99-cache-v1';
-const filesToCache = [
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/icon-512.png'
+const CACHE_NAME = 'el-aw-v1';
+const assets = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png'
 ];
 
-self.addEventListener('install', (event) => {
+// تثبيت الـ Service Worker وحفظ الملفات
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(cacheName).then((cache) => cache.addAll(filesToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(assets);
+    })
   );
-  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (event) => {
+// جلب البيانات (عشان يفتح حتى لو النت فصل)
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request).then(response => {
       return response || fetch(event.request);
     })
   );
