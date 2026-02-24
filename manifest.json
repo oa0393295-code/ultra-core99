@@ -1,13 +1,22 @@
 {
   "name": "العو الخفي",
-  "short_name": "العو الخفي",
-  "start_url": "/.https://oa0393295-code.github.io/ultra-core99/",
+  "short_name": "العو",
+  "description": "تطبيق العو الخفي لمتابعة المذاكرة والعبادات",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "theme_color": "#000000",
+  "orientation": "portrait",
+  "scope": "./",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
       "sizes": "512x512",
       "type": "image/png"
     }
