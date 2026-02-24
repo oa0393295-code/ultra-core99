@@ -1,237 +1,230 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دايما على بعض نسند واهي مواقفنا بتثبت 📚</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-
-<!-- السطر ده للـ manifest -->
-<link rel="manifest" href="manifest.json">
-
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دايما على بعض نسند واهي مواقفنا بتثبت 📚</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <canvas id="bgCanvas"></canvas>
 
-<!-- خلفية متحركة -->
-<canvas id="bgCanvas"></canvas>
-
-<!-- ==================== LOGIN PAGE ==================== -->
-<div id="loginPage">
-  <div class="login-card">
-    <div class="login-logo">📚</div>
-    <div class="login-title">دايما على بعض نسند واهي مواقفنا بتثبت</div>
-    <div class="login-sub">تابع مذاكرتك وصلواتك وقرآنك وتنافس مع صحابك 🔥</div>
-    <button class="google-btn" onclick="googleSignIn()">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-      ادخل بحساب جوجل بتاعك
-    </button>
-    <div id="loginLoading">⏳ استنّى بنسجّل دخولك...</div>
-  </div>
-</div>
-
-<!-- ==================== APP PAGE ==================== -->
-<div id="appPage">
-
-  <nav>
-    <div class="nav-logo">🤝 دايما على بعض نسند واهي مواقفنا بتثبت</div>
-    <div class="nav-user">
-      <img id="userAvatar" class="nav-avatar" src="" alt="">
-      <span id="userName"></span>
-      <button class="sign-out-btn" onclick="googleSignOut()">خروج</button>
+    <div id="loginPage">
+        <div class="login-card">
+            <div class="login-logo">📚</div>
+            <div class="login-title">دايما على بعض نسند واهي مواقفنا بتثبت</div>
+            <div class="login-sub">تابع مذاكرتك وصلواتك وقرآنك وتنافس مع صحابك 🔥</div>
+            <button class="google-btn" onclick="googleSignIn()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                ادخل بحساب جوجل بتاعك
+            </button>
+            <div id="loginLoading">⏳ استنّى بنسجّل دخولك...</div>
+        </div>
     </div>
-  </nav>
 
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('home', this)">🏠 الرئيسية</button>
-    <button class="tab-btn" onclick="showTab('leaderboard', this)">🏆 الترتيب</button>
-    <button class="tab-btn" onclick="showTab('friends', this)">👥 الصحاب</button>
-    <button class="tab-btn" onclick="showTab('chat', this)">💬 الشات</button>
-  </div>
+    <div id="appPage">
+        <nav>
+            <div class="nav-logo">🤝 دايما على بعض نسند واهي مواقفنا بتثبت</div>
+            <div class="nav-user">
+                <img id="userAvatar" class="nav-avatar" src="" alt="">
+                <span id="userName"></span>
+                <button class="sign-out-btn" onclick="googleSignOut()">خروج</button>
+            </div>
+        </nav>
 
-  <div class="main-content">
-
-    <!-- HOME TAB -->
-    <div id="tab-home" class="tab-section active">
-      <div class="my-stats-row">
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myStudyHours">0h</div>
-          <div class="my-stat-label">📚 اتذاكر</div>
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="showTab('home', this)">🏠 الرئيسية</button>
+            <button class="tab-btn" onclick="showTab('leaderboard', this)">🏆 الترتيب</button>
+            <button class="tab-btn" onclick="showTab('friends', this)">👥 الصحاب</button>
+            <button class="tab-btn" onclick="showTab('chat', this)">💬 الشات</button>
         </div>
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myPrayersCount">0/6</div>
-          <div class="my-stat-label">🕌 صلوات</div>
-        </div>
-        <div class="my-stat-card">
-          <div class="my-stat-num" id="myQuranPages">0</div>
-          <div class="my-stat-label">📖 صفحات</div>
-        </div>
-      </div>
 
-      <div class="input-grid">
-        <!-- Timer Card -->
-        <div class="glass-card">
-          <div class="section-title"><div class="dot"></div> عداد المذاكرة</div>
-          <div class="timer-section">
-            <div class="timer-circle-wrap">
-              <svg class="timer-svg" width="220" height="220" viewBox="0 0 220 220">
-                <defs>
-                  <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#4fc3f7"/>
-                    <stop offset="100%" stop-color="#ce93d8"/>
-                  </linearGradient>
-                </defs>
-                <circle class="timer-track" cx="110" cy="110" r="90"/>
-                <circle id="timerCircle" cx="110" cy="110" r="90"/>
-              </svg>
-              <div class="timer-inner">
-                <div class="timer-digits">
-                  <span id="timerHours">00</span>:<span id="timerMins">00</span>:<span id="timerSecs">00</span>
+        <div class="main-content">
+            <div id="tab-home" class="tab-section active">
+                <div class="my-stats-row">
+                    <div class="my-stat-card">
+                        <div class="my-stat-num" id="myStudyHours">0h</div>
+                        <div class="my-stat-label">📚 اتذاكر</div>
+                    </div>
+                    <div class="my-stat-card">
+                        <div class="my-stat-num" id="myPrayersCount">0/6</div>
+                        <div class="my-stat-label">🕌 صلوات</div>
+                    </div>
+                    <div class="my-stat-card">
+                        <div class="my-stat-num" id="myQuranPages">0</div>
+                        <div class="my-stat-label">📖 صفحات</div>
+                    </div>
                 </div>
-                <div id="timerStatus">واقف</div>
-              </div>
+
+                <div class="input-grid">
+                    <div class="glass-card">
+                        <div class="section-title"><div class="dot"></div> عداد المذاكرة</div>
+                        <div class="timer-section">
+                            <div class="timer-circle-wrap">
+                                <svg class="timer-svg" width="220" height="220" viewBox="0 0 220 220">
+                                    <defs>
+                                        <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4fc3f7"/>
+                                            <stop offset="100%" stop-color="#ce93d8"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle class="timer-track" cx="110" cy="110" r="90"/>
+                                    <circle id="timerCircle" cx="110" cy="110" r="90"/>
+                                </svg>
+                                <div class="timer-inner">
+                                    <div class="timer-digits">
+                                        <span id="timerHours">00</span>:<span id="timerMins">00</span>:<span id="timerSecs">00</span>
+                                    </div>
+                                    <div id="timerStatus">واقف</div>
+                                </div>
+                            </div>
+                            <button class="timer-btn" id="timerBtn" onclick="toggleStudy()">▶ يلا نذاكر</button>
+                        </div>
+                    </div>
+
+                    <div class="gap-md">
+                        <div class="glass-card">
+                            <div class="section-title"><div class="dot" style="background:var(--green)"></div> صلوات النهارده</div>
+                            <div class="prayers-grid">
+                                <button class="prayer-btn" data-prayer="الفجر" onclick="togglePrayer('الفجر')">🌅 الفجر</button>
+                                <button class="prayer-btn" data-prayer="الظهر" onclick="togglePrayer('الظهر')">☀️ الظهر</button>
+                                <button class="prayer-btn" data-prayer="العصر" onclick="togglePrayer('العصر')">🌤 العصر</button>
+                                <button class="prayer-btn" data-prayer="المغرب" onclick="togglePrayer('المغرب')">🌆 المغرب</button>
+                                <button class="prayer-btn" data-prayer="العشاء" onclick="togglePrayer('العشاء')">🌙 العشاء</button>
+                                <button class="prayer-btn" data-prayer="التراويح" onclick="togglePrayer('التراويح')">🕌 التراويح</button>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> قرآن النهارده</div>
+                            <div class="quran-input-wrap">
+                                <input type="number" id="quranInput" class="quran-input" placeholder="كام صفحة اتقرأت؟" min="0" max="604">
+                                <button class="save-btn" onclick="saveQuran()">💾 احفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button class="timer-btn" id="timerBtn" onclick="toggleStudy()">▶ يلا نذاكر</button>
-          </div>
-        </div>
 
-        <!-- Prayers + Quran -->
-        <div class="gap-md">
-          <div class="glass-card">
-            <div class="section-title"><div class="dot" style="background:var(--green)"></div> صلوات النهارده</div>
-            <div class="prayers-grid">
-              <button class="prayer-btn" data-prayer="الفجر"    onclick="togglePrayer('الفجر')">🌅 الفجر</button>
-              <button class="prayer-btn" data-prayer="الظهر"    onclick="togglePrayer('الظهر')">☀️ الظهر</button>
-              <button class="prayer-btn" data-prayer="العصر"    onclick="togglePrayer('العصر')">🌤 العصر</button>
-              <button class="prayer-btn" data-prayer="المغرب"   onclick="togglePrayer('المغرب')">🌆 المغرب</button>
-              <button class="prayer-btn" data-prayer="العشاء"   onclick="togglePrayer('العشاء')">🌙 العشاء</button>
-              <button class="prayer-btn" data-prayer="التراويح" onclick="togglePrayer('التراويح')">🕌 التراويح</button>
+            <div id="tab-leaderboard" class="tab-section">
+                <div class="glass-card" style="margin-bottom:1.2rem">
+                    <div style="display:flex;align-items:center;gap:0.5rem;color:var(--sub);font-size:0.85rem">
+                        🗓 إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> بس  
+                    </div>
+                </div>
+                <div class="boards-grid">
+                    <div class="glass-card">
+                        <div class="board-title">📚 المذاكرة</div>
+                        <div id="studyBoard"></div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="board-title">🕌 الصلوات</div>
+                        <div id="prayersBoard"></div>
+                    </div>
+                    <div class="glass-card" style="grid-column: 1 / -1">
+                        <div class="board-title">📖 القرآن</div>
+                        <div id="quranBoard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.3rem"></div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="glass-card">
-            <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> قرآن النهارده</div>
-            <div class="quran-input-wrap">
-              <input type="number" id="quranInput" class="quran-input" placeholder="كام صفحة اتقرأت؟" min="0" max="604">
-              <button class="save-btn" onclick="saveQuran()">💾 احفظ</button>
+
+            <div id="tab-friends" class="tab-section">
+                <div class="glass-card">
+                    <div class="section-title"><div class="dot"></div> الصحاب دلوقتي بيعملوا إيه؟</div>
+                    <div class="friends-grid" id="friendsStatus"></div>
+                </div>
             </div>
-          </div>
+
+            <div id="tab-chat" class="tab-section">
+                <div class="glass-card chat-container">
+                    <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> شات الصحاب 💬</div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-loading">استنّى بنجيب الرسايل...</div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="اكتب حاجة للصحاب..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()">
+                        <button class="chat-send-btn" onclick="sendChat()">إرسال ✈️</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <!-- LEADERBOARD TAB -->
-    <div id="tab-leaderboard" class="tab-section">
-      <div class="glass-card" style="margin-bottom:1.2rem">
-        <div style="display:flex;align-items:center;gap:0.5rem;color:var(--sub);font-size:0.85rem">
-          🗓 إحصائيات <strong style="color:var(--accent)" id="todayLabel"></strong> بس
+    <div class="modal" id="logModal" onclick="if(event.target===this)closeLogModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="logModalTitle">السجل</h3>
+                <button class="modal-close" onclick="closeLogModal()">✕</button>
+            </div>
+            <div class="modal-body" id="logContent"></div>
         </div>
-      </div>
-      <div class="boards-grid">
-        <div class="glass-card">
-          <div class="board-title">📚 المذاكرة</div>
-          <div id="studyBoard"></div>
-        </div>
-        <div class="glass-card">
-          <div class="board-title">🕌 الصلوات</div>
-          <div id="prayersBoard"></div>
-        </div>
-        <div class="glass-card" style="grid-column: 1 / -1">
-          <div class="board-title">📖 القرآن</div>
-          <div id="quranBoard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.3rem"></div>
-        </div>
-      </div>
     </div>
 
-    <!-- FRIENDS TAB -->
-    <div id="tab-friends" class="tab-section">
-      <div class="glass-card">
-        <div class="section-title"><div class="dot"></div> الصحاب دلوقتي بيعملوا إيه؟</div>
-        <div class="friends-grid" id="friendsStatus"></div>
-      </div>
-    </div>
-
-    <!-- CHAT TAB -->
-    <div id="tab-chat" class="tab-section">
-      <div class="glass-card chat-container">
-        <div class="section-title"><div class="dot" style="background:var(--accent2)"></div> شات الصحاب 💬</div>
-        <div class="chat-messages" id="chatMessages">
-          <div class="chat-loading">استنّى بنجيب الرسايل...</div>
+    <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="editModalTitle">✏️ تعديل</h3>
+                <button class="modal-close" onclick="closeEditModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="section-title" style="font-size:0.9rem;margin-bottom:0.7rem">
+                    <div class="dot" style="background:var(--green)"></div> الصلوات  
+                </div>
+                <div class="edit-checks">
+                    <label class="edit-check-item"><input type="checkbox" id="edit_الفجر"> 🌅 الفجر</label>
+                    <label class="edit-check-item"><input type="checkbox" id="edit_الظهر"> ☀️ الظهر</label>
+                    <label class="edit-check-item"><input type="checkbox" id="edit_العصر"> 🌤 العصر</label>
+                    <label class="edit-check-item"><input type="checkbox" id="edit_المغرب"> 🌆 المغرب</label>
+                    <label class="edit-check-item"><input type="checkbox" id="edit_العشاء"> 🌙 العشاء</label>
+                    <label class="edit-check-item"><input type="checkbox" id="edit_التراويح"> 🕌 التراويح</label>
+                </div>
+                <div class="edit-field">
+                    <label class="edit-label">📖 كام صفحة قرآن اتقرأت؟</label>
+                    <input type="number" id="editQuran" class="edit-input" min="0" max="604">
+                </div>
+                <div class="edit-field">
+                    <label class="edit-label">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label>
+                    <input type="number" id="editStudy" class="edit-input" min="0" max="24" step="0.1">
+                </div>
+                <button class="save-edit-btn" onclick="saveEditLog()">✅ احفظ التعديلات</button>
+            </div>
         </div>
-        <div class="chat-input-row">
-          <input type="text" id="chatInput" class="chat-input" placeholder="اكتب حاجة للصحاب..." maxlength="300"
-            onkeydown="if(event.key==='Enter')sendChat()">
-          <button class="chat-send-btn" onclick="sendChat()">إرسال ✈️</button>
-        </div>
-      </div>
     </div>
 
-  </div>
-</div>
+    <div class="toast" id="toast"></div>
 
-<!-- ===== LOG MODAL ===== -->
-<div class="modal" id="logModal" onclick="if(event.target===this)closeLogModal()">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="logModalTitle">السجل</h3>
-      <button class="modal-close" onclick="closeLogModal()">✕</button>
-    </div>
-    <div class="modal-body" id="logContent"></div>
-  </div>
-</div>
+    <script>
+        function showTab(name, btn) {
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            btn.classList.add('active');
+            if (name === 'leaderboard') {
+                const d = new Date();
+                document.getElementById('todayLabel').textContent = d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            if (name === 'chat') {
+                const msgs = document.getElementById('chatMessages');
+                if (msgs) setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
+            }
+        }
+    </script>
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('S.W. Registered'))
+            .catch(err => console.log('S.W. Failed', err));
+        });
+      }
+    </script>
 
-<!-- ===== EDIT MODAL ===== -->
-<div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="editModalTitle">✏️ تعديل</h3>
-      <button class="modal-close" onclick="closeEditModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="section-title" style="font-size:0.9rem;margin-bottom:0.7rem">
-        <div class="dot" style="background:var(--green)"></div> الصلوات
-      </div>
-      <div class="edit-checks">
-        <label class="edit-check-item"><input type="checkbox" id="edit_الفجر">    🌅 الفجر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_الظهر">    ☀️ الظهر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_العصر">    🌤 العصر</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_المغرب">   🌆 المغرب</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_العشاء">   🌙 العشاء</label>
-        <label class="edit-check-item"><input type="checkbox" id="edit_التراويح"> 🕌 التراويح</label>
-      </div>
-      <div class="edit-field">
-        <label class="edit-label">📖 كام صفحة قرآن اتقرأت؟</label>
-        <input type="number" id="editQuran" class="edit-input" min="0" max="604">
-      </div>
-      <div class="edit-field">
-        <label class="edit-label">📚 كام ساعة اتذاكر؟ (مثال: 2.5 = ساعتين ونص)</label>
-        <input type="number" id="editStudy" class="edit-input" min="0" max="24" step="0.1">
-      </div>
-      <button class="save-edit-btn" onclick="saveEditLog()">✅ احفظ التعديلات</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-function showTab(name, btn) {
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
-  if (name === 'leaderboard') {
-    const d = new Date();
-    document.getElementById('todayLabel').textContent =
-      d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
-  }
-  if (name === 'chat') {
-    const msgs = document.getElementById('chatMessages');
-    if (msgs) setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
-  }
-}
-</script>
-
-<script src="bg.js"></script>
-<script type="module" src="app.js"></script>
+    <script src="bg.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
-</html>
+                                      </html>
+                                      
